@@ -49,7 +49,7 @@ export function renderProductDetail() {
     </div>
     <div class="pd-tab-content is-active" data-tab="science"><p>${(d.science || 'Research data available upon request.')}</p></div>
     <div class="pd-tab-content" data-tab="specs"><pre class="pd-pre">${(d.specs || 'Specifications available upon request.')}</pre></div>
-    <div class="pd-tab-content" data-tab="coa"><pre class="pd-pre">${(d.coa || 'COA available upon request.')}</pre></div>
+    <div class="pd-tab-content" data-tab="coa"><pre class="pd-pre">${(p.coaUrl ? d.coa : 'Awaiting COA — Third-party certificate of analysis pending for this product.')}</pre></div>
   </div>`;
   container.querySelectorAll('.pd-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -232,21 +232,37 @@ function renderPdpProduct(root) {
   }
 
   const coaRows = byId('pdpCoaRows');
-  if (coaRows && d.coa) {
-    coaRows.innerHTML = d.coa.split('\n').map(function (line) {
-      var parts = line.split(':');
-      if (parts.length < 2) return '';
-      return '<div class="pdp-coa-row"><strong>' + parts[0].trim() + '</strong><span>' + parts.slice(1).join(':').trim() + '</span></div>';
-    }).join('');
+  if (coaRows) {
+    if (d.coa && p.coaUrl) {
+      coaRows.innerHTML = d.coa.split('\n').map(function (line) {
+        var parts = line.split(':');
+        if (parts.length < 2) return '';
+        return '<div class="pdp-coa-row"><strong>' + parts[0].trim() + '</strong><span>' + parts.slice(1).join(':').trim() + '</span></div>';
+      }).join('');
+    } else {
+      coaRows.innerHTML = '<div class="pdp-coa-row" style="opacity:.6;font-style:italic"><strong>Awaiting COA</strong><span>Third-party certificate of analysis pending for this product.</span></div>';
+    }
   }
   var coaCertImg = byId('pdpCoaCertImg');
-  if (coaCertImg && p.coaImage) { coaCertImg.src = p.coaImage; coaCertImg.alt = p.name + ' COA'; }
-  byId('pdpCoaView')?.addEventListener('click', function () {
-    if (p.coaUrl) { window.open(p.coaUrl, '_blank', 'noopener'); return; }
-    var lb = byId('lightboxOverlay') || byId('lbBackdrop');
-    var img = byId('lightboxImg') || byId('lbImg');
-    if (lb && img) { img.src = p.coaImage || './images/reta-coa-2026-06.png'; img.alt = p.name + ' COA'; lb.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-  });
+  var coaCertParent = coaCertImg ? coaCertImg.closest('.pdp-coa-cert') : null;
+  if (p.coaImage) {
+    if (coaCertImg) { coaCertImg.src = p.coaImage; coaCertImg.alt = p.name + ' COA'; }
+    if (coaCertParent) coaCertParent.style.display = '';
+  } else {
+    if (coaCertParent) coaCertParent.style.display = 'none';
+  }
+  var coaViewBtn = byId('pdpCoaView');
+  var coaCtaWrap = coaViewBtn ? coaViewBtn.closest('.pdp-coa-cta') : null;
+  if (!p.coaUrl && !p.coaImage) {
+    if (coaCtaWrap) coaCtaWrap.innerHTML = '<div class="left"><strong>Awaiting COA</strong> Certificate of analysis pending for this product.</div>';
+  } else if (coaViewBtn) {
+    coaViewBtn.addEventListener('click', function () {
+      if (p.coaUrl) { window.open(p.coaUrl, '_blank', 'noopener'); return; }
+      var lb = byId('lightboxOverlay') || byId('lbBackdrop');
+      var img = byId('lightboxImg') || byId('lbImg');
+      if (lb && img) { img.src = p.coaImage || ''; img.alt = p.name + ' COA'; lb.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    });
+  }
 
   setText('pdpScoreNum', p.rating.toFixed(1));
   var scoreStars = byId('pdpScoreStars');
