@@ -239,10 +239,13 @@ function renderPdpProduct(root) {
       return '<div class="pdp-coa-row"><strong>' + parts[0].trim() + '</strong><span>' + parts.slice(1).join(':').trim() + '</span></div>';
     }).join('');
   }
+  var coaCertImg = byId('pdpCoaCertImg');
+  if (coaCertImg && p.coaImage) { coaCertImg.src = p.coaImage; coaCertImg.alt = p.name + ' COA'; }
   byId('pdpCoaView')?.addEventListener('click', function () {
-    var lb = byId('lightboxOverlay');
-    var img = byId('lightboxImg');
-    if (lb && img) { img.src = './images/coa-certificate.jpg'; img.alt = p.name + ' COA'; lb.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    if (p.coaUrl) { window.open(p.coaUrl, '_blank', 'noopener'); return; }
+    var lb = byId('lightboxOverlay') || byId('lbBackdrop');
+    var img = byId('lightboxImg') || byId('lbImg');
+    if (lb && img) { img.src = p.coaImage || './images/reta-coa-2026-06.png'; img.alt = p.name + ' COA'; lb.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
   });
 
   setText('pdpScoreNum', p.rating.toFixed(1));

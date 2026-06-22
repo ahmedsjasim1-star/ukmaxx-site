@@ -6,7 +6,7 @@ export function setupLightbox() {
   const title = byId('lbTitle');
   const body = byId('lbBody');
   const data = [
-    { title: 'Tamper seal integrity', body: 'Each vial ships with a tamper-evident security seal applied before dispatch. If the seal is broken, missing, or shows signs of interference on arrival, do not use the product. Contact us immediately for a replacement.' },
+    { title: 'Janoshik report #193587', body: 'Retatrutide 10mg — Batch RT10-2026-06-A — 99.223% purity confirmed via UPLC/MS GLP-1 blind test on 22 Jun 2026. Verify at verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42' },
     { title: 'Batch code traceability', body: 'Every UKMAXX vial carries a unique batch QR code printed on the label. Scanning the code takes you directly to the third-party COA results for that specific batch — confirming compound identity, purity percentage, test method, lab name, and report date.' }
   ];
   const open = (i) => {
