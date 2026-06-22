@@ -1,6 +1,7 @@
 import { toast } from './toast.js';
 import { byId } from '../utils/dom.js';
 import { getCurrentUser } from './auth.js';
+import { getSupabase } from '../data/supabase.js';
 
 const STATUS_ORDER = ['paid', 'processing', 'dispatched', 'delivered'];
 const STATUS_LABELS = { paid: 'Paid', processing: 'Processing', dispatched: 'Dispatched', delivered: 'Delivered', cancelled: 'Cancelled', refunded: 'Refunded' };
@@ -17,10 +18,9 @@ export function setupTracking() {
     e.preventDefault();
     const ref = byId('orderNumber')?.value.trim();
     const user = getCurrentUser();
-    const email = user?.email || '';
     const result = byId('trackResult');
     if (!ref) { toast('Missing order number', 'Please enter your order number.', 'error'); return; }
-    if (!email) { toast('Sign in required', 'Please sign in to track your orders.', 'error'); return; }
+    if (!user?.email) { toast('Sign in required', 'Please sign in to track your orders.', 'error'); return; }
     if (result) {
       result.style.display = 'none';
       result.classList.remove('is-shown');
@@ -28,9 +28,16 @@ export function setupTracking() {
     const submitBtn = byId('trackSubmit');
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Looking up…'; }
     try {
+      const supabase = await getSupabase();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('session_expired');
       const res = await fetch('/api/track-order', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference: ref, email })
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ reference: ref })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.order) {

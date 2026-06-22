@@ -3,8 +3,8 @@
 --
 -- Run after applying:
 --   1. Go to Supabase Dashboard > Authentication > Settings
---   2. Set SITE_URL to https://ukmaxx-site-5tc7.vercel.app
---   3. Add redirect URLs: https://ukmaxx-site-5tc7.vercel.app/**
+--   2. Set SITE_URL to https://www.ukmaxx.co.uk
+--   3. Add redirect URLs: https://www.ukmaxx.co.uk/**
 --   4. (Optional) DISABLE email confirmations for dev:
 --      SQL: UPDATE auth.config SET enable_confirmations = false;
 --

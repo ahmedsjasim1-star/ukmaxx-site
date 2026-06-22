@@ -3,12 +3,17 @@ const { getSupabaseAdmin } = require('./_lib/supabase');
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const { reference, email } = req.body || {};
+    const { reference } = req.body || {};
     const normRef = String(reference || '').trim().toUpperCase();
-    const normEmail = String(email || '').trim().toLowerCase();
-    if (!normRef || !normEmail) return res.status(400).json({ error: 'Missing reference or email' });
+    if (!normRef) return res.status(400).json({ error: 'Missing reference' });
 
     const supabase = getSupabaseAdmin();
+    const authorization = String(req.headers.authorization || '');
+    const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+    if (!token) return res.status(401).json({ error: 'Sign in required' });
+    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authData?.user?.email) return res.status(401).json({ error: 'Invalid or expired session' });
+    const normEmail = authData.user.email.toLowerCase();
 
     const { data: order, error } = await supabase
       .from('orders')

@@ -4,6 +4,7 @@ import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY
 import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
+import { getSupabase } from '../data/supabase.js';
 
 const SHIP_THRESHOLD = FREE_SHIPPING_THRESHOLD || 100;
 const SHIP_FLAT = FLAT_SHIPPING || 4.99;
@@ -230,8 +231,15 @@ async function startCheckout() {
     if (payBtn) { payBtn.disabled = true; if (label) label.textContent = 'Processing…'; }
     const controller = new AbortController();
     const to = setTimeout(() => controller.abort(), 15000);
+    const supabase = await getSupabase();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('Your session has expired. Please sign in again.');
     const res = await fetch('/api/create-checkout-session', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify({ cartItems: c, email, fullName, promoOptIn: false, promoCode, address: {} }),
       signal: controller.signal
     });

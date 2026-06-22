@@ -89,7 +89,7 @@ function renderPdpProduct(root) {
   setAttr('pageDesc', 'content', p.name + ': ' + p.description + ' Third-party verified.');
   setText('ogTitle', p.name + ' \u2014 UKMAXX');
   setAttr('ogDesc', 'content', p.description);
-  setAttr('canonical', 'href', 'https://ukmaxx-site-5tc7.vercel.app/product.html?sku=' + sku);
+  setAttr('canonical', 'href', 'https://www.ukmaxx.co.uk/product.html?sku=' + sku);
 
   const jsonLd = byId('productJsonLd');
   if (jsonLd) {
@@ -103,7 +103,7 @@ function renderPdpProduct(root) {
       brand: { '@type': 'Brand', name: 'UKMAXX' },
       offers: {
         '@type': 'Offer',
-        url: 'https://ukmaxx-site-5tc7.vercel.app/product.html?sku=' + sku,
+        url: 'https://www.ukmaxx.co.uk/product.html?sku=' + sku,
         priceCurrency: 'GBP',
         price: p.price,
         availability: p.stock === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'

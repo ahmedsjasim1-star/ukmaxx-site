@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { getSupabaseAdmin } = require('./_lib/supabase');
 const {
   sendOrderDispatchedEmail,
@@ -14,9 +15,20 @@ module.exports = async (req, res) => {
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const adminChatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !adminChatId) {
-    console.error('telegram-bot-env-missing', { hasToken: !!token, hasChatId: !!adminChatId });
-    return res.status(200).json({ ok: true });
+  const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET || '';
+  const suppliedSecret = String(req.headers['x-telegram-bot-api-secret-token'] || '');
+  if (!token || !adminChatId || !expectedSecret) {
+    console.error('telegram-bot-env-missing', {
+      hasToken: !!token,
+      hasChatId: !!adminChatId,
+      hasWebhookSecret: !!expectedSecret,
+    });
+    return res.status(503).json({ ok: false });
+  }
+  const expected = Buffer.from(expectedSecret);
+  const supplied = Buffer.from(suppliedSecret);
+  if (expected.length !== supplied.length || !crypto.timingSafeEqual(expected, supplied)) {
+    return res.status(401).json({ ok: false });
   }
 
   const update = req.body;
@@ -181,6 +193,7 @@ async function handleDeliver(token, chatId, args) {
 /* ---------- /cancel ---------- */
 
 async function handleCancel(token, chatId, args) {
+  const Stripe = require('stripe');
   const orderNumber = args[0];
   if (!orderNumber) return sendTelegram(token, chatId, 'Usage: /cancel &lt;orderNumber&gt; [reason]');
 
@@ -196,19 +209,45 @@ async function handleCancel(token, chatId, args) {
 
   const items = await getItems(supabase, order.id);
   const wasPaid = ['paid', 'processing', 'dispatched'].includes(order.status);
+  let stripeRefund = null;
+  if (wasPaid) {
+    if (!process.env.STRIPE_SECRET_KEY) return sendTelegram(token, chatId, '❌ Missing Stripe config.');
+    if (!order.stripe_session_id) return sendTelegram(token, chatId, '❌ No Stripe session found for this order.');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id);
+    if (!session.payment_intent) return sendTelegram(token, chatId, '❌ No payment intent found for this order.');
+    stripeRefund = await stripe.refunds.create({
+      payment_intent: session.payment_intent,
+      reason: reason ? 'requested_by_customer' : undefined,
+      metadata: { order_number: orderNumber, reason: reason || 'telegram_cancel' },
+    }, {
+      idempotencyKey: `refund-${order.id}`,
+    });
+  }
 
-  await supabase.from('orders').update({ status: 'cancelled', cancellation_reason: reason }).eq('id', order.id);
+  await supabase.from('orders').update({
+    status: stripeRefund ? 'refunded' : 'cancelled',
+    cancellation_reason: reason,
+    refunded_at: stripeRefund ? new Date().toISOString() : null,
+    stripe_refund_id: stripeRefund?.id || null,
+  }).eq('id', order.id);
 
   await sendOrderCancelledEmail({
-    to: order.email, orderNumber: order.order_number, items, total: order.total, refundInitiated: wasPaid,
+    to: order.email, orderNumber: order.order_number, items, total: order.total, refundInitiated: !!stripeRefund,
   });
 
   await supabase.from('admin_audit_log').insert({
     action: 'order_cancelled', order_id: order.id,
-    payload: { order_number: orderNumber, reason, was_paid: wasPaid, source: 'telegram_bot' },
+    payload: {
+      order_number: orderNumber,
+      reason,
+      was_paid: wasPaid,
+      stripe_refund_id: stripeRefund?.id || null,
+      source: 'telegram_bot',
+    },
   });
 
-  await sendTelegram(token, chatId, `✅ <b>Order cancelled</b>\nOrder: ${orderNumber}\nRefund initiated: ${wasPaid ? 'Yes' : 'No'}\nEmail sent to ${order.email}`);
+  await sendTelegram(token, chatId, `✅ <b>Order cancelled</b>\nOrder: ${orderNumber}\nRefund processed: ${stripeRefund ? 'Yes' : 'No'}\nEmail sent to ${order.email}`);
 }
 
 /* ---------- /refund ---------- */
@@ -256,5 +295,3 @@ async function handleRefund(token, chatId, args) {
 
   await sendTelegram(token, chatId, `✅ <b>Refund processed</b>\nOrder: ${orderNumber}\nAmount: £${(refundAmount / 100).toFixed(2)}\nStripe refund: ${stripeRefund.id}\nEmail sent to ${order.email}`);
 }
-
-

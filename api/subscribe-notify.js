@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
       const base = process.env.PUBLIC_BASE_URL || 'https://www.ukmaxx.co.uk';
       const unsubscribeUrl = `${base}/api/unsubscribe-notify?email=${encodeURIComponent(cleanEmail)}`;
       await resend.emails.send({
-        from: process.env.RESEND_FROM || 'UKMAXX <orders@ukmaxx.com>',
+        from: process.env.RESEND_FROM || 'UKMAXX <orders@ukmaxx.co.uk>',
         to: cleanEmail,
         subject: 'UKMAXX updates subscription confirmed',
         html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#111">
