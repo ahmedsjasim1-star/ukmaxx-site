@@ -1,0 +1,10 @@
+{
+  "name": "ukmaxx-site",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "resend": "^4.0.1",
+    "stripe": "^16.12.0"
+  }
+}

@@ -1,0 +1,38 @@
+import { renderProducts } from './modules/products.js';
+import { renderReviews, setupReviewDrawer } from './modules/reviews.js';
+import { renderCart, initCart } from './modules/cart.js';
+import { initAgeGate } from './modules/ageGate.js';
+import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js';
+import { setupLightbox } from './modules/lightbox.js';
+import { setupExitIntent } from './modules/exitIntent.js';
+import { setupCookieBanner } from './modules/cookieBanner.js';
+import { setupNewsletter } from './modules/newsletter.js';
+import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js';
+import { setupTracking } from './modules/tracking.js';
+import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  initAuth();
+  initAgeGate();
+  renderProducts();
+  renderReviews();
+  renderCart();
+  initCart();
+  renderProductDetail();
+  renderRelatedProducts();
+  setupHeaderScroll();
+  setupActiveNav();
+  setupMobileStickyCta();
+  setupReviewDrawer();
+  setupLightbox();
+  setupExitIntent();
+  setupCookieBanner();
+  setupNewsletter();
+  initAuthGate();
+  setupAuthForms();
+  setupPasswordStrength();
+  setupGoogleAuth();
+  setupForgotPassword();
+  setupProfileDropdown();
+  setupTracking();
+});

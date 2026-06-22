@@ -1,0 +1,5 @@
+.lock-icon{width:56px;height:56px;border-radius:50%;background:var(--accent-light);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;color:var(--accent);margin:0 auto 20px}
+.lock-icon svg{width:28px;height:28px}
+.pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 28px;justify-content:center}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--surface-3);border:1px solid var(--border);border-radius:999px;font-size:12px;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;color:var(--text-2)}
+.pill svg{width:13px;height:13px;color:var(--success)}

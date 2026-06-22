@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Sign in — UKMAXX</title>
+<meta name="description" content="Sign in to your UKMAXX account to track orders, view order history, and manage your research compound purchases.">
+<meta name="theme-color" content="#0A7E8C">
+<meta property="og:title" content="Sign in — UKMAXX">
+<meta property="og:description" content="Access your UKMAXX account. Track orders, view history, manage purchases.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="shortcut icon" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="canonical" href="https://ukmaxx-site-5tc7.vercel.app/signin.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/css/variables.css">
+<link rel="stylesheet" href="./assets/css/reset.css">
+<link rel="stylesheet" href="./assets/css/base.css">
+<link rel="stylesheet" href="./assets/css/components.css">
+<link rel="stylesheet" href="./assets/css/pages/auth.css">
+</head>
+<body>
+
+<!-- AGE GATE -->
+<div class="auth-gate" id="authAgeGate">
+  <div class="auth-gate-card">
+    <div class="auth-gate-logo"><span class="logo-mark" aria-hidden="true"></span>UKMAXX</div>
+    <h2 class="auth-gate-title">Are you 18 or older?</h2>
+    <p class="auth-gate-text">This site contains information about research compounds. By entering, you confirm you are at least 18 years old.</p>
+    <div class="auth-gate-btns">
+      <button class="auth-gate-btn auth-gate-btn-yes" id="authAgeYes">Yes, I'm 18+</button>
+      <button class="auth-gate-btn auth-gate-btn-no" id="authAgeNo">No, leave</button>
+    </div>
+    <p class="auth-gate-footer">All products are for laboratory and in-vitro research use only.<br>Not for human consumption.</p>
+  </div>
+</div>
+
+<div class="auth-page">
+
+<a href="/" class="auth-logo" aria-label="UKMAXX — Home">
+  <span class="logo-mark" aria-hidden="true"></span>
+  UKMAXX
+</a>
+
+<!-- AUTH HERO -->
+<section class="auth-hero" aria-label="Sign in">
+  <div class="auth-hero-inner">
+    <span class="auth-eyebrow">Welcome back</span>
+    <h1 class="auth-title">Sign in to your account</h1>
+    <p class="auth-sub">Track orders, view history, and manage your research compound purchases.</p>
+  </div>
+</section>
+
+<!-- AUTH CARD -->
+<div class="auth-card">
+  <form class="auth-form" id="signinForm" novalidate>
+    <div id="signinFields">
+      <div class="field">
+        <label for="si_email" class="field-label">Email address</label>
+        <input type="email" id="si_email" class="field-input" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="si_password" class="field-label">Password</label>
+        <input type="password" id="si_password" class="field-input" placeholder="Enter your password" required autocomplete="current-password">
+      </div>
+      <div class="auth-forgot">
+        <span style="font-size:13px;color:var(--dim);font-weight:500">Forgot password? <a href="#" id="forgotPwdLink" style="color:var(--accent);text-decoration:underline">Reset</a></span>
+      </div>
+      <div id="signinMsg" class="auth-msg"></div>
+      <button type="submit" class="btn btn-primary auth-submit">
+        Sign in
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+    <div id="forgotSection" style="display:none">
+      <p style="font-size:13px;color:var(--dim);margin-bottom:14px;line-height:1.5">Enter your email address and we'll send you a link to reset your password.</p>
+      <div class="field">
+        <label for="forgotEmail" class="field-label">Email address</label>
+        <input type="email" id="forgotEmail" class="field-input" placeholder="you@example.com">
+      </div>
+      <div id="forgotMsg" class="auth-msg"></div>
+      <button type="button" class="btn btn-primary auth-submit" id="forgotSendBtn">
+        Send reset link
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </button>
+      <button type="button" class="btn btn-ghost" id="forgotBackBtn" style="width:100%;margin-top:6px">Back to sign in</button>
+    </div>
+  </form>
+
+  <div class="auth-divider"><span>or continue with</span></div>
+
+  <div class="auth-social">
+    <button type="button" class="auth-social-btn" id="googleSignIn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Google
+    </button>
+  </div>
+
+  <p class="auth-alt">Don't have an account? <a href="/signup.html">Create one</a></p>
+</div>
+
+<!-- FEATURES -->
+<div class="auth-features">
+  <div class="auth-features-grid">
+    <div class="auth-feature">
+      <div class="auth-feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v10l9 4 9-4V7l-9-4z"/><path d="M3 7l9 4 9-4"/></svg>
+      </div>
+      <div class="auth-feature-text"><strong>Track orders</strong>Real-time dispatch & delivery</div>
+    </div>
+    <div class="auth-feature">
+      <div class="auth-feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+      </div>
+      <div class="auth-feature-text"><strong>Order history</strong>View past purchases & COAs</div>
+    </div>
+    <div class="auth-feature">
+      <div class="auth-feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="auth-feature-text"><strong>Secure storage</strong>Saved addresses & details</div>
+    </div>
+    <div class="auth-feature">
+      <div class="auth-feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </div>
+      <div class="auth-feature-text"><strong>Fast reorder</strong>One-tap repeat purchases</div>
+    </div>
+  </div>
+</div>
+
+<div class="auth-footer">
+  <a href="/">&larr; Back to UKMAXX</a><br>
+  <span class="auth-footer-mono">All products for research use only &middot; Not for human consumption</span>
+</div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+
+<!-- COOKIE BANNER -->
+<div class="cookie-banner" id="cookieBanner">
+  <h3 class="cookie-title">Cookies</h3>
+  <p class="cookie-text">We use cookies to improve your experience. By continuing, you agree to our use of cookies for analytics and functionality.</p>
+  <div class="cookie-btns">
+    <button class="btn btn-primary" id="cookieAccept">Accept all</button>
+    <button class="btn btn-ghost" id="cookieDecline">Decline</button>
+  </div>
+</div>
+
+<script type="module" src="./assets/js/app.js"></script>
+</body>
+</html>

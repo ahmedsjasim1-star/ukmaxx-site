@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Track your order — UKMAXX</title>
+<meta name="description" content="Track your UKMAXX order in real time. Enter your order number and email to see the latest dispatch and delivery status.">
+<meta name="theme-color" content="#0A7E8C">
+<meta property="og:title" content="Track your order — UKMAXX">
+<meta property="og:description" content="Real-time order tracking for UKMAXX research compound orders.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="shortcut icon" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="canonical" href="https://ukmaxx-site-5tc7.vercel.app/track.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>if(localStorage.getItem('ukmaxx_age_verified')!=='true'){document.documentElement.classList.add('needs-age-gate');document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('pre-gate'));}</script>
+<link rel="stylesheet" href="./assets/css/variables.css">
+<link rel="stylesheet" href="./assets/css/reset.css">
+<link rel="stylesheet" href="./assets/css/base.css">
+<link rel="stylesheet" href="./assets/css/components.css">
+<link rel="stylesheet" href="./assets/css/pages/track.css">
+<script src="./assets/html/bundle.js"></script>
+
+</head>
+<body>
+
+<script>document.write(window.__html.topbar)</script>
+<script>document.write(window.__html.header)</script>
+
+<main id="main">
+
+<!-- TRACK HERO -->
+<section class="track-hero" aria-label="Order tracking">
+  <div class="container">
+    <div class="track-hero-inner">
+      <div class="track-eyebrow">Order tracking</div>
+      <h1 class="track-title">Where is my order?</h1>
+      <p class="track-sub">Enter your order number and the email you used at checkout. We'll show live dispatch, tracking and delivery updates.</p>
+
+      <div class="track-form-card">
+        <form class="track-form" id="trackForm" novalidate>
+          <div class="field">
+            <label class="field-label" for="orderNumber">Order number</label>
+            <input class="field-input" type="text" id="orderNumber" name="order" placeholder="e.g. UKX-2026-0142" autocomplete="off" required>
+          </div>
+
+          <button class="btn btn-primary track-submit" type="submit" id="trackSubmit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            Track my order
+          </button>
+        </form>
+        <p class="track-form-help">Need help? <a href="mailto:support@ukmaxx.co.uk">support@ukmaxx.co.uk</a></p>
+      </div>
+
+      <!-- Track result -->
+      <div class="track-result" id="trackResult" aria-live="polite" style="display:none">
+        <article class="result-card">
+          <header class="result-head">
+            <div class="result-meta">
+              <span class="result-label">Order</span>
+              <span class="result-value" id="resOrder">—</span>
+            </div>
+            <div class="result-meta">
+              <span class="result-label">Status</span>
+              <span class="result-value" id="resStatusShort">—</span>
+            </div>
+          </header>
+
+          <div class="result-status-bar" id="resStatusBar"></div>
+
+          <div class="timeline">
+            <ol class="timeline-list" id="timeline">
+              <li class="timeline-item is-future"><span class="timeline-dot"></span><span class="timeline-label">Paid</span></li>
+              <li class="timeline-item is-future"><span class="timeline-dot"></span><span class="timeline-label">Processing</span></li>
+              <li class="timeline-item is-future"><span class="timeline-dot"></span><span class="timeline-label">Dispatched</span></li>
+              <li class="timeline-item is-future"><span class="timeline-dot"></span><span class="timeline-label">Delivered</span></li>
+            </ol>
+          </div>
+
+          <div class="result-body">
+            <div>
+              <h4 class="result-section-title">Items</h4>
+              <div class="result-items"></div>
+            </div>
+            <div>
+              <h4 class="result-section-title">Details</h4>
+              <div class="result-meta-list">
+                <div class="result-meta-row"><span class="result-meta-key">Tracking</span><span class="result-meta-val" id="resTracking">—</span></div>
+                <div class="result-meta-row"><span class="result-meta-key">Carrier</span><span class="result-meta-val" id="resCarrier">—</span></div>
+                <div class="result-meta-row"><span class="result-meta-key">Subtotal</span><span class="result-meta-val" id="resSubtotal">—</span></div>
+                <div class="result-meta-row"><span class="result-meta-key">Shipping</span><span class="result-meta-val" id="resShipping">—</span></div>
+                <div class="result-meta-row"><span class="result-meta-key">Total</span><span class="result-meta-val" id="resTotal" style="color:var(--accent);font-weight:700">—</span></div>
+              </div>
+            </div>
+          </div>
+
+          <footer class="result-actions">
+            <div class="result-user" id="resUser"></div>
+          </footer>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>document.write(window.__html.footer)</script>
+
+<script>document.write(window.__html.mobileNav)</script>
+
+<!-- CART DRAWER -->
+<script>document.write(window.__html.cartDrawer)</script>
+<script>document.write(window.__html.toast)</script>
+<script>document.write(window.__html.cookieBanner)</script>
+
+<script type="module" src="./assets/js/app.js"></script>
+</body>
+</html>

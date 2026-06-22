@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs>
+    <style><![CDATA[
+      .bg{fill:#F4F8F9}.surface{fill:#E6F2F4}.accent{fill:#0A7E8C}.text{fill:#081F23}.dim{fill:#4F727B}.border{stroke:#B8D8DC;stroke-width:2;fill:none}
+      .brand{font-family:'Space Grotesk',Arial,sans-serif;letter-spacing:.08em}
+      .mono{font-family:'IBM Plex Mono','Courier New',monospace;letter-spacing:.08em}
+      .sans{font-family:'Inter',Arial,sans-serif}
+      .h1{font-size:44px}.h2{font-size:28px}.h3{font-size:20px}.small{font-size:16px}.tiny{font-size:13px}
+    ]]></style>
+  </defs>
+
+  <rect width="1200" height="900" class="bg"/>
+  <text x="50" y="48" class="mono tiny dim">UKMAXX MASTER LABEL SYSTEM (editable fields marked with {{ }})</text>
+
+  <!-- FRONT LABEL 50x30mm -->
+  <g id="front_label_50x30" transform="translate(50,90)">
+    <text x="0" y="-16" class="mono tiny dim">Front label — 50mm × 30mm</text>
+    <rect x="0" y="0" width="600" height="360" class="surface"/>
+    <rect x="0" y="0" width="600" height="360" class="border"/>
+
+    <!-- non-editable brand -->
+    <g>
+      <polygon points="24,22 40,22 52,34 52,50 40,62 24,62 12,50 12,34" class="accent"/>
+      <polygon points="27,29 37,29 44,36 44,46 37,53 27,53 20,46 20,36" fill="#fff"/>
+      <text x="64" y="50" class="brand h2 text">UKMAXX</text>
+    </g>
+
+    <!-- editable fields -->
+    <text x="20" y="94" class="mono tiny dim">PRODUCT</text>
+    <text x="20" y="130" class="brand h1 text">{{PRODUCT_NAME}}</text>
+
+    <text x="20" y="170" class="mono tiny dim">STRENGTH</text>
+    <text x="190" y="170" class="mono tiny dim">VOLUME (ML)</text>
+    <text x="20" y="202" class="sans h3 text">{{STRENGTH}}</text>
+    <text x="190" y="202" class="sans h3 text">{{VOLUME_ML}}</text>
+
+    <text x="20" y="238" class="mono tiny dim">BATCH CODE</text>
+    <text x="20" y="266" class="sans h3 text">{{BATCH_CODE}}</text>
+
+    <text x="20" y="300" class="mono tiny dim">PURITY %</text>
+    <text x="170" y="300" class="mono tiny dim">EXPIRY DATE</text>
+    <text x="20" y="330" class="sans h3 text">{{PURITY_PERCENT}}</text>
+    <text x="170" y="330" class="sans h3 text">{{EXPIRY_DATE}}</text>
+  </g>
+
+  <!-- VERIFICATION LABEL 50x20mm -->
+  <g id="verification_label_50x20" transform="translate(50,500)">
+    <text x="0" y="-16" class="mono tiny dim">Verification label — 50mm × 20mm</text>
+    <rect x="0" y="0" width="600" height="240" class="surface"/>
+    <rect x="0" y="0" width="600" height="240" class="border"/>
+
+    <g>
+      <polygon points="24,18 38,18 49,29 49,43 38,54 24,54 13,43 13,29" class="accent"/>
+      <polygon points="27,24 36,24 42,30 42,39 36,45 27,45 21,39 21,30" fill="#fff"/>
+      <text x="60" y="44" class="brand h3 text">UKMAXX</text>
+    </g>
+
+    <text x="20" y="82" class="mono tiny dim">VERIFICATION TYPE</text>
+    <text x="20" y="112" class="sans h3 text">{{VERIFICATION_TYPE}}</text>
+
+    <text x="20" y="146" class="mono tiny dim">COA URL</text>
+    <text x="20" y="174" class="sans small text">{{COA_URL}}</text>
+
+    <rect x="450" y="58" width="120" height="120" class="border"/>
+    <text x="510" y="125" text-anchor="middle" class="mono tiny dim">{{QR_CODE}}</text>
+  </g>
+
+  <!-- TAMPER SEAL 25x25mm -->
+  <g id="tamper_seal_25x25" transform="translate(720,90)">
+    <text x="0" y="-16" class="mono tiny dim">Tamper seal — 25mm × 25mm</text>
+    <rect x="0" y="0" width="300" height="300" class="surface"/>
+    <rect x="0" y="0" width="300" height="300" class="border"/>
+
+    <polygon points="150,34 222,76 222,160 150,202 78,160 78,76" class="accent"/>
+    <polygon points="150,64 197,91 197,145 150,172 103,145 103,91" fill="#fff"/>
+    <text x="150" y="235" text-anchor="middle" class="brand h3 text">UKMAXX</text>
+    <text x="150" y="262" text-anchor="middle" class="mono tiny dim">{{BATCH_CODE}}</text>
+    <text x="150" y="282" text-anchor="middle" class="mono tiny dim">{{EXPIRY_DATE}}</text>
+  </g>
+</svg>
