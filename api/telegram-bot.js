@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const adminChatId = process.env.TELEGRAM_CHAT_ID;
+  const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
   const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET || '';
   const suppliedSecret = String(req.headers['x-telegram-bot-api-secret-token'] || '');
   if (!token || !adminChatId || !expectedSecret) {

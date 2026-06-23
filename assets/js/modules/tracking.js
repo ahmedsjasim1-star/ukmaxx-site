@@ -1,6 +1,5 @@
 import { toast } from './toast.js';
 import { byId } from '../utils/dom.js';
-import { getCurrentUser } from './auth.js';
 import { getSupabase } from '../data/supabase.js';
 
 const STATUS_ORDER = ['paid', 'processing', 'dispatched', 'delivered'];
@@ -17,31 +16,29 @@ export function setupTracking() {
   byId('trackForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const ref = byId('orderNumber')?.value.trim();
-    const user = getCurrentUser();
     const result = byId('trackResult');
     if (!ref) { toast('Missing order number', 'Please enter your order number.', 'error'); return; }
-    if (!user?.email) { toast('Sign in required', 'Please sign in to track your orders.', 'error'); return; }
     if (result) {
       result.style.display = 'none';
       result.classList.remove('is-shown');
     }
+
     const submitBtn = byId('trackSubmit');
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Looking up…'; }
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Looking up...'; }
     try {
+      const headers = { 'Content-Type': 'application/json' };
       const supabase = await getSupabase();
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('session_expired');
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+
       const res = await fetch('/api/track-order', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers,
         body: JSON.stringify({ reference: ref })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.order) {
-        toast('Order not found', 'Check your order number and make sure you are signed in with the same email used at checkout.', 'error');
+        toast('Order not found', 'Check your order number and try again.', 'error');
         return;
       }
       renderOrder(data.order);

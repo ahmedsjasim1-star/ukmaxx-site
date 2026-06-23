@@ -1,6 +1,6 @@
 async function sendTelegramAdminAlert(text) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const chatId = process.env.TELEGRAM_ORDER_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) {
     console.error('telegram-env-missing', {
       hasToken: Boolean(token),

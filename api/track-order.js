@@ -7,20 +7,26 @@ module.exports = async (req, res) => {
     const normRef = String(reference || '').trim().toUpperCase();
     if (!normRef) return res.status(400).json({ error: 'Missing reference' });
 
-    const supabase = getSupabaseAdmin();
     const authorization = String(req.headers.authorization || '');
     const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
-    if (!token) return res.status(401).json({ error: 'Sign in required' });
-    const { data: authData, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authData?.user?.email) return res.status(401).json({ error: 'Invalid or expired session' });
-    const normEmail = authData.user.email.toLowerCase();
+    const supabase = getSupabaseAdmin();
+    let normEmail = null;
 
-    const { data: order, error } = await supabase
+    if (token) {
+      const { data: authData, error: authError } = await supabase.auth.getUser(token);
+      if (!authError && authData?.user?.email) {
+        normEmail = authData.user.email.toLowerCase();
+      }
+    }
+
+    let query = supabase
       .from('orders')
       .select('id,order_number,status,created_at,subtotal,shipping,total,currency,full_name,shipping_address_line1,shipping_address_line2,shipping_city,shipping_postcode,shipping_country,tracking_number,tracking_url,dispatched_at,delivered_at')
-      .eq('order_number', normRef)
-      .eq('email', normEmail)
-      .maybeSingle();
+      .eq('order_number', normRef);
+
+    if (normEmail) query = query.eq('email', normEmail);
+
+    const { data: order, error } = await query.maybeSingle();
 
     if (error) {
       console.error('track-order-db-error', { reference: normRef, error: error?.message });
@@ -53,12 +59,12 @@ module.exports = async (req, res) => {
         shipping: order.shipping,
         total: order.total,
         currency: order.currency,
-        full_name: order.full_name,
-        shipping_address_line1: order.shipping_address_line1,
-        shipping_address_line2: order.shipping_address_line2,
-        shipping_city: order.shipping_city,
-        shipping_postcode: order.shipping_postcode,
-        shipping_country: order.shipping_country,
+        full_name: normEmail ? order.full_name : null,
+        shipping_address_line1: normEmail ? order.shipping_address_line1 : null,
+        shipping_address_line2: normEmail ? order.shipping_address_line2 : null,
+        shipping_city: normEmail ? order.shipping_city : null,
+        shipping_postcode: normEmail ? order.shipping_postcode : null,
+        shipping_country: normEmail ? order.shipping_country : null,
         carrier: 'Royal Mail · Tracked 24',
         tracking_number: order.tracking_number,
         tracking_url: order.tracking_url,

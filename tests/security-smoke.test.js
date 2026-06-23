@@ -48,13 +48,11 @@ test('checkout refuses to operate without Stripe configuration', async () => {
   assert.equal(res.statusCode, 503);
 });
 
-test('tracking requires an authenticated Supabase session', async () => {
-  process.env.SUPABASE_URL = 'https://example.supabase.co';
-  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
+test('tracking validates that an order reference is supplied', async () => {
   const handler = require('../api/track-order');
   const res = response();
-  await handler({ method: 'POST', headers: {}, body: { reference: 'UKX-TEST' } }, res);
-  assert.equal(res.statusCode, 401);
+  await handler({ method: 'POST', headers: {}, body: {} }, res);
+  assert.equal(res.statusCode, 400);
 });
 
 test('Telegram endpoint is unavailable until its webhook secret is configured', async () => {
