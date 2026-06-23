@@ -1,5 +1,5 @@
 import { toast } from './toast.js';
-import { requireAuth, getCurrentUser } from './auth.js';
+import { getCurrentUser } from './auth.js';
 import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY } from '../data/products.js';
 import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw } from '../utils/storage.js';
@@ -199,7 +199,6 @@ function rmv(s) {
 }
 
 export async function openCheckout() {
-  if (!(await requireAuth())) return;
   const c = getCart();
   if (!c.length) { toast('Basket empty', 'Add products to begin checkout.', 'error'); return; }
   const m = byId('checkoutBackdrop');
@@ -233,14 +232,18 @@ async function startCheckout() {
     const to = setTimeout(() => controller.abort(), 15000);
     const supabase = await getSupabase();
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) throw new Error('Your session has expired. Please sign in again.');
+    const guestCheckoutIdKey = 'ukmaxx_guest_checkout_id';
+    let guestCheckoutId = localStorage.getItem(guestCheckoutIdKey);
+    if (!guestCheckoutId) {
+      guestCheckoutId = (crypto?.randomUUID?.() || String(Date.now()) + Math.random().toString(16).slice(2));
+      localStorage.setItem(guestCheckoutIdKey, guestCheckoutId);
+    }
+    const headers = { 'Content-Type': 'application/json' };
+    if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
     const res = await fetch('/api/create-checkout-session', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ cartItems: c, email, fullName, promoOptIn: false, promoCode, address: {} }),
+      headers,
+      body: JSON.stringify({ cartItems: c, email, fullName, promoOptIn: false, promoCode, guestCheckoutId, address: {} }),
       signal: controller.signal
     });
     clearTimeout(to);

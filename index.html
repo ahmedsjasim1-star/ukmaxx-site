@@ -48,8 +48,7 @@
   "description":"Lyophilised peptide compound. Third-party tested via UPLC/MS. 99.8% purity. For in-vitro research use only.",
   "brand":{"@type":"Brand","name":"UKMAXX"},
   "sku":"RT10",
-  "offers":{"@type":"Offer","price":"54.99","priceCurrency":"GBP","availability":"https://schema.org/InStock","url":"https://www.ukmaxx.co.uk/#products"},
-  "aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","reviewCount":"127"}
+  "offers":{"@type":"Offer","price":"54.99","priceCurrency":"GBP","availability":"https://schema.org/InStock","url":"https://www.ukmaxx.co.uk/#products"}
 }
 </script>
 <script type="application/ld+json">
@@ -101,9 +100,9 @@
         <span class="hero-eyebrow">UK Stock · COA Verified</span>
         <h1 class="hero-title">Research compounds, <em>verified</em> at every batch.</h1>
         <p class="hero-sub">Third-party tested. UK stocked. Same-day tracked dispatch. Every batch independently documented — no overseas delays, no guesswork.</p>
-        <div class="hero-rating" aria-label="Customer rating">
+        <div class="hero-rating" aria-label="Batch verification">
           <span class="hero-rating-stars">★★★★★</span>
-          <span class="hero-rating-text"><strong>4.9 / 5</strong> from 240+ verified customers</span>
+          <span class="hero-rating-text"><strong>COA verified</strong> UK stock with tracked dispatch</span>
         </div>
         <div class="hero-ctas">
           <a href="#products" class="btn btn-primary btn-lg">
@@ -289,50 +288,43 @@
   <div class="container">
     <div class="section-head">
       <div>
-        <div class="section-eyebrow">Verified customers</div>
-        <h2 class="section-title">Customer reviews</h2>
+        <div class="section-eyebrow">Customer feedback</div>
+        <h2 class="section-title">Verified feedback, coming soon.</h2>
       </div>
-      <p class="section-sub">Real reviews from verified UKMAXX buyers. All reviews are tied to a real order and batch.</p>
+      <p class="section-sub">We only show feedback tied to real UKMAXX orders. No placeholder reviews, no inflated public rating claims.</p>
     </div>
     <div class="reviews-summary">
       <div class="tp-summary">
         <div class="tp-summary-head">
-          <span class="tp-summary-badge">Excellent</span>
-          <div class="tp-summary-stars" aria-label="4.9 out of 5 stars"><i></i><i></i><i></i><i></i><i class="tp-half"></i></div>
+          <span class="tp-summary-badge">New store</span>
         </div>
-        <div class="tp-summary-score"><strong>4.9</strong> <span>/ 5</span></div>
-        <div class="tp-summary-meta">Based on <strong>247</strong> reviews</div>
-        <a href="https://uk.trustpilot.com/review/ukmaxx.co.uk" target="_blank" rel="noopener" class="tp-summary-logo" aria-label="View on Trustpilot">
-          <svg viewBox="0 0 120 30" width="110" height="28" aria-hidden="true"><rect width="30" height="30" rx="4" fill="#00B67A"/><polygon points="15,5 18.5,11.5 25.5,12.5 20.5,17.5 22,24.5 15,21 8,24.5 9.5,17.5 4.5,12.5 11.5,11.5" fill="#fff"/><text x="36" y="20" font-family="Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#191919">Trustpilot</text></svg>
-        </a>
+        <div class="tp-summary-score"><strong>—</strong></div>
+        <div class="tp-summary-meta">Verified customer feedback will appear after real orders are fulfilled and reviewed.</div>
       </div>
-      <div class="review-bars" aria-label="Rating distribution">
-        <div class="review-bar-row"><span class="review-bar-label">5</span><span class="review-bar-track"><span class="review-bar-fill" style="width:88%"></span></span><span class="review-bar-pct">88%</span></div>
-        <div class="review-bar-row"><span class="review-bar-label">4</span><span class="review-bar-track"><span class="review-bar-fill" style="width:9%"></span></span><span class="review-bar-pct">9%</span></div>
-        <div class="review-bar-row"><span class="review-bar-label">3</span><span class="review-bar-track"><span class="review-bar-fill" style="width:2%"></span></span><span class="review-bar-pct">2%</span></div>
-        <div class="review-bar-row"><span class="review-bar-label">2</span><span class="review-bar-track"><span class="review-bar-fill" style="width:1%"></span></span><span class="review-bar-pct">1%</span></div>
-        <div class="review-bar-row"><span class="review-bar-label">1</span><span class="review-bar-track"><span class="review-bar-fill" style="width:0%"></span></span><span class="review-bar-pct">0%</span></div>
+      <div class="review-bars" aria-label="Feedback policy">
+        <div class="review-bar-row"><span class="review-bar-label">1</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">Real orders only</span></div>
+        <div class="review-bar-row"><span class="review-bar-label">2</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">Verified before publishing</span></div>
+        <div class="review-bar-row"><span class="review-bar-label">3</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">No placeholders</span></div>
       </div>
       <div class="tp-summary-cta">
-        <a href="https://uk.trustpilot.com/evaluate/ukmaxx.co.uk" target="_blank" rel="noopener" class="btn btn-dark">Review us on Trustpilot</a>
         <button class="btn btn-ghost" id="leaveReviewBtn" type="button">Leave a site review</button>
       </div>
     </div>
     <div class="review-grid" id="reviewsGrid"></div>
 
-    <!-- Trustpilot invite CTA -->
-    <div class="tp-invite">
+    <!-- Feedback invite CTA -->
+    <div class="tp-invite" hidden>
       <div class="tp-invite-content">
         <div class="tp-invite-eyebrow">Leave a review</div>
-        <h3 class="tp-invite-title">Reviewed us? Tell it on Trustpilot.</h3>
+        <h3 class="tp-invite-title">Verified feedback opens after launch.</h3>
         <p class="tp-invite-sub">Your honest feedback helps other UK researchers choose verified suppliers. Takes 30 seconds — every review counts.</p>
       </div>
       <div class="tp-invite-cta">
-        <a href="https://uk.trustpilot.com/evaluate/ukmaxx.co.uk" target="_blank" rel="noopener" class="btn-tp">
+        <a href="mailto:support@ukmaxx.co.uk?subject=UKMAXX%20feedback" class="btn-tp">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12,2 15,9 22,9.5 16.5,14.5 18.5,22 12,18 5.5,22 7.5,14.5 2,9.5 9,9"/></svg>
-          Write a review
+          Send feedback
         </a>
-        <a href="https://uk.trustpilot.com/review/ukmaxx.co.uk" target="_blank" rel="noopener" class="btn btn-ghost">See all 247 reviews</a>
+        <a href="mailto:support@ukmaxx.co.uk?subject=UKMAXX%20feedback" class="btn btn-ghost">Send feedback</a>
       </div>
     </div>
   </div>

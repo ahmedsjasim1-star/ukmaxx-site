@@ -26,10 +26,14 @@ module.exports = async (req, res) => {
   try {
     const supabase = getSupabaseAdmin();
     const token = getBearerToken(req);
-    if (!token) return res.status(401).json({ error: 'Sign in required' });
-
-    const { data: authData, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authData?.user) return res.status(401).json({ error: 'Invalid or expired session' });
+    let authData = null;
+    if (token) {
+      const authResult = await supabase.auth.getUser(token);
+      if (authResult.error || !authResult.data?.user) {
+        return res.status(401).json({ error: 'Invalid or expired session' });
+      }
+      authData = authResult.data;
+    }
 
     const normalized = normalizeCart(req.body?.cartItems);
     if (!normalized.length) return res.status(400).json({ error: 'Cart is empty or invalid' });
@@ -62,10 +66,10 @@ module.exports = async (req, res) => {
       });
     }
 
-    const email = String(authData.user.email || '').trim().toLowerCase();
+    const email = String(authData?.user?.email || '').trim().toLowerCase();
     const requestedPromo = String(req.body?.promoCode || '').trim().toUpperCase();
     const validPromo = requestedPromo === 'MAXX15';
-    if (validPromo) {
+    if (validPromo && email) {
       const { data: prior, error: priorError } = await supabase
         .from('promo_redemptions')
         .select('id')
@@ -77,6 +81,8 @@ module.exports = async (req, res) => {
       if (!process.env.STRIPE_MAXX15_COUPON_ID) {
         return res.status(503).json({ error: 'Promo code is temporarily unavailable' });
       }
+    } else if (validPromo && !process.env.STRIPE_MAXX15_COUPON_ID) {
+      return res.status(503).json({ error: 'Promo code is temporarily unavailable' });
     }
 
     const estimatedDiscountPence = validPromo ? Math.round(subtotalPence * 0.15) : 0;
@@ -84,8 +90,8 @@ module.exports = async (req, res) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      customer_email: email,
-      client_reference_id: authData.user.id,
+      customer_email: email || undefined,
+      client_reference_id: authData?.user?.id || undefined,
       line_items: lineItems,
       shipping_address_collection: { allowed_countries: ['GB'] },
       billing_address_collection: 'required',
@@ -105,13 +111,14 @@ module.exports = async (req, res) => {
         },
       }] : undefined,
       metadata: {
-        user_id: authData.user.id,
+        user_id: authData?.user?.id || '',
+        checkout_type: authData?.user?.id ? 'account' : 'guest',
         promo_opt_in: req.body?.promoOptIn ? 'true' : 'false',
         promo_code: validPromo ? 'MAXX15' : '',
         cart: JSON.stringify(normalized),
       },
     }, {
-      idempotencyKey: `checkout-${authData.user.id}-${Buffer.from(JSON.stringify(normalized)).toString('base64url')}-${validPromo ? 'maxx15' : 'none'}`,
+      idempotencyKey: `checkout-${authData?.user?.id || String(req.body?.guestCheckoutId || 'guest').slice(0, 64)}-${Buffer.from(JSON.stringify(normalized)).toString('base64url')}-${validPromo ? 'maxx15' : 'none'}`,
     });
 
     return res.status(200).json({ url: session.url });
