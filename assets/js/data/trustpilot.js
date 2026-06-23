@@ -2,6 +2,7 @@ export const TRUSTPILOT = {
   profileUrl: 'https://uk.trustpilot.com/review/ukmaxx.co.uk',
   reviewUrl: 'https://uk.trustpilot.com/evaluate/ukmaxx.co.uk',
   apiUrl: '/api/trustpilot',
+  businessUnitId: '6a3b074b9a89ab506eaa9e5b',
 
   // Fill these with real Trustpilot data once the UKMAXX business profile is live.
   // Keep rating as null until Trustpilot shows a genuine public score.
