@@ -1,5 +1,5 @@
 import { renderProducts } from './modules/products.js';
-import { renderReviews, setupReviewDrawer } from './modules/reviews.js';
+import { renderReviews } from './modules/reviews.js';
 import { renderCart, initCart } from './modules/cart.js';
 import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js';
@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setupHeaderScroll();
   setupActiveNav();
   setupMobileStickyCta();
-  setupReviewDrawer();
   setupLightbox();
   setupExitIntent();
   setupCookieBanner();

@@ -288,43 +288,44 @@
   <div class="container">
     <div class="section-head">
       <div>
-        <div class="section-eyebrow">Customer feedback</div>
-        <h2 class="section-title">Verified feedback, coming soon.</h2>
+        <div class="section-eyebrow">Trustpilot reviews</div>
+        <h2 class="section-title">Real Trustpilot reviews.</h2>
       </div>
-      <p class="section-sub">We only show feedback tied to real UKMAXX orders. No placeholder reviews, no inflated public rating claims.</p>
+      <p class="section-sub">This section is reserved for genuine Trustpilot reviews only. No onsite placeholder reviews, no inflated public rating claims.</p>
     </div>
     <div class="reviews-summary">
       <div class="tp-summary">
         <div class="tp-summary-head">
-          <span class="tp-summary-badge">New store</span>
+          <span class="tp-summary-badge" id="trustpilotBadge">Trustpilot coming soon</span>
+          <div class="tp-summary-stars" id="trustpilotStars" aria-label="No Trustpilot rating yet"><i></i><i></i><i></i><i></i><i class="tp-half"></i></div>
         </div>
         <div class="tp-summary-score"><strong>—</strong></div>
         <div class="tp-summary-meta">Verified customer feedback will appear after real orders are fulfilled and reviewed.</div>
       </div>
-      <div class="review-bars" aria-label="Feedback policy">
+      <div class="review-bars" id="trustpilotBars" aria-label="Trustpilot rating distribution">
         <div class="review-bar-row"><span class="review-bar-label">1</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">Real orders only</span></div>
         <div class="review-bar-row"><span class="review-bar-label">2</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">Verified before publishing</span></div>
         <div class="review-bar-row"><span class="review-bar-label">3</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">No placeholders</span></div>
       </div>
       <div class="tp-summary-cta">
-        <button class="btn btn-ghost" id="leaveReviewBtn" type="button">Leave a site review</button>
+        <a href="https://uk.trustpilot.com/evaluate/ukmaxx.co.uk" target="_blank" rel="noopener" class="btn btn-dark" id="trustpilotReviewLink">Review us on Trustpilot</a>
       </div>
     </div>
     <div class="review-grid" id="reviewsGrid"></div>
 
     <!-- Feedback invite CTA -->
-    <div class="tp-invite" hidden>
+    <div class="tp-invite">
       <div class="tp-invite-content">
-        <div class="tp-invite-eyebrow">Leave a review</div>
-        <h3 class="tp-invite-title">Verified feedback opens after launch.</h3>
+        <div class="tp-invite-eyebrow">Trustpilot</div>
+        <h3 class="tp-invite-title">Review UKMAXX on Trustpilot.</h3>
         <p class="tp-invite-sub">Your honest feedback helps other UK researchers choose verified suppliers. Takes 30 seconds — every review counts.</p>
       </div>
       <div class="tp-invite-cta">
-        <a href="mailto:support@ukmaxx.co.uk?subject=UKMAXX%20feedback" class="btn-tp">
+        <a href="https://uk.trustpilot.com/evaluate/ukmaxx.co.uk" target="_blank" rel="noopener" class="btn-tp" id="trustpilotInviteLink">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12,2 15,9 22,9.5 16.5,14.5 18.5,22 12,18 5.5,22 7.5,14.5 2,9.5 9,9"/></svg>
-          Send feedback
+          Write a review
         </a>
-        <a href="mailto:support@ukmaxx.co.uk?subject=UKMAXX%20feedback" class="btn btn-ghost">Send feedback</a>
+        <a href="https://uk.trustpilot.com/review/ukmaxx.co.uk" target="_blank" rel="noopener" class="btn btn-ghost" id="trustpilotAllReviewsLink">View Trustpilot profile</a>
       </div>
     </div>
   </div>

@@ -1,83 +1,94 @@
-import { SAMPLE_REVIEWS } from '../data/products.js';
+import { TRUSTPILOT } from '../data/trustpilot.js';
 import { tpStars } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
-function renderEmptyReviews(grid) {
-  grid.innerHTML = '<article class="review-card"><div class="review-card-head"><span>UKMAXX feedback</span><span>Coming soon</span></div><p class="review-card-text">Verified customer feedback will appear here after real orders are fulfilled and reviewed.</p><div class="review-card-author">No placeholder reviews shown</div></article>';
+function setText(id, value) {
+  const el = byId(id);
+  if (el) el.textContent = value;
 }
 
-export function renderReviews() {
+function setHref(id, value) {
+  const el = byId(id);
+  if (el && value) el.setAttribute('href', value);
+}
+
+function setFirst(selector, value) {
+  const el = document.querySelector(selector);
+  if (el) el.textContent = value;
+}
+
+function renderRatingBars() {
+  const bars = byId('trustpilotBars');
+  if (!bars) return;
+
+  if (!TRUSTPILOT.reviewCount) {
+    bars.innerHTML = `
+      <div class="review-bar-row"><span class="review-bar-label">Status</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">Awaiting real reviews</span></div>
+      <div class="review-bar-row"><span class="review-bar-label">Source</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">Trustpilot only</span></div>
+      <div class="review-bar-row"><span class="review-bar-label">Policy</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">No placeholders</span></div>
+    `;
+    return;
+  }
+
+  const distribution = TRUSTPILOT.distribution || {};
+  bars.innerHTML = [5, 4, 3, 2, 1].map(stars => {
+    const pct = Math.max(0, Math.min(100, Number(distribution[stars] || 0)));
+    return `<div class="review-bar-row"><span class="review-bar-label">${stars}</span><span class="review-bar-track"><span class="review-bar-fill" style="width:${pct}%"></span></span><span class="review-bar-pct">${pct}%</span></div>`;
+  }).join('');
+}
+
+function renderTrustpilotCards() {
   const grid = byId('reviewsGrid');
   if (!grid) return;
 
-  if (SAMPLE_REVIEWS.length) {
-    grid.innerHTML = SAMPLE_REVIEWS.map(r => {
-      return `<article class="review-card">
-        <div class="review-card-head"><span>${r.product}</span><span>${r.date}</span></div>
-        ${tpStars(Number(r.rating) || 5)}
-        <div class="review-card-badge"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Verified order</div>
-        <p class="review-card-text">${r.text}</p>
-        <div class="review-card-author">— ${r.initials}</div>
-      </article>`;
-    }).join('');
-  } else {
-    renderEmptyReviews(grid);
+  const reviews = Array.isArray(TRUSTPILOT.reviews) ? TRUSTPILOT.reviews : [];
+  if (!reviews.length) {
+    grid.innerHTML = '<article class="review-card"><div class="review-card-head"><span>Trustpilot</span><span>Coming soon</span></div><p class="review-card-text">Real Trustpilot reviews will appear here after the UKMAXX Trustpilot business profile is live and genuine customer reviews are available.</p><div class="review-card-author">No onsite or placeholder reviews shown</div></article>';
+    return;
   }
 
-  fetch('/api/reviews').then(r => r.json()).then(data => {
-    const rows = Array.isArray(data?.reviews) ? data.reviews : [];
-    if (!rows.length) {
-      renderEmptyReviews(grid);
-      return;
-    }
-    grid.innerHTML = rows.slice(0, 6).map(r => {
-      const date = r.review_date ? new Date(r.review_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase() : '';
-      return `<article class="review-card">
-        <div class="review-card-head"><span>${r.product || ''}</span><span>${date}</span></div>
-        ${tpStars(Number(r.rating) || 5)}
-        <div class="review-card-badge"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Verified order</div>
-        <p class="review-card-text">${r.review_text || ''}</p>
-        <div class="review-card-author">— ${r.initials || ''}</div>
-      </article>`;
-    }).join('');
-  }).catch(() => {
-    if (!SAMPLE_REVIEWS.length) renderEmptyReviews(grid);
-  });
+  grid.innerHTML = reviews.slice(0, 6).map(r => {
+    return `<article class="review-card">
+      <div class="review-card-head"><span>${r.product || 'UKMAXX'}</span><span>${r.date || ''}</span></div>
+      ${tpStars(Number(r.rating) || 5)}
+      <div class="review-card-badge"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Trustpilot</div>
+      <p class="review-card-text">${r.text || ''}</p>
+      <div class="review-card-author">— ${r.initials || 'Verified reviewer'}</div>
+    </article>`;
+  }).join('');
 }
 
-export function setupReviewDrawer() {
-  const drawer = byId('reviewDrawer');
-  const open = () => { if (drawer) { drawer.style.display = 'flex'; document.body.style.overflow = 'hidden'; } };
-  const shut = () => { if (drawer) { drawer.style.display = 'none'; document.body.style.overflow = ''; } };
-  byId('leaveReviewBtn')?.addEventListener('click', (e) => { e.preventDefault(); open(); });
-  byId('reviewCloseBtn')?.addEventListener('click', shut);
-  drawer?.addEventListener('click', (e) => { if (e.target === drawer) shut(); });
-  byId('reviewSubmitBtn')?.addEventListener('click', async () => {
-    const name = byId('reviewName')?.value.trim();
-    const product = byId('reviewProduct')?.value;
-    const rating = byId('reviewRating')?.value;
-    const text = byId('reviewText')?.value.trim();
-    const msg = byId('reviewMsg');
-    if (!name || !product || !rating || !text) {
-      if (msg) { msg.textContent = 'Please complete all review fields.'; msg.style.color = 'var(--danger)'; }
-      return;
-    }
-    try {
-      const res = await fetch('/api/submit-review', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initials: name, product, rating: Number(rating), reviewText: text, hp: '' })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) {
-        if (msg) { msg.textContent = 'Unable to submit review right now.'; msg.style.color = 'var(--danger)'; }
-        return;
-      }
-      if (msg) { msg.textContent = 'Thanks — your review was submitted for verification.'; msg.style.color = 'var(--success)'; }
-      ['reviewName', 'reviewProduct', 'reviewRating', 'reviewText'].forEach(id => { const el = byId(id); if (el) el.value = ''; });
-      setTimeout(shut, 1800);
-    } catch {
-      if (msg) { msg.textContent = 'Network error — please try again.'; msg.style.color = 'var(--danger)'; }
-    }
-  });
+export function renderReviews() {
+  const hasRating = Number(TRUSTPILOT.rating) > 0 && Number(TRUSTPILOT.reviewCount) > 0;
+  setText('trustpilotBadge', hasRating ? (TRUSTPILOT.label || 'Trustpilot') : 'Trustpilot coming soon');
+  setText('trustpilotScore', hasRating ? Number(TRUSTPILOT.rating).toFixed(1) : '—');
+  setText('trustpilotScoreSuffix', hasRating ? '/ 5' : '');
+  setFirst('.tp-summary-score strong', hasRating ? Number(TRUSTPILOT.rating).toFixed(1) : '—');
+  setFirst('.tp-summary-score span', hasRating ? '/ 5' : '');
+  setFirst(
+    '.tp-summary-meta',
+    hasRating
+      ? `Based on ${Number(TRUSTPILOT.reviewCount).toLocaleString('en-GB')} real Trustpilot reviews`
+      : 'Create and verify the UKMAXX Trustpilot profile, then add the real score here.'
+  );
+  setText(
+    'trustpilotMeta',
+    hasRating
+      ? `Based on ${Number(TRUSTPILOT.reviewCount).toLocaleString('en-GB')} real Trustpilot reviews`
+      : 'Create and verify the UKMAXX Trustpilot profile, then add the real score here.'
+  );
+
+  const stars = byId('trustpilotStars');
+  if (stars) {
+    stars.setAttribute('aria-label', hasRating ? `${Number(TRUSTPILOT.rating).toFixed(1)} out of 5 stars` : 'No Trustpilot rating yet');
+    stars.style.display = hasRating ? '' : 'none';
+  }
+
+  setHref('trustpilotProfileLink', TRUSTPILOT.profileUrl);
+  setHref('trustpilotReviewLink', TRUSTPILOT.reviewUrl);
+  setHref('trustpilotInviteLink', TRUSTPILOT.reviewUrl);
+  setHref('trustpilotAllReviewsLink', TRUSTPILOT.profileUrl);
+
+  renderRatingBars();
+  renderTrustpilotCards();
 }
