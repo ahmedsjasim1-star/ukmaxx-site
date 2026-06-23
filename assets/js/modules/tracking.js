@@ -41,7 +41,7 @@ export function setupTracking() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.order) {
-        toast('Order not found', 'Check your order number and email and try again.', 'error');
+        toast('Order not found', 'Check your order number and make sure you are signed in with the same email used at checkout.', 'error');
         return;
       }
       renderOrder(data.order);

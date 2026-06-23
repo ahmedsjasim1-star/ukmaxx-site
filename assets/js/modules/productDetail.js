@@ -13,7 +13,9 @@ export function renderProductDetail() {
   const p = PRODUCTS[sku];
   if (!p) { container.innerHTML = '<div class="product-404"><h2>Product not found</h2><p>This product does not exist or has been removed.</p><a class="btn btn-dark" href="/">Back to shop</a></div>'; return; }
   const d = DETAIL_DATA[sku] || {};
-  const starsStr = '★'.repeat(Math.round(p.rating)) + '☆'.repeat(5 - Math.round(p.rating));
+  const rating = Number(p.rating || 0);
+  const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
+  const starsStr = hasReviews ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '';
   container.innerHTML = `<div class="pd-layout">
     <div class="pd-gallery">
       <div class="pd-main-img"><img src="${p.image}" alt="${p.name}" width="600" height="600"></div>
@@ -22,9 +24,10 @@ export function renderProductDetail() {
       <div class="pd-sku">${p.id} · ${p.shortName}</div>
       <h1 class="pd-title">${p.name}</h1>
       <div class="pd-rating">
+        ${hasReviews ? `
         <span class="stars" aria-hidden="true">${starsStr}</span>
-        <span><strong>${p.rating.toFixed(1)}</strong></span>
-        <a class="count" href="#reviews">(${p.reviewCount} reviews)</a>
+        <span><strong>${rating.toFixed(1)}</strong></span>
+        <a class="count" href="#reviews">(${p.reviewCount} reviews)</a>` : '<span class="count">New batch · awaiting reviews</span>'}
       </div>
       <div class="pd-price-row">
         <span class="pd-price">${money(p.price)}</span>
@@ -85,6 +88,8 @@ function renderPdpProduct(root) {
   if (sections) sections.style.display = '';
 
   const d = DETAIL_DATA[sku] || {};
+  const rating = Number(p.rating || 0);
+  const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
   setText('pageTitle', p.name + ' \u2014 UKMAXX');
   setAttr('pageDesc', 'content', p.name + ': ' + p.description + ' Third-party verified.');
   setText('ogTitle', p.name + ' \u2014 UKMAXX');
@@ -130,14 +135,15 @@ function renderPdpProduct(root) {
 
   const starsWrap = byId('pdpStarsWrap');
   if (starsWrap) {
-    const full = Math.round(p.rating);
+    const full = hasReviews ? Math.round(rating) : 0;
     let h = '';
     for (let i = 0; i < full; i++) h += '<i class="s-full"></i>';
     for (let i = full; i < 5; i++) h += '<i class="s-empty"></i>';
     starsWrap.innerHTML = h;
+    starsWrap.style.display = hasReviews ? '' : 'none';
   }
-  setText('pdpRating', p.rating.toFixed(1));
-  setText('pdpReviewCount', p.reviewCount + ' reviews');
+  setText('pdpRating', hasReviews ? rating.toFixed(1) : 'New batch');
+  setText('pdpReviewCount', hasReviews ? p.reviewCount + ' reviews' : 'Awaiting verified reviews');
   setText('pdpStockText', p.stock === 'in_stock' ? 'In stock' : 'Out of stock');
   setText('pdpStockSub', p.stock === 'in_stock' ? '\u00B7 ' + p.stockCount + ' vials ready' : '');
   const stockDot = $('.pdp-stock-dot', root);
@@ -264,23 +270,28 @@ function renderPdpProduct(root) {
     });
   }
 
-  setText('pdpScoreNum', p.rating.toFixed(1));
+  setText('pdpScoreNum', hasReviews ? rating.toFixed(1) : '—');
   var scoreStars = byId('pdpScoreStars');
   if (scoreStars) {
     var sh = '';
-    for (var i = 0; i < Math.round(p.rating); i++) sh += '<i></i>';
-    for (var i = Math.round(p.rating); i < 5; i++) sh += '<i class="empty"></i>';
+    for (var i = 0; i < (hasReviews ? Math.round(rating) : 0); i++) sh += '<i></i>';
+    for (var i = (hasReviews ? Math.round(rating) : 0); i < 5; i++) sh += '<i class="empty"></i>';
     scoreStars.innerHTML = sh;
+    scoreStars.style.display = hasReviews ? '' : 'none';
   }
-  setText('pdpScoreText', p.reviewCount + ' verified reviews');
+  setText('pdpScoreText', hasReviews ? p.reviewCount + ' verified reviews' : 'Verified customer feedback coming soon');
 
   var rbList = byId('pdpRbList');
   if (rbList) {
-    var basePct = Math.round(p.rating / 5 * 80);
     rbList.innerHTML = '';
-    for (var s = 5; s >= 1; s--) {
-      var barPct = s <= Math.round(p.rating) ? Math.max(20, basePct + (s - Math.round(p.rating)) * 5) : Math.max(5, basePct - (Math.round(p.rating) - s) * 10);
-      rbList.innerHTML += '<div class="pdp-rb-row"><span class="pdp-rb-label">' + s + '</span><div class="pdp-rb-bar"><div class="pdp-rb-bar-fill" style="width:' + barPct + '%"></div></div><span class="pdp-rb-pct">' + barPct + '%</span></div>';
+    if (hasReviews) {
+      var basePct = Math.round(rating / 5 * 80);
+      for (var s = 5; s >= 1; s--) {
+        var barPct = s <= Math.round(rating) ? Math.max(20, basePct + (s - Math.round(rating)) * 5) : Math.max(5, basePct - (Math.round(rating) - s) * 10);
+        rbList.innerHTML += '<div class="pdp-rb-row"><span class="pdp-rb-label">' + s + '</span><div class="pdp-rb-bar"><div class="pdp-rb-bar-fill" style="width:' + barPct + '%"></div></div><span class="pdp-rb-pct">' + barPct + '%</span></div>';
+      }
+    } else {
+      rbList.innerHTML = '<p class="pdp-reviews-empty">No verified reviews yet for this product.</p>';
     }
   }
 
@@ -289,7 +300,7 @@ function renderPdpProduct(root) {
     var productReviews = SAMPLE_REVIEWS.filter(function (r) { return r.product === p.id || r.product === p.name; });
     if (productReviews.length) {
       reviewsList.innerHTML = productReviews.map(function (r) {
-        return '<article class="review-card"><div class="review-card-head"><span>' + r.product + '</span><span>' + r.date + '</span></div>' + tpStars(Number(r.rating) || 5) + '<div class="review-card-badge"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Verified \u00B7 Trustpilot</div><p class="review-card-text">' + r.text + '</p><div class="review-card-author">\u2014 ' + r.initials + '</div></article>';
+        return '<article class="review-card"><div class="review-card-head"><span>' + r.product + '</span><span>' + r.date + '</span></div>' + tpStars(Number(r.rating) || 5) + '<div class="review-card-badge"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Verified order</div><p class="review-card-text">' + r.text + '</p><div class="review-card-author">\u2014 ' + r.initials + '</div></article>';
       }).join('');
     } else {
       reviewsList.innerHTML = '<p class="pdp-reviews-empty">No reviews yet for this product.</p>';
@@ -300,7 +311,7 @@ function renderPdpProduct(root) {
   if (relatedGrid) {
     var related = Object.values(PRODUCTS).filter(function (x) { return x.id !== p.id && (x.category === p.category || x.category === 'support'); }).slice(0, 4);
     relatedGrid.innerHTML = related.map(function (r) {
-      return '<article class="product-card" data-sku="' + r.id + '"><div class="product-media"><img loading="lazy" src="' + r.image + '" alt="' + r.name + '" width="400" height="400"><div class="product-badges"><span class="badge badge-stock">In stock</span></div></div><div class="product-body"><h3 class="product-name"><a href="./product.html?sku=' + r.id + '">' + r.name + '</a></h3><div class="product-rating"><span class="stars" aria-hidden="true">' + '\u2605'.repeat(Math.round(r.rating)) + '\u2606'.repeat(5 - Math.round(r.rating)) + '</span><span>' + r.rating.toFixed(1) + '</span></div><div class="product-foot"><div class="product-price"><span class="currency">\u00A3</span>' + r.price.toFixed(2) + '</div><button class="add-btn" data-add="' + r.id + '" aria-label="Add ' + r.name + ' to basket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div></article>';
+      return '<article class="product-card" data-sku="' + r.id + '"><div class="product-media"><img loading="lazy" src="' + r.image + '" alt="' + r.name + '" width="400" height="400"><div class="product-badges"><span class="badge badge-stock">In stock</span></div></div><div class="product-body"><h3 class="product-name"><a href="./product.html?sku=' + r.id + '">' + r.name + '</a></h3><div class="product-rating"><span class="count">New batch · awaiting reviews</span></div><div class="product-foot"><div class="product-price"><span class="currency">\u00A3</span>' + r.price.toFixed(2) + '</div><button class="add-btn" data-add="' + r.id + '" aria-label="Add ' + r.name + ' to basket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div></article>';
     }).join('');
   }
 
@@ -366,6 +377,6 @@ export function renderRelatedProducts() {
   if (!p) return;
   var related = Object.values(PRODUCTS).filter(function (x) { return x.id !== p.id && (x.category === p.category || x.category === 'support'); }).slice(0, 4);
   grid.innerHTML = related.map(function (r) {
-    return '<article class="product-card" data-sku="' + r.id + '"><div class="product-media"><img loading="lazy" src="' + r.image + '" alt="' + r.name + '" width="400" height="400"><div class="product-badges"><span class="badge badge-stock">In stock</span></div></div><div class="product-body"><h3 class="product-name"><a href="./product.html?sku=' + r.id + '">' + r.name + '</a></h3><div class="product-rating"><span class="stars" aria-hidden="true">' + '\u2605'.repeat(Math.round(r.rating)) + '\u2606'.repeat(5 - Math.round(r.rating)) + '</span><span>' + r.rating.toFixed(1) + '</span></div><div class="product-foot"><div class="product-price"><span class="currency">\u00A3</span>' + r.price.toFixed(2) + '</div><button class="add-btn" data-add="' + r.id + '" aria-label="Add ' + r.name + ' to basket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div></article>';
+    return '<article class="product-card" data-sku="' + r.id + '"><div class="product-media"><img loading="lazy" src="' + r.image + '" alt="' + r.name + '" width="400" height="400"><div class="product-badges"><span class="badge badge-stock">In stock</span></div></div><div class="product-body"><h3 class="product-name"><a href="./product.html?sku=' + r.id + '">' + r.name + '</a></h3><div class="product-rating"><span class="count">New batch · awaiting reviews</span></div><div class="product-foot"><div class="product-price"><span class="currency">\u00A3</span>' + r.price.toFixed(2) + '</div><button class="add-btn" data-add="' + r.id + '" aria-label="Add ' + r.name + ' to basket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div></article>';
   }).join('');
 }

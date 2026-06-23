@@ -1,6 +1,6 @@
 import { PRODUCTS, CATEGORIES } from '../data/products.js';
 import { money } from '../utils/money.js';
-import { $, $$, byId } from '../utils/dom.js';
+import { byId } from '../utils/dom.js';
 
 const CATS = CATEGORIES;
 
@@ -9,11 +9,13 @@ function productCard(p, bundle = false) {
   const stockBadge = stockLow ? `<span class="badge badge-low">Only ${p.stockCount} left</span>` : `<span class="badge badge-stock">In stock</span>`;
   const bestBadge = p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Top seller'}</span>` : '';
   const saveBadge = p.originalPrice ? `<span class="badge badge-new">Save ${money(p.originalPrice - p.price)}</span>` : '';
-  const rating = Number(p.rating || 5);
-  const starsStr = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+  const rating = Number(p.rating || 0);
+  const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
+  const starsStr = hasReviews ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '';
   const priceWrap = p.originalPrice
     ? `<div class="product-price-wrap"><div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div><span class="product-price-original">${money(p.originalPrice)}</span></div>`
     : `<div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div>`;
+
   return `<article class="product-card${p.featured ? ' is-featured' : ''}" data-sku="${p.id}">
     <div class="product-media">
       <img loading="lazy" src="${p.image}" alt="${p.name}" width="400" height="400">
@@ -23,9 +25,7 @@ function productCard(p, bundle = false) {
       <div class="product-sku">${p.id} · ${p.shortName}</div>
       <h3 class="product-name"><a href="./product.html?sku=${p.id}">${p.name}</a></h3>
       <div class="product-rating">
-        <span class="stars" aria-hidden="true">${starsStr}</span>
-        <span><strong>${rating.toFixed(1)}</strong></span>
-        <a class="count" href="#reviews">(${p.reviewCount} reviews)</a>
+        ${hasReviews ? `<span class="stars" aria-hidden="true">${starsStr}</span><span><strong>${rating.toFixed(1)}</strong></span><a class="count" href="#reviews">(${p.reviewCount} reviews)</a>` : '<span class="count">New batch · awaiting reviews</span>'}
       </div>
       <p class="product-desc">${p.description}</p>
       <div class="product-attrs">
