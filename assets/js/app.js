@@ -1,6 +1,6 @@
 import { renderProducts } from './modules/products.js';
-import { renderReviews } from './modules/reviews.js';
-import { renderCart, initCart } from './modules/cart.js';
+import { renderReviews } from './modules/reviews.js?v=20260623-trustpilot';
+import { renderCart, initCart } from './modules/cart.js?v=20260623-guest-checkout';
 import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js';
 import { setupLightbox } from './modules/lightbox.js';
