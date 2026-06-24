@@ -11,10 +11,12 @@ import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, s
 import { setupTracking } from './modules/tracking.js';
 import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js';
 import { setupAccountPage } from './modules/account.js';
+import { updateHeroBatchChips } from './modules/heroBatch.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initAuth();
   initAgeGate();
+  updateHeroBatchChips();
   renderProducts();
   renderReviews();
   renderCart();
