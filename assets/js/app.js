@@ -10,7 +10,6 @@ import { setupNewsletter } from './modules/newsletter.js';
 import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js';
 import { setupTracking } from './modules/tracking.js';
 import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js';
-import { loadCoaBatches } from './modules/coaBatches.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initAuth();
@@ -35,9 +34,4 @@ document.addEventListener('DOMContentLoaded', () => {
   setupForgotPassword();
   setupProfileDropdown();
   setupTracking();
-  loadCoaBatches().then(() => {
-    renderProducts();
-    renderProductDetail();
-    renderRelatedProducts();
-  });
 });

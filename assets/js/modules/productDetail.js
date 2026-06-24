@@ -1,5 +1,5 @@
 import { requireAuth } from './auth.js';
-import { PRODUCTS, DETAIL_DATA, SAMPLE_REVIEWS, getProductCoaRows, getProductPurityLabel, hasPublishedCoa, resolveProductCoa } from '../data/products.js';
+import { PRODUCTS, DETAIL_DATA, SAMPLE_REVIEWS } from '../data/products.js';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 
@@ -13,10 +13,6 @@ export function renderProductDetail() {
   const p = PRODUCTS[sku];
   if (!p) { container.innerHTML = '<div class="product-404"><h2>Product not found</h2><p>This product does not exist or has been removed.</p><a class="btn btn-dark" href="/">Back to shop</a></div>'; return; }
   const d = DETAIL_DATA[sku] || {};
-  const coa = resolveProductCoa(p);
-  const hasCoa = hasPublishedCoa(p);
-  const purityLabel = getProductPurityLabel(p);
-  const coaRows = getProductCoaRows(p);
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
   const starsStr = hasReviews ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '';
@@ -39,10 +35,10 @@ export function renderProductDetail() {
       </div>
       <div class="pd-desc">${p.description}</div>
       <div class="pd-attrs">
-        <div class="pd-attr"><strong>Purity</strong><span>${purityLabel}</span></div>
+        <div class="pd-attr"><strong>Purity</strong><span>${p.purity}</span></div>
         <div class="pd-attr"><strong>Batch</strong><span>${p.batch}</span></div>
-        <div class="pd-attr"><strong>COA</strong><span>${hasCoa ? 'Published' : 'Pending'}</span></div>
-        <div class="pd-attr"><strong>Lab</strong><span>${hasCoa ? (coa.lab || 'Third-party lab') : 'Awaiting COA'}</span></div>
+        <div class="pd-attr"><strong>Lab</strong><span>${p.coa.lab}</span></div>
+        <div class="pd-attr"><strong>Method</strong><span>${p.coa.method}</span></div>
         <div class="pd-attr"><strong>Stock</strong><span class="stock-${p.stock}">${p.stockCount > 0 ? `${p.stockCount} vials` : p.stock}</span></div>
       </div>
       <button class="btn btn-dark btn-lg" data-add="${p.id}">Add to basket — ${money(p.price)}</button>
@@ -56,7 +52,7 @@ export function renderProductDetail() {
     </div>
     <div class="pd-tab-content is-active" data-tab="science"><p>${(d.science || 'Research data available upon request.')}</p></div>
     <div class="pd-tab-content" data-tab="specs"><pre class="pd-pre">${(d.specs || 'Specifications available upon request.')}</pre></div>
-    <div class="pd-tab-content" data-tab="coa"><pre class="pd-pre">${(hasCoa ? coaRows.map((row) => row[0] + ': ' + row[1]).join('\n') : 'Awaiting COA — Third-party certificate of analysis pending for this product.')}</pre></div>
+    <div class="pd-tab-content" data-tab="coa"><pre class="pd-pre">${(p.coaUrl ? d.coa : 'Awaiting COA — Third-party certificate of analysis pending for this product.')}</pre></div>
   </div>`;
   container.querySelectorAll('.pd-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -92,14 +88,10 @@ function renderPdpProduct(root) {
   if (sections) sections.style.display = '';
 
   const d = DETAIL_DATA[sku] || {};
-  const coa = resolveProductCoa(p);
-  const hasCoa = hasPublishedCoa(p);
-  const purityLabel = getProductPurityLabel(p);
-  const coaDataRows = getProductCoaRows(p);
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
   setText('pageTitle', p.name + ' \u2014 UKMAXX');
-  setAttr('pageDesc', 'content', p.name + ': ' + p.description + (hasCoa ? ' Published COA available.' : ' COA pending.'));
+  setAttr('pageDesc', 'content', p.name + ': ' + p.description + ' Third-party verified.');
   setText('ogTitle', p.name + ' \u2014 UKMAXX');
   setAttr('ogDesc', 'content', p.description);
   setAttr('canonical', 'href', 'https://www.ukmaxx.co.uk/product.html?sku=' + sku);
@@ -159,7 +151,7 @@ function renderPdpProduct(root) {
 
   const specsMini = byId('pdpSpecsMini');
   if (specsMini) {
-    specsMini.innerHTML = '<span>Purity: <strong>' + purityLabel + '</strong></span><span>Batch: <strong>' + p.batch + '</strong></span><span>COA: <strong>' + (hasCoa ? 'Published' : 'Pending') + '</strong></span>';
+    specsMini.innerHTML = '<span>Purity: <strong>' + p.purity + '</strong></span><span>Batch: <strong>' + p.batch + '</strong></span><span>Lab: <strong>' + p.coa.lab + '</strong></span>';
   }
 
   const galleryImg = byId('pdpGalleryImg');
@@ -216,16 +208,14 @@ function renderPdpProduct(root) {
 
   const overviewText = byId('pdpOverviewText');
   if (overviewText) {
-    overviewText.innerHTML = hasCoa
-      ? '<p>' + p.description + '</p><p>This batch has a published COA from <strong>' + (coa.lab || 'an independent laboratory') + '</strong> using <strong>' + (coa.method || 'documented lab analysis') + '</strong>. Published purity: <strong>' + purityLabel + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>'
-      : '<p>' + p.description + '</p><p>Batch: <strong>' + p.batch + '</strong>. A published COA is pending for this product, so the site will not show a verified purity claim until the lab documentation is available.</p>';
+    overviewText.innerHTML = '<p>' + p.description + '</p><p>Each vial independently tested by <strong>' + p.coa.lab + '</strong> using <strong>' + p.coa.method + '</strong>. Purity verified at <strong>' + p.purity + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>';
   }
   const featureList = byId('pdpFeatureList');
   if (featureList) {
     let features = [
       '1\u00D7 ' + p.name + ' vial',
-      'Batch ' + p.batch + ' \u2014 ' + purityLabel,
-      hasCoa ? 'COA published by ' + (coa.lab || 'third-party lab') + (coa.method ? ' (' + coa.method + ')' : '') : 'COA pending \u2014 no public purity claim yet',
+      'Batch ' + p.batch + ' \u2014 ' + p.purity + ' purity',
+      'COA verified by ' + p.coa.lab + ' (' + p.coa.method + ')',
       'Insulated cold-chain packaging',
       'Free UK Tracked 24 over \u00A3100'
     ];
@@ -248,12 +238,12 @@ function renderPdpProduct(root) {
   }
 
   const coaRows = byId('pdpCoaRows');
-  setText('pdpCoaTitle', hasCoa ? 'This batch has a published COA' : 'COA pending for this product');
-  setText('pdpCoaSub', hasCoa ? 'Lab documentation by ' + (coa.lab || 'the testing laboratory') : 'Published lab documentation will appear here when available.');
   if (coaRows) {
-    if (hasCoa) {
-      coaRows.innerHTML = coaDataRows.map(function (row) {
-        return '<div class="pdp-coa-row"><strong>' + row[0] + '</strong><span>' + row[1] + '</span></div>';
+    if (d.coa && p.coaUrl) {
+      coaRows.innerHTML = d.coa.split('\n').map(function (line) {
+        var parts = line.split(':');
+        if (parts.length < 2) return '';
+        return '<div class="pdp-coa-row"><strong>' + parts[0].trim() + '</strong><span>' + parts.slice(1).join(':').trim() + '</span></div>';
       }).join('');
     } else {
       coaRows.innerHTML = '<div class="pdp-coa-row" style="opacity:.6;font-style:italic"><strong>Awaiting COA</strong><span>Third-party certificate of analysis pending for this product.</span></div>';
@@ -261,22 +251,22 @@ function renderPdpProduct(root) {
   }
   var coaCertImg = byId('pdpCoaCertImg');
   var coaCertParent = coaCertImg ? coaCertImg.closest('.pdp-coa-cert') : null;
-  if (hasCoa && coa.image) {
-    if (coaCertImg) { coaCertImg.src = coa.image; coaCertImg.alt = p.name + ' COA'; }
+  if (p.coaImage) {
+    if (coaCertImg) { coaCertImg.src = p.coaImage; coaCertImg.alt = p.name + ' COA'; }
     if (coaCertParent) coaCertParent.style.display = '';
   } else {
     if (coaCertParent) coaCertParent.style.display = 'none';
   }
   var coaViewBtn = byId('pdpCoaView');
   var coaCtaWrap = coaViewBtn ? coaViewBtn.closest('.pdp-coa-cta') : null;
-  if (!hasCoa) {
+  if (!p.coaUrl && !p.coaImage) {
     if (coaCtaWrap) coaCtaWrap.innerHTML = '<div class="left"><strong>Awaiting COA</strong> Certificate of analysis pending for this product.</div>';
   } else if (coaViewBtn) {
     coaViewBtn.addEventListener('click', function () {
-      if (coa.url) { window.open(coa.url, '_blank', 'noopener'); return; }
+      if (p.coaUrl) { window.open(p.coaUrl, '_blank', 'noopener'); return; }
       var lb = byId('lightboxOverlay') || byId('lbBackdrop');
       var img = byId('lightboxImg') || byId('lbImg');
-      if (lb && img) { img.src = coa.image || ''; img.alt = p.name + ' COA'; lb.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+      if (lb && img) { img.src = p.coaImage || ''; img.alt = p.name + ' COA'; lb.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
     });
   }
 

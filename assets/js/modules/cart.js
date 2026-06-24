@@ -1,6 +1,6 @@
 import { toast } from './toast.js';
 import { getCurrentUser } from './auth.js';
-import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getProductPurityLabel } from '../data/products.js';
+import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY } from '../data/products.js';
 import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
@@ -98,7 +98,7 @@ export function renderCart() {
       <img class="cart-thumb" src="${p.image}" alt="${p.name}">
       <div class="cart-item-info">
         <div class="cart-item-name">${p.name}</div>
-        <div class="cart-item-meta">${p.id} · ${getProductPurityLabel(p)}</div>
+        <div class="cart-item-meta">${p.id} · ${p.purity}</div>
         <div class="cart-item-bottom">
           <div class="qty-control" role="group" aria-label="Quantity for ${p.name}">
             <button class="qty-btn" aria-label="Decrease quantity" data-a="dec" data-sku="${i.sku}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>

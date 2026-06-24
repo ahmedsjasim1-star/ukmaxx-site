@@ -1,4 +1,4 @@
-import { PRODUCTS, CATEGORIES, getProductCoaLabel, getProductPurityLabel, hasPublishedCoa } from '../data/products.js';
+import { PRODUCTS, CATEGORIES } from '../data/products.js';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
@@ -11,11 +11,6 @@ function productCard(p, bundle = false) {
   const saveBadge = p.originalPrice ? `<span class="badge badge-new">Save ${money(p.originalPrice - p.price)}</span>` : '';
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
-  const purityLabel = getProductPurityLabel(p);
-  const coaLabel = getProductCoaLabel(p);
-  const coaIcon = hasPublishedCoa(p)
-    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>'
-    : '';
   const starsStr = hasReviews ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '';
   const priceWrap = p.originalPrice
     ? `<div class="product-price-wrap"><div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div><span class="product-price-original">${money(p.originalPrice)}</span></div>`
@@ -34,8 +29,8 @@ function productCard(p, bundle = false) {
       </div>
       <p class="product-desc">${p.description}</p>
       <div class="product-attrs">
-        <span class="product-attr">${coaIcon} ${purityLabel}</span>
-        <span class="product-attr">${coaLabel}</span>
+        <span class="product-attr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> ${p.purity} purity</span>
+        <span class="product-attr">${p.coa.lab}</span>
       </div>
       <div class="product-foot">
         ${priceWrap}
