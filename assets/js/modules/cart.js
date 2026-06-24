@@ -1,6 +1,6 @@
 import { toast } from './toast.js';
 import { getCurrentUser } from './auth.js';
-import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY } from '../data/products.js';
+import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
@@ -27,7 +27,7 @@ function sanitizeCart(arr = []) {
   (Array.isArray(arr) ? arr : []).forEach(i => {
     const sku = normalizeSku(i?.sku || '');
     const qty = Math.max(0, Number(i?.qty || 0));
-    if (!sku || !PRODUCTS[sku] || !qty) return;
+    if (!sku || !PRODUCTS[sku] || !isPurchasable(PRODUCTS[sku]) || !qty) return;
     map.set(sku, (map.get(sku) || 0) + qty);
   });
   return [...map.entries()].map(([sku, qty]) => ({ sku, qty }));
@@ -161,23 +161,31 @@ function renderCheckoutSummary() {
 }
 
 export function addSku(s) {
+  const p = PRODUCTS[s];
+  if (!isPurchasable(p)) {
+    toast(getReleaseLabel(p), `${p?.name || 'This product'} is awaiting COA before release.`, 'error');
+    return;
+  }
   const c = getCart();
   const f = c.find(x => x.sku === s);
   if (f) f.qty++; else c.push({ sku: s, qty: 1 });
   setCart(c);
   renderCart();
-  const p = PRODUCTS[s];
   if (p) toast('Added to basket', `${p.name} added — review your basket or continue shopping.`);
 }
 
 export function addSkuQty(s, qty) {
+  const p = PRODUCTS[s];
+  if (!isPurchasable(p)) {
+    toast(getReleaseLabel(p), `${p?.name || 'This product'} is awaiting COA before release.`, 'error');
+    return;
+  }
   const num = Math.max(1, Math.min(99, Number(qty) || 1));
   const c = getCart();
   const f = c.find(x => x.sku === s);
   if (f) f.qty += num; else c.push({ sku: s, qty: num });
   setCart(c);
   renderCart();
-  const p = PRODUCTS[s];
   if (p) toast('Added to basket', `${num}× ${p.name} added.`);
 }
 

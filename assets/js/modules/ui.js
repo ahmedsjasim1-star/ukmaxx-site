@@ -1,4 +1,4 @@
-import { PRODUCTS } from '../data/products.js';
+import { PRODUCTS, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 import { addSku } from './cart.js';
@@ -43,7 +43,10 @@ export function setupMobileStickyCta() {
       if (p) {
         byId('msName').textContent = p.name;
         byId('msPrice').textContent = money(p.price);
-        byId('msAdd').onclick = () => addSku(sku);
+        const purchasable = isPurchasable(p);
+        byId('msAdd').textContent = purchasable ? 'Add' : getReleaseLabel(p);
+        byId('msAdd').disabled = !purchasable;
+        byId('msAdd').onclick = purchasable ? () => addSku(sku) : null;
         cta.classList.add('is-shown');
         cta.setAttribute('aria-hidden', 'false');
       }

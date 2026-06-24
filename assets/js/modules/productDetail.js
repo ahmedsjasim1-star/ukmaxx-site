@@ -1,5 +1,5 @@
 import { requireAuth } from './auth.js';
-import { PRODUCTS, DETAIL_DATA, SAMPLE_REVIEWS } from '../data/products.js';
+import { PRODUCTS, DETAIL_DATA, SAMPLE_REVIEWS, getCoaStatusLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 
@@ -13,6 +13,7 @@ export function renderProductDetail() {
   const p = PRODUCTS[sku];
   if (!p) { container.innerHTML = '<div class="product-404"><h2>Product not found</h2><p>This product does not exist or has been removed.</p><a class="btn btn-dark" href="/">Back to shop</a></div>'; return; }
   const d = DETAIL_DATA[sku] || {};
+  const purchasable = isPurchasable(p);
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
   const starsStr = hasReviews ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '';
@@ -35,13 +36,13 @@ export function renderProductDetail() {
       </div>
       <div class="pd-desc">${p.description}</div>
       <div class="pd-attrs">
-        <div class="pd-attr"><strong>Purity</strong><span>${p.purity}</span></div>
+        <div class="pd-attr"><strong>Purity</strong><span>${purchasable ? p.purity : getCoaStatusLabel(p)}</span></div>
         <div class="pd-attr"><strong>Batch</strong><span>${p.batch}</span></div>
-        <div class="pd-attr"><strong>Lab</strong><span>${p.coa.lab}</span></div>
-        <div class="pd-attr"><strong>Method</strong><span>${p.coa.method}</span></div>
-        <div class="pd-attr"><strong>Stock</strong><span class="stock-${p.stock}">${p.stockCount > 0 ? `${p.stockCount} vials` : p.stock}</span></div>
+        <div class="pd-attr"><strong>Lab</strong><span>${purchasable ? p.coa.lab : 'Awaiting COA'}</span></div>
+        <div class="pd-attr"><strong>Method</strong><span>${purchasable ? p.coa.method : getReleaseLabel(p)}</span></div>
+        <div class="pd-attr"><strong>Status</strong><span class="stock-${p.stock}">${purchasable ? `${p.stockCount} vials` : getReleaseLabel(p)}</span></div>
       </div>
-      <button class="btn btn-dark btn-lg" data-add="${p.id}">Add to basket — ${money(p.price)}</button>
+      <button class="btn btn-dark btn-lg" ${purchasable ? `data-add="${p.id}"` : 'disabled aria-disabled="true"'}>${purchasable ? `Add to basket — ${money(p.price)}` : `${getReleaseLabel(p)} — ${getCoaStatusLabel(p)}`}</button>
     </div>
   </div>
   <div class="pd-tabs">
@@ -88,6 +89,7 @@ function renderPdpProduct(root) {
   if (sections) sections.style.display = '';
 
   const d = DETAIL_DATA[sku] || {};
+  const purchasable = isPurchasable(p);
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
   setText('pageTitle', p.name + ' \u2014 UKMAXX');
@@ -144,21 +146,23 @@ function renderPdpProduct(root) {
   }
   setText('pdpRating', hasReviews ? rating.toFixed(1) : 'New batch');
   setText('pdpReviewCount', hasReviews ? p.reviewCount + ' reviews' : 'Awaiting verified reviews');
-  setText('pdpStockText', p.stock === 'in_stock' ? 'In stock' : 'Out of stock');
-  setText('pdpStockSub', p.stock === 'in_stock' ? '\u00B7 ' + p.stockCount + ' vials ready' : '');
+  setText('pdpStockText', purchasable ? 'In stock' : getReleaseLabel(p));
+  setText('pdpStockSub', purchasable ? '\u00B7 ' + p.stockCount + ' vials ready' : '\u00B7 ' + getCoaStatusLabel(p));
   const stockDot = $('.pdp-stock-dot', root);
   if (stockDot) stockDot.className = 'pdp-stock-dot stock-' + p.stock;
 
   const specsMini = byId('pdpSpecsMini');
   if (specsMini) {
-    specsMini.innerHTML = '<span>Purity: <strong>' + p.purity + '</strong></span><span>Batch: <strong>' + p.batch + '</strong></span><span>Lab: <strong>' + p.coa.lab + '</strong></span>';
+    specsMini.innerHTML = purchasable
+      ? '<span>Purity: <strong>' + p.purity + '</strong></span><span>Batch: <strong>' + p.batch + '</strong></span><span>Lab: <strong>' + p.coa.lab + '</strong></span>'
+      : '<span>Status: <strong>' + getReleaseLabel(p) + '</strong></span><span>COA: <strong>' + getCoaStatusLabel(p) + '</strong></span>';
   }
 
   const galleryImg = byId('pdpGalleryImg');
   if (galleryImg) { galleryImg.src = p.image; galleryImg.alt = p.name; }
   const galleryBadges = byId('pdpGalleryBadges');
   if (galleryBadges) {
-    galleryBadges.innerHTML = '<span class="badge badge-stock">In stock</span>' + (p.featured ? '<span class="badge badge-featured">Bestseller</span>' : '');
+    galleryBadges.innerHTML = (purchasable ? '<span class="badge badge-stock">In stock</span>' : '<span class="badge badge-coming">' + getReleaseLabel(p) + '</span><span class="badge badge-awaiting">' + getCoaStatusLabel(p) + '</span>') + (p.featured ? '<span class="badge badge-featured">Bestseller</span>' : '');
   }
   const galleryThumbs = byId('pdpGalleryThumbs');
   if (galleryThumbs) {
@@ -167,11 +171,31 @@ function renderPdpProduct(root) {
 
   const addBtn = byId('pdpAddBtn');
   const addBtnLabel = byId('pdpAddBtnLabel');
-  if (addBtn) { addBtn.dataset.add = p.id; if (addBtnLabel) addBtnLabel.textContent = 'Add to basket'; }
+  if (addBtn) {
+    if (purchasable) {
+      addBtn.dataset.add = p.id;
+      addBtn.disabled = false;
+      if (addBtnLabel) addBtnLabel.textContent = 'Add to basket';
+    } else {
+      delete addBtn.dataset.add;
+      addBtn.disabled = true;
+      if (addBtnLabel) addBtnLabel.textContent = getReleaseLabel(p);
+    }
+  }
   setText('pdpMobileName', p.name);
   setText('pdpMobilePrice', money(p.price));
   const mobileAdd = byId('pdpMobileAdd');
-  if (mobileAdd) mobileAdd.dataset.add = p.id;
+  if (mobileAdd) {
+    if (purchasable) {
+      mobileAdd.dataset.add = p.id;
+      mobileAdd.disabled = false;
+      setText('pdpMobileAddLabel', 'Add');
+    } else {
+      delete mobileAdd.dataset.add;
+      mobileAdd.disabled = true;
+      setText('pdpMobileAddLabel', 'Soon');
+    }
+  }
 
   const dec = byId('pdpQtyDec');
   const inc = byId('pdpQtyInc');
@@ -190,7 +214,14 @@ function renderPdpProduct(root) {
   if (mInc) mInc.addEventListener('click', () => { if (mInp) mInp.value = clamp(Number(mInp.value) + 1); mSync(); });
   if (mInp) mInp.addEventListener('change', mSync);
 
+  const buyNowBtn = byId('pdpBuyNow');
+  if (buyNowBtn && !purchasable) {
+    buyNowBtn.disabled = true;
+    buyNowBtn.innerHTML = getReleaseLabel(p) + ' — ' + getCoaStatusLabel(p);
+  }
+
   byId('pdpBuyNow')?.addEventListener('click', async () => {
+    if (!purchasable) return;
     if (!(await requireAuth())) return;
     const qty = Number(byId('pdpQtyInput')?.value || 1);
     window.addSkuQty(p.id, qty);
@@ -208,14 +239,16 @@ function renderPdpProduct(root) {
 
   const overviewText = byId('pdpOverviewText');
   if (overviewText) {
-    overviewText.innerHTML = '<p>' + p.description + '</p><p>Each vial independently tested by <strong>' + p.coa.lab + '</strong> using <strong>' + p.coa.method + '</strong>. Purity verified at <strong>' + p.purity + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>';
+    overviewText.innerHTML = purchasable
+      ? '<p>' + p.description + '</p><p>Each vial independently tested by <strong>' + p.coa.lab + '</strong> using <strong>' + p.coa.method + '</strong>. Purity verified at <strong>' + p.purity + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>'
+      : '<p>' + p.description + '</p><p><strong>' + getReleaseLabel(p) + '.</strong> This product is awaiting its COA before release, so ordering is disabled until the batch documentation is ready.</p>';
   }
   const featureList = byId('pdpFeatureList');
   if (featureList) {
     let features = [
       '1\u00D7 ' + p.name + ' vial',
-      'Batch ' + p.batch + ' \u2014 ' + p.purity + ' purity',
-      'COA verified by ' + p.coa.lab + ' (' + p.coa.method + ')',
+      purchasable ? 'Batch ' + p.batch + ' \u2014 ' + p.purity + ' purity' : getReleaseLabel(p),
+      purchasable ? 'COA verified by ' + p.coa.lab + ' (' + p.coa.method + ')' : getCoaStatusLabel(p),
       'Insulated cold-chain packaging',
       'Free UK Tracked 24 over \u00A3100'
     ];
@@ -309,7 +342,7 @@ function renderPdpProduct(root) {
 
   var relatedGrid = byId('pdpRelated');
   if (relatedGrid) {
-    var related = Object.values(PRODUCTS).filter(function (x) { return x.id !== p.id && (x.category === p.category || x.category === 'support'); }).slice(0, 4);
+    var related = Object.values(PRODUCTS).filter(function (x) { return x.id !== p.id && isPurchasable(x) && (x.category === p.category || x.category === 'support'); }).slice(0, 4);
     relatedGrid.innerHTML = related.map(function (r) {
       return '<article class="product-card" data-sku="' + r.id + '"><div class="product-media"><img loading="lazy" src="' + r.image + '" alt="' + r.name + '" width="400" height="400"><div class="product-badges"><span class="badge badge-stock">In stock</span></div></div><div class="product-body"><h3 class="product-name"><a href="./product.html?sku=' + r.id + '">' + r.name + '</a></h3><div class="product-rating"><span class="count">New batch · awaiting reviews</span></div><div class="product-foot"><div class="product-price"><span class="currency">\u00A3</span>' + r.price.toFixed(2) + '</div><button class="add-btn" data-add="' + r.id + '" aria-label="Add ' + r.name + ' to basket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div></article>';
     }).join('');
@@ -375,7 +408,7 @@ export function renderRelatedProducts() {
   var sku = params.get('sku');
   var p = PRODUCTS[sku];
   if (!p) return;
-  var related = Object.values(PRODUCTS).filter(function (x) { return x.id !== p.id && (x.category === p.category || x.category === 'support'); }).slice(0, 4);
+  var related = Object.values(PRODUCTS).filter(function (x) { return x.id !== p.id && isPurchasable(x) && (x.category === p.category || x.category === 'support'); }).slice(0, 4);
   grid.innerHTML = related.map(function (r) {
     return '<article class="product-card" data-sku="' + r.id + '"><div class="product-media"><img loading="lazy" src="' + r.image + '" alt="' + r.name + '" width="400" height="400"><div class="product-badges"><span class="badge badge-stock">In stock</span></div></div><div class="product-body"><h3 class="product-name"><a href="./product.html?sku=' + r.id + '">' + r.name + '</a></h3><div class="product-rating"><span class="count">New batch · awaiting reviews</span></div><div class="product-foot"><div class="product-price"><span class="currency">\u00A3</span>' + r.price.toFixed(2) + '</div><button class="add-btn" data-add="' + r.id + '" aria-label="Add ' + r.name + ' to basket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div></article>';
   }).join('');

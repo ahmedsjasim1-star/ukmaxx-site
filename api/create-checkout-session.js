@@ -2,6 +2,7 @@ const Stripe = require('stripe');
 const { getSupabaseAdmin } = require('./_lib/supabase');
 
 const SITE_URL = process.env.SITE_URL || 'https://www.ukmaxx.co.uk';
+const COA_PENDING_SKUS = new Set(['BC5', 'IP5', 'NJ500', 'WA10']);
 
 function getBearerToken(req) {
   const value = String(req.headers.authorization || '');
@@ -51,6 +52,7 @@ module.exports = async (req, res) => {
     for (const item of normalized) {
       const product = bySku.get(item.sku);
       if (!product || !product.is_active) return res.status(400).json({ error: `Unavailable SKU: ${item.sku}` });
+      if (COA_PENDING_SKUS.has(item.sku)) return res.status(400).json({ error: `${item.sku} is coming soon and awaiting COA` });
       if (Number(product.stock_quantity) < item.qty) {
         return res.status(409).json({ error: `Insufficient stock for ${item.sku}` });
       }

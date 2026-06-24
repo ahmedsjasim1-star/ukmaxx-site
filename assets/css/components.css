@@ -23,6 +23,8 @@
 .badge-new{background:#fff;color:var(--text);border:1px solid var(--border)}
 .badge-stock{background:rgba(15,138,79,.10);color:var(--success);border:1px solid rgba(15,138,79,.25)}
 .badge-low{background:rgba(180,83,9,.10);color:var(--warning);border:1px solid rgba(180,83,9,.25)}
+.badge-coming{background:rgba(10,126,140,.10);color:var(--accent);border:1px solid rgba(10,126,140,.25)}
+.badge-awaiting{background:rgba(180,83,9,.10);color:var(--warning);border:1px solid rgba(180,83,9,.25)}
 .badge-sale{background:var(--danger);color:#fff}
 .badge-coa{background:var(--accent-light);color:var(--accent);border:1px solid var(--accent)}
 
@@ -153,6 +155,8 @@
 .add-btn:active{transform:scale(.97)}
 .add-btn svg{width:14px;height:14px}
 .add-btn.is-adding{background:var(--success)}
+.add-btn:disabled,.add-btn.is-disabled{background:var(--surface-3);color:var(--dim);cursor:not-allowed;pointer-events:none;border:1px solid var(--border)}
+.add-btn:disabled svg,.add-btn.is-disabled svg{display:none}
 .filter-tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none}
 .filter-tabs::-webkit-scrollbar{display:none}
 .filter-tab{padding:9px 16px;background:#fff;border:1px solid var(--border);border-radius:999px;font-size:13px;font-weight:500;color:var(--text-2);white-space:nowrap;transition:all .15s ease;flex-shrink:0}

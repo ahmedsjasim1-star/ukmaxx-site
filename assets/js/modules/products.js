@@ -1,12 +1,16 @@
-import { PRODUCTS, CATEGORIES } from '../data/products.js';
+import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
 const CATS = CATEGORIES;
 
 function productCard(p, bundle = false) {
+  const purchasable = isPurchasable(p);
   const stockLow = p.stockCount && p.stockCount <= 10;
-  const stockBadge = stockLow ? `<span class="badge badge-low">Only ${p.stockCount} left</span>` : `<span class="badge badge-stock">In stock</span>`;
+  const stockBadge = purchasable
+    ? (stockLow ? `<span class="badge badge-low">Only ${p.stockCount} left</span>` : `<span class="badge badge-stock">In stock</span>`)
+    : `<span class="badge badge-coming">${getReleaseLabel(p)}</span>`;
+  const coaBadge = !p.coaUrl ? `<span class="badge badge-awaiting">${getCoaStatusLabel(p)}</span>` : '';
   const bestBadge = p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Top seller'}</span>` : '';
   const saveBadge = p.originalPrice ? `<span class="badge badge-new">Save ${money(p.originalPrice - p.price)}</span>` : '';
   const rating = Number(p.rating || 0);
@@ -19,7 +23,7 @@ function productCard(p, bundle = false) {
   return `<article class="product-card${p.featured ? ' is-featured' : ''}" data-sku="${p.id}">
     <div class="product-media">
       <img loading="lazy" src="${p.image}" alt="${p.name}" width="400" height="400">
-      <div class="product-badges">${bestBadge}${saveBadge}${stockBadge}</div>
+      <div class="product-badges">${bestBadge}${saveBadge}${stockBadge}${coaBadge}</div>
     </div>
     <div class="product-body">
       <div class="product-sku">${p.id} · ${p.shortName}</div>
@@ -29,14 +33,14 @@ function productCard(p, bundle = false) {
       </div>
       <p class="product-desc">${p.description}</p>
       <div class="product-attrs">
-        <span class="product-attr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> ${p.purity} purity</span>
-        <span class="product-attr">${p.coa.lab}</span>
+        <span class="product-attr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> ${purchasable ? `${p.purity} purity` : getCoaStatusLabel(p)}</span>
+        <span class="product-attr">${purchasable ? p.coa.lab : getReleaseLabel(p)}</span>
       </div>
       <div class="product-foot">
         ${priceWrap}
-        <button class="add-btn" data-add="${p.id}" aria-label="Add ${p.name} to basket">
+        <button class="add-btn${purchasable ? '' : ' is-disabled'}" ${purchasable ? `data-add="${p.id}" aria-label="Add ${p.name} to basket"` : `disabled aria-disabled="true" aria-label="${p.name} coming soon"`}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          Add
+          ${purchasable ? 'Add' : 'Soon'}
         </button>
       </div>
     </div>
