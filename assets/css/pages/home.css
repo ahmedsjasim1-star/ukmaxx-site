@@ -106,7 +106,6 @@
 .tp-invite-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.2;color:var(--text);margin-bottom:6px}
 @media (min-width:768px){.tp-invite-title{font-size:26px}}
 .tp-invite-sub{font-size:14px;color:var(--text-2);line-height:1.55;max-width:480px;margin:0}
-.tp-collector-widget{max-width:420px;margin-top:16px;background:#fff;border:1px solid var(--tp-border);border-radius:var(--radius-sm);padding:10px 12px}
 .tp-invite-cta{position:relative;z-index:1;display:flex;gap:10px;flex-shrink:0}
 .tp-invite-cta .btn{white-space:nowrap}
 .sticky-cta{position:fixed;bottom:64px;left:0;right:0;background:rgba(255,255,255,.98);backdrop-filter:blur(12px);border-top:1px solid var(--border);z-index:80;padding:10px 14px;display:none;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(8,31,35,.08);transform:translateY(0);transition:transform .25s ease}
