@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>My account — UKMAXX</title>
+<meta name="description" content="View your UKMAXX account, order history, tracking links and batch COA records.">
+<meta name="theme-color" content="#0A7E8C">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="shortcut icon" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="canonical" href="https://www.ukmaxx.co.uk/account.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/css/variables.css">
+<link rel="stylesheet" href="./assets/css/reset.css">
+<link rel="stylesheet" href="./assets/css/base.css">
+<link rel="stylesheet" href="./assets/css/components.css">
+<link rel="stylesheet" href="./assets/css/pages/account.css">
+<script src="./assets/html/bundle.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<script>document.write(window.__html.topbar)</script>
+<script>document.write(window.__html.header)</script>
+
+<main id="main" class="account-page">
+  <section class="account-hero">
+    <div class="container">
+      <span class="section-eyebrow">Customer account</span>
+      <h1>My UKMAXX</h1>
+      <p>Track your orders, revisit batch COAs, and keep your research purchase history in one place.</p>
+      <div class="account-email" id="accountEmail">Loading account…</div>
+    </div>
+  </section>
+
+  <section class="section" id="accountRoot">
+    <div class="container">
+      <div class="account-loading" id="accountLoading">Loading your account…</div>
+      <div class="account-content" id="accountContent" style="display:none">
+        <div class="account-summary" id="accountSummary"></div>
+
+        <div class="account-actions">
+          <a class="btn btn-primary" href="/#products">Shop products</a>
+          <a class="btn btn-ghost" href="/track.html">Track by order number</a>
+        </div>
+
+        <div class="section-head account-section-head">
+          <div>
+            <span class="section-eyebrow">Order history</span>
+            <h2 class="section-title">Your orders</h2>
+          </div>
+          <p class="section-sub">Orders are matched to your signed-in email address. Guest orders made with the same email will appear here too.</p>
+        </div>
+
+        <div class="account-orders" id="accountOrders"></div>
+      </div>
+
+      <div class="account-empty" id="accountEmpty" style="display:none">
+        <h2>No orders yet</h2>
+        <p>When you place an order with this email address, it will appear here with tracking and COA links.</p>
+        <a class="btn btn-primary" href="/#products">Browse products</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>document.write(window.__html.footer)</script>
+<script>document.write(window.__html.mobileNav)</script>
+<script>document.write(window.__html.cartDrawer)</script>
+<script>document.write(window.__html.checkout)</script>
+<div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+<script type="module" src="./assets/js/app.js"></script>
+</body>
+</html>

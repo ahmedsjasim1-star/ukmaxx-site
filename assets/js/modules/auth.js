@@ -7,6 +7,12 @@ import { AGE_KEY } from '../data/products.js';
 
 let currentUser = null;
 let authInited = false;
+const ACCOUNT_URL = '/account.html';
+
+function redirectTarget() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('redirect') || ACCOUNT_URL;
+}
 
 /* ── Age gate (auth pages) ── */
 export function initAuthGate() {
@@ -108,8 +114,7 @@ function redirectIfAuthed() {
   const path = window.location.pathname;
   const guestPages = ['/signin.html', '/signup.html'];
   if (guestPages.includes(path)) {
-    const params = new URLSearchParams(window.location.search);
-    window.location.href = params.get('redirect') || '/';
+    window.location.href = redirectTarget();
   }
 }
 
@@ -155,9 +160,7 @@ export function setupSignInForm() {
         return;
       }
       toast('Signed in', 'Redirecting\u2026', 'success');
-      const params = new URLSearchParams(window.location.search);
-      const redirect = params.get('redirect') || '/';
-      setTimeout(() => { window.location.href = redirect; }, 600);
+      setTimeout(() => { window.location.href = redirectTarget(); }, 600);
     } catch {
       if (msg) { msg.textContent = 'Network error \u2014 please try again.'; msg.style.color = 'var(--danger)'; }
       toast('Sign in failed', 'Network error \u2014 please try again.', 'error');
@@ -221,7 +224,7 @@ export function setupSignUpForm() {
         toast('Account created', 'Welcome!', 'success');
         if (msg) { msg.textContent = 'Account created successfully!'; msg.style.color = 'var(--success)'; }
         if (btn) { btn.textContent = 'Welcome!'; btn.disabled = true; }
-        setTimeout(() => { window.location.href = '/'; }, 1200);
+        setTimeout(() => { window.location.href = ACCOUNT_URL; }, 1200);
         return;
       }
       if (!data?.user || (Array.isArray(data.user.identities) && data.user.identities.length === 0)) {
@@ -299,9 +302,13 @@ export function setupGoogleAuth() {
       btn.disabled = true;
       try {
         const supabase = await getSupabase();
+        const next = new URL(redirectTarget(), SITE_URL);
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: SITE_URL }
+          options: {
+            redirectTo: next.href,
+            queryParams: { prompt: 'select_account' }
+          }
         });
         if (error) { toast('Sign-in failed', error.message, 'error'); btn.disabled = false; }
       } catch (err) { toast('Sign-in failed', err.message, 'error'); btn.disabled = false; }
