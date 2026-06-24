@@ -121,9 +121,7 @@ function redirectIfAuthed() {
 function doSignOut() {
   getSupabase().then(s => s.auth.signOut().then(() => {
     toast('Signed out', 'You have been signed out.', 'success');
-    if (window.location.pathname.includes('update-password')) {
-      window.location.href = '/signin.html';
-    }
+    setTimeout(() => { window.location.href = '/'; }, 250);
   }).catch(console.error));
 }
 
