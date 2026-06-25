@@ -1,4 +1,4 @@
-import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
+import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
@@ -10,7 +10,7 @@ function productCard(p, bundle = false) {
   const stockBadge = purchasable
     ? (stockLow ? `<span class="badge badge-low">Only ${p.stockCount} left</span>` : `<span class="badge badge-stock">In stock</span>`)
     : `<span class="badge badge-coming">${getReleaseLabel(p)}</span>`;
-  const coaBadge = !p.coaUrl ? `<span class="badge badge-awaiting">${getCoaStatusLabel(p)}</span>` : '';
+  const coaBadge = !p.coaUrl && !purchasable ? `<span class="badge badge-awaiting">${getCoaStatusLabel(p)}</span>` : '';
   const bestBadge = p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Top seller'}</span>` : '';
   const saveBadge = p.originalPrice ? `<span class="badge badge-new">Save ${money(p.originalPrice - p.price)}</span>` : '';
   const rating = Number(p.rating || 0);
@@ -33,7 +33,7 @@ function productCard(p, bundle = false) {
       </div>
       <p class="product-desc">${p.description}</p>
       <div class="product-attrs">
-        <span class="product-attr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> ${purchasable ? `${p.purity} purity` : getCoaStatusLabel(p)}</span>
+        <span class="product-attr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> ${getQualityLabel(p)}</span>
         <span class="product-attr">${purchasable ? p.coa.lab : getReleaseLabel(p)}</span>
       </div>
       <div class="product-foot">

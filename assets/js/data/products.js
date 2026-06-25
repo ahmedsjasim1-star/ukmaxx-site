@@ -4,7 +4,7 @@ export const PRODUCTS = {
   BC5:{id:'BC5',slug:'bpc-157',name:'BPC 157',shortName:'BPC',description:'5mg lyophilised peptide.',purity:'99%+',batch:'BC5-2026-05-B',price:29.99,reviewCount:0,image:'./images/bpc-157.jpg',category:'peptides',featured:false,stock:'coming_soon',stockCount:0,releaseLabel:'Coming soon',coaLabel:'Awaiting COA',coa:{lab:'Janoshik Analytical',method:'HPLC',status:'PENDING'}},
   IP5:{id:'IP5',slug:'ipam-5mg',name:'IPAM 5MG',shortName:'IPAM',description:'5mg peptide.',purity:'99%+',batch:'IP5-2026-05-C',price:24.99,reviewCount:0,image:'./images/ipamorelin.jpg',category:'peptides',featured:false,stock:'coming_soon',stockCount:0,releaseLabel:'Coming soon',coaLabel:'Awaiting COA',coa:{lab:'Janoshik Analytical',method:'MS',status:'PENDING'}},
   NJ500:{id:'NJ500',slug:'nad-500mg',name:'NAD+ 500MG',shortName:'NAD+',description:'High-purity coenzyme.',purity:'99%+',batch:'NJ500-2026-05-D',price:44.99,reviewCount:0,image:'./images/nad-single.jpg',category:'coenzymes',featured:false,stock:'coming_soon',stockCount:0,releaseLabel:'Coming soon',coaLabel:'Awaiting COA',coa:{lab:'Janoshik Analytical',method:'HPLC',status:'PENDING'}},
-  WA10:{id:'WA10',slug:'bac-water',name:'BAC WATER',shortName:'BAC',description:'Sterile bacteriostatic water.',purity:'Sterile',batch:'WA10-2026-05-E',price:8.99,reviewCount:0,image:'./images/bac-water-box.jpg',category:'support',featured:false,stock:'in_stock',stockCount:48,coa:{lab:'UKMAXX Internal QC',method:'Sterility',status:'VERIFIED'}}
+  WA10:{id:'WA10',slug:'bac-water',name:'BAC WATER',shortName:'BAC',description:'Bacteriostatic water for laboratory reconstitution.',purity:'UKMAXX Internal QC',batch:'WA10-2026-05-E',price:8.99,reviewCount:0,image:'./images/bac-water-box.jpg',category:'support',featured:false,stock:'in_stock',stockCount:48,coa:{lab:'UKMAXX Internal QC',method:'Internal QC',status:'VERIFIED'},coaLabel:'UKMAXX Internal QC'}
 };
 
 export const COA = {'RT10-2026-06-A':{sample:'Retatrutide 10mg',purity:'99.223%',method:'UPLC/MS',lab:'Janoshik Analytical',url:'https://verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42'}};
@@ -26,6 +26,11 @@ export function getCoaStatusLabel(product) {
   if (product.coaLabel) return product.coaLabel;
   return product.coa?.status === 'VERIFIED' ? 'COA verified' : 'Awaiting COA';
 }
+export function getQualityLabel(product) {
+  if (!product) return 'Quality pending';
+  if (product.id === 'WA10') return 'UKMAXX Internal QC';
+  return isPurchasable(product) ? `${product.purity} purity` : getCoaStatusLabel(product);
+}
 export const CATEGORIES = [
   {id:'all',label:'All Products'},
   {id:'peptides',label:'Peptides'},
@@ -46,7 +51,7 @@ export const DETAIL_DATA = {
   IP5:{science:'Ipamorelin is a selective growth hormone secretagogue and ghrelin receptor agonist. Research focus includes GH pulse stimulation, IGF-1 pathway modulation, and metabolic signalling. Notable for high selectivity with minimal cortisol or prolactin interference in research models.',specs:'Form: Lyophilised peptide\nDose: 5mg per vial\nPurity: 99%+ (mass spectrometry verified)\nStorage: -20°C (unopened) / 4°C (reconstituted, use within 28 days)\nReconstitution: Add 2ml bacteriostatic water slowly. Swirl gently.\nShelf life: 24 months unopened',coa:'Lab: Janoshik Analytical\nBatch: IPA-2026-05-A\nMethod: MS\nDate: May 2026\nPurity: 99%+'},
   NJ500:{science:'Nicotinamide adenine dinucleotide (NAD+) is a coenzyme central to cellular energy metabolism and redox reactions. Research applications include mitochondrial function studies, sirtuin pathway activation, and DNA repair mechanism research.',specs:'Form: Lyophilised powder\nDose: 500mg per vial\nPurity: 99%+ (identity verified)\nStorage: -20°C (unopened) / 4°C (reconstituted, use within 7 days)\nReconstitution: Add sterile water or BAC water. Dissolve fully before use. Do not shake.\nShelf life: 24 months unopened',coa:'Lab: Janoshik Analytical\nBatch: NJ500-2026-05-A\nMethod: Identity verification\nDate: May 2026\nPurity: 99%+'},
   RT10X3:{science:'Retatrutide 10mg · 3-pack research bundle. Contains three 10mg vials of third-party COA-verified Retatrutide peptide at 99%+ purity (UPLC/MS), supplied alongside three 10ml vials of bacteriostatic water for laboratory reconstitution.',specs:'Bundle contents: 3x Retatrutide 10mg vials + 3x Bacteriostatic Water 10ml vials\nDose per vial: 10mg lyophilised peptide\nPurity: 99%+ (UPLC/MS verified)\nLab: Janoshik Analytical\nStorage: -20°C (unopened) / 4°C (reconstituted, use within 28 days)\nReconstitution: Add 2ml bacteriostatic water slowly down vial wall. Swirl gently.\nShelf life: 24 months unopened',coa:'Lab: Janoshik Analytical\nMethod: UPLC/MS (GLP-1 blind test)\nDate: 22 Jun 2026\nPurity: 99.223%\nBundle SKU: RT10-2026-06-A\nVerify: https://verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42'},
-  WA10:{science:'Bacteriostatic water is sterile water containing 0.9% benzyl alcohol, which inhibits bacterial growth. Used as a reconstitution solvent for lyophilised peptide compounds in laboratory settings. Multi-draw safe due to bacteriostatic properties.',specs:'Form: Sterile aqueous solution\nVolume: 10ml per vial\nComposition: 0.9% benzyl alcohol in water for injection\nStorage: Room temperature (unopened) / 4°C (opened)\nShelf life: 24 months unopened / 28 days opened',coa:'Standard: Sterility confirmed\nBatch: BW-2026-05-A'}
+  WA10:{science:'Bacteriostatic water containing 0.9% benzyl alcohol for laboratory reconstitution workflows. Multi-draw safe due to bacteriostatic properties.',specs:'Form: Aqueous solution\nVolume: 10ml per vial\nComposition: 0.9% benzyl alcohol in water for injection\nStorage: Room temperature (unopened) / 4°C (opened)\nShelf life: 24 months unopened / 28 days opened',coa:'QC: UKMAXX Internal QC\nBatch: WA10-2026-05-E'}
 };
 
 export const SAMPLE_REVIEWS = [];

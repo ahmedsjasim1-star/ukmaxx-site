@@ -1,5 +1,5 @@
 import { requireAuth } from './auth.js';
-import { PRODUCTS, DETAIL_DATA, SAMPLE_REVIEWS, getCoaStatusLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
+import { PRODUCTS, DETAIL_DATA, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 
@@ -36,7 +36,7 @@ export function renderProductDetail() {
       </div>
       <div class="pd-desc">${p.description}</div>
       <div class="pd-attrs">
-        <div class="pd-attr"><strong>Purity</strong><span>${purchasable ? p.purity : getCoaStatusLabel(p)}</span></div>
+        <div class="pd-attr"><strong>Quality</strong><span>${getQualityLabel(p)}</span></div>
         <div class="pd-attr"><strong>Batch</strong><span>${p.batch}</span></div>
         <div class="pd-attr"><strong>Lab</strong><span>${purchasable ? p.coa.lab : 'Awaiting COA'}</span></div>
         <div class="pd-attr"><strong>Method</strong><span>${purchasable ? p.coa.method : getReleaseLabel(p)}</span></div>
@@ -53,7 +53,7 @@ export function renderProductDetail() {
     </div>
     <div class="pd-tab-content is-active" data-tab="science"><p>${(d.science || 'Research data available upon request.')}</p></div>
     <div class="pd-tab-content" data-tab="specs"><pre class="pd-pre">${(d.specs || 'Specifications available upon request.')}</pre></div>
-    <div class="pd-tab-content" data-tab="coa"><pre class="pd-pre">${(p.coaUrl ? d.coa : 'Awaiting COA — Third-party certificate of analysis pending for this product.')}</pre></div>
+    <div class="pd-tab-content" data-tab="coa"><pre class="pd-pre">${(p.coaUrl || p.coa?.status === 'VERIFIED' ? d.coa : 'Awaiting COA — Third-party certificate of analysis pending for this product.')}</pre></div>
   </div>`;
   container.querySelectorAll('.pd-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -154,7 +154,7 @@ function renderPdpProduct(root) {
   const specsMini = byId('pdpSpecsMini');
   if (specsMini) {
     specsMini.innerHTML = purchasable
-      ? '<span>Purity: <strong>' + p.purity + '</strong></span><span>Batch: <strong>' + p.batch + '</strong></span><span>Lab: <strong>' + p.coa.lab + '</strong></span>'
+      ? '<span>Quality: <strong>' + getQualityLabel(p) + '</strong></span><span>Batch: <strong>' + p.batch + '</strong></span><span>Lab: <strong>' + p.coa.lab + '</strong></span>'
       : '<span>Status: <strong>' + getReleaseLabel(p) + '</strong></span><span>COA: <strong>' + getCoaStatusLabel(p) + '</strong></span>';
   }
 
@@ -240,15 +240,17 @@ function renderPdpProduct(root) {
   const overviewText = byId('pdpOverviewText');
   if (overviewText) {
     overviewText.innerHTML = purchasable
-      ? '<p>' + p.description + '</p><p>Each vial independently tested by <strong>' + p.coa.lab + '</strong> using <strong>' + p.coa.method + '</strong>. Purity verified at <strong>' + p.purity + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>'
+      ? (p.id === 'WA10'
+        ? '<p>' + p.description + '</p><p>Quality: <strong>' + getQualityLabel(p) + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>'
+        : '<p>' + p.description + '</p><p>Each vial independently tested by <strong>' + p.coa.lab + '</strong> using <strong>' + p.coa.method + '</strong>. Purity verified at <strong>' + p.purity + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>')
       : '<p>' + p.description + '</p><p><strong>' + getReleaseLabel(p) + '.</strong> This product is awaiting its COA before release, so ordering is disabled until the batch documentation is ready.</p>';
   }
   const featureList = byId('pdpFeatureList');
   if (featureList) {
     let features = [
       '1\u00D7 ' + p.name + ' vial',
-      purchasable ? 'Batch ' + p.batch + ' \u2014 ' + p.purity + ' purity' : getReleaseLabel(p),
-      purchasable ? 'COA verified by ' + p.coa.lab + ' (' + p.coa.method + ')' : getCoaStatusLabel(p),
+      purchasable ? 'Batch ' + p.batch + ' \u2014 ' + (p.id === 'WA10' ? getQualityLabel(p) : p.purity + ' purity') : getReleaseLabel(p),
+      purchasable ? (p.id === 'WA10' ? getQualityLabel(p) : 'COA verified by ' + p.coa.lab + ' (' + p.coa.method + ')') : getCoaStatusLabel(p),
       'Insulated cold-chain packaging',
       'Free UK Tracked 24 over \u00A3100'
     ];
@@ -272,7 +274,7 @@ function renderPdpProduct(root) {
 
   const coaRows = byId('pdpCoaRows');
   if (coaRows) {
-    if (d.coa && p.coaUrl) {
+    if (d.coa && (p.coaUrl || p.coa?.status === 'VERIFIED')) {
       coaRows.innerHTML = d.coa.split('\n').map(function (line) {
         var parts = line.split(':');
         if (parts.length < 2) return '';
@@ -293,7 +295,9 @@ function renderPdpProduct(root) {
   var coaViewBtn = byId('pdpCoaView');
   var coaCtaWrap = coaViewBtn ? coaViewBtn.closest('.pdp-coa-cta') : null;
   if (!p.coaUrl && !p.coaImage) {
-    if (coaCtaWrap) coaCtaWrap.innerHTML = '<div class="left"><strong>Awaiting COA</strong> Certificate of analysis pending for this product.</div>';
+    if (coaCtaWrap) coaCtaWrap.innerHTML = p.coa?.status === 'VERIFIED'
+      ? '<div class="left"><strong>' + getQualityLabel(p) + '</strong> Batch quality details are listed above.</div>'
+      : '<div class="left"><strong>Awaiting COA</strong> Certificate of analysis pending for this product.</div>';
   } else if (coaViewBtn) {
     coaViewBtn.addEventListener('click', function () {
       if (p.coaUrl) { window.open(p.coaUrl, '_blank', 'noopener'); return; }

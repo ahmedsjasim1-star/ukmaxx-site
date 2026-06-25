@@ -23,8 +23,8 @@
 .badge-new{background:#fff;color:var(--text);border:1px solid var(--border)}
 .badge-stock{background:rgba(15,138,79,.10);color:var(--success);border:1px solid rgba(15,138,79,.25)}
 .badge-low{background:rgba(180,83,9,.10);color:var(--warning);border:1px solid rgba(180,83,9,.25)}
-.badge-coming{background:rgba(10,126,140,.10);color:var(--accent);border:1px solid rgba(10,126,140,.25)}
-.badge-awaiting{background:rgba(180,83,9,.10);color:var(--warning);border:1px solid rgba(180,83,9,.25)}
+.badge-coming{background:#0a7e8c;color:#fff;border:1px solid rgba(255,255,255,.55);box-shadow:0 5px 14px rgba(4,31,35,.18)}
+.badge-awaiting{background:#d97706;color:#fff;border:1px solid rgba(255,255,255,.60);box-shadow:0 5px 14px rgba(76,29,0,.20)}
 .badge-sale{background:var(--danger);color:#fff}
 .badge-coa{background:var(--accent-light);color:var(--accent);border:1px solid var(--accent)}
 
