@@ -1,10 +1,10 @@
 import { renderProducts } from './modules/products.js';
 import { renderReviews } from './modules/reviews.js?v=20260623-trustpilot';
-import { renderCart, initCart } from './modules/cart.js?v=20260623-guest-checkout';
+import { renderCart, initCart } from './modules/cart.js?v=20260625-promo-fix';
 import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js';
 import { setupLightbox } from './modules/lightbox.js';
-import { setupExitIntent } from './modules/exitIntent.js';
+import { setupExitIntent } from './modules/exitIntent.js?v=20260625-alerts';
 import { setupCookieBanner } from './modules/cookieBanner.js';
 import { setupNewsletter } from './modules/newsletter.js';
 import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js';

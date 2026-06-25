@@ -2,7 +2,7 @@ import { toast } from './toast.js';
 import { getCurrentUser } from './auth.js';
 import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money } from '../utils/money.js';
-import { getStorage, setStorage, getRaw } from '../utils/storage.js';
+import { getStorage, setStorage, getRaw, setRaw, removeStorage } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
 import { getSupabase } from '../data/supabase.js';
 
@@ -36,9 +36,18 @@ function sanitizeCart(arr = []) {
 function getCart() { return sanitizeCart(getStorage(CART_KEY) || []); }
 function setCart(c) { setStorage(CART_KEY, sanitizeCart(c)); }
 
+function getPromoCode() {
+  const raw = getRaw(PROMO_KEY) || '';
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === 'string') return parsed.trim().toUpperCase();
+  } catch {}
+  return String(raw).trim().toUpperCase();
+}
+
 function cartTotals(c) {
   const sub = c.reduce((a, b) => a + PRODUCTS[b.sku].price * b.qty, 0);
-  const code = (getRaw(PROMO_KEY) || '').toUpperCase();
+  const code = getPromoCode();
   const promo = PROMOS[code];
   const discount = promo ? (promo.type === 'percent' ? sub * promo.value : promo.value) : 0;
   const discounted = sub - discount;
@@ -229,7 +238,7 @@ async function startCheckout() {
   const user = getCurrentUser();
   const email = user?.email || '';
   const fullName = (user?.user_metadata?.first_name || '') + ' ' + (user?.user_metadata?.last_name || '');
-  const promoCode = (getRaw(PROMO_KEY) || '').toUpperCase();
+  const promoCode = getPromoCode();
   const err = byId('checkoutError');
   const payBtn = byId('payBtn');
   if (err) { err.classList.remove('is-shown'); err.textContent = ''; }
@@ -338,11 +347,11 @@ export function initCart() {
     const msg = byId('promoMsg');
     const code = (input?.value || '').trim().toUpperCase();
     if (PROMOS[code]) {
-      setStorage(PROMO_KEY, code);
+      setRaw(PROMO_KEY, code);
       if (msg) { msg.textContent = `${code} applied — ${PROMOS[code].label}`; msg.classList.add('is-success'); }
       toast('Promo applied', `${code}: ${PROMOS[code].label}`);
     } else {
-      setStorage(PROMO_KEY, null);
+      removeStorage(PROMO_KEY);
       if (msg) { msg.textContent = code ? 'Invalid promo code.' : 'Promo removed.'; msg.classList.remove('is-success'); }
       if (code) toast('Invalid code', 'That promo code is not recognised.', 'error');
     }

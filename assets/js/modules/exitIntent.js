@@ -1,42 +1,53 @@
 import { EXIT_KEY } from '../data/products.js';
 import { toast } from './toast.js';
-import { $, byId } from '../utils/dom.js';
+import { byId } from '../utils/dom.js';
 import { getRaw, setRaw } from '../utils/storage.js';
 
 export function setupExitIntent() {
+  const backdrop = byId('exitBackdrop');
+  const form = byId('exitForm');
+  if (!backdrop || !form) return;
   if (getRaw(EXIT_KEY)) return;
+
   let shown = false;
   const show = () => {
     if (shown) return;
     shown = true;
-    byId('exitBackdrop').classList.add('is-open');
-    byId('exitBackdrop').setAttribute('aria-hidden', 'false');
+    backdrop.classList.add('is-open');
+    backdrop.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
   };
+
   const close = () => {
-    byId('exitBackdrop').classList.remove('is-open');
-    byId('exitBackdrop').setAttribute('aria-hidden', 'true');
+    backdrop.classList.remove('is-open');
+    backdrop.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
     setRaw(EXIT_KEY, '1');
   };
+
   byId('exitClose')?.addEventListener('click', close);
-  byId('exitBackdrop')?.addEventListener('click', (e) => { if (e.target === byId('exitBackdrop')) close(); });
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
 
   document.addEventListener('mouseout', (e) => { if (e.clientY <= 0 && !shown) show(); });
 
-  let dwellTimer = setTimeout(() => { if (!shown) show(); }, 30000);
+  const dwellTimer = setTimeout(() => { if (!shown) show(); }, 30000);
   document.addEventListener('scroll', () => {
     const atBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200;
     if (atBottom && !shown) { clearTimeout(dwellTimer); show(); }
   }, { passive: true });
 
-  byId('exitForm')?.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const em = byId('exitEmail').value.trim();
-    if (!em) return;
+    const email = byId('exitEmail')?.value.trim();
+    if (!email) return;
     try {
-      await fetch('/api/subscribe-notify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: em, topics: ['restock', 'batch_updates', 'promo'], hp: '' }) });
-      toast('Code sent!', 'Check your inbox for WELCOME10 — valid for 14 days.');
+      const res = await fetch('/api/subscribe-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, topics: ['restock', 'batch_updates'], hp: '' })
+      });
+      if (!res.ok) throw new Error('subscribe_failed');
+      toast('You’re on the list', 'We’ll email important restock and batch-release updates.');
       close();
     } catch {
       toast('Try again', 'Unable to subscribe. Please try again later.', 'error');
