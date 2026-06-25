@@ -13,7 +13,7 @@ const TELEGRAM_API = 'https://api.telegram.org/bot';
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = process.env.TELEGRAM_ADMIN_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
   const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
   const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET || '';
   const suppliedSecret = String(req.headers['x-telegram-bot-api-secret-token'] || '');
@@ -69,6 +69,10 @@ module.exports = async (req, res) => {
         await handleRefund(token, chatId, args);
         break;
 
+      case '/review':
+        await handleReview(token, chatId, args);
+        break;
+
       default:
         await sendTelegram(token, chatId, `Unknown command: ${cmd}\n\n${HELP_TEXT}`);
     }
@@ -94,7 +98,10 @@ const HELP_TEXT = `<b>UKMAXX Admin Bot</b>
    Cancel order (auto-refunds if paid)
 
 /refund &lt;orderNumber&gt; [reason]
-   Process Stripe refund`;
+   Process Stripe refund
+
+/review &lt;orderNumber&gt;
+   Send the Trustpilot review request email`;
 
 /* ---------- Send Telegram helper ---------- */
 
@@ -188,6 +195,41 @@ async function handleDeliver(token, chatId, args) {
   });
 
   await sendTelegram(token, chatId, `✅ <b>Order delivered</b>\nOrder: ${orderNumber}\nEmail sent to ${order.email}`);
+}
+
+/* ---------- /review ---------- */
+
+async function handleReview(token, chatId, args) {
+  const orderNumber = args[0];
+  if (!orderNumber) return sendTelegram(token, chatId, 'Usage: /review &lt;orderNumber&gt;');
+
+  const supabase = getSupabaseAdmin();
+  const order = await findOrder(supabase, orderNumber);
+  if (!order) return sendTelegram(token, chatId, '❌ Order not found.');
+  if (order.status !== 'delivered') {
+    return sendTelegram(token, chatId, `❌ Cannot send review request for status "${order.status}". Mark the order delivered first.`);
+  }
+  if (order.review_request_sent_at) {
+    return sendTelegram(token, chatId, `❌ Review request was already sent for ${orderNumber}.`);
+  }
+
+  const items = await getItems(supabase, order.id);
+  const now = new Date().toISOString();
+
+  await sendReviewRequestEmail({
+    to: order.email,
+    orderNumber: order.order_number,
+    items,
+  });
+
+  await supabase.from('orders').update({ review_request_sent_at: now }).eq('id', order.id);
+
+  await supabase.from('admin_audit_log').insert({
+    action: 'review_request_sent', order_id: order.id,
+    payload: { order_number: orderNumber, source: 'telegram_bot' },
+  });
+
+  await sendTelegram(token, chatId, `✅ <b>Review request sent</b>\nOrder: ${orderNumber}\nEmail sent to ${order.email}`);
 }
 
 /* ---------- /cancel ---------- */
