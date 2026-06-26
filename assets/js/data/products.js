@@ -27,6 +27,10 @@ export function syncBundleStock(source = PRODUCTS) {
   });
 }
 
+function canUseLiveStock(product) {
+  return Boolean(product && !product.releaseLabel && product.coa?.status === 'VERIFIED');
+}
+
 export async function refreshLiveStock() {
   try {
     const res = await fetch('/api/products-stock', { headers: { Accept: 'application/json' } });
@@ -35,6 +39,11 @@ export async function refreshLiveStock() {
     for (const item of data.products || []) {
       const sku = String(item.sku || '').toUpperCase();
       if (!PRODUCTS[sku]) continue;
+      if (!canUseLiveStock(PRODUCTS[sku])) {
+        PRODUCTS[sku].stockCount = 0;
+        PRODUCTS[sku].stock = 'coming_soon';
+        continue;
+      }
       PRODUCTS[sku].stockCount = Math.max(0, Number(item.stockCount || 0));
       PRODUCTS[sku].stock = item.isActive && PRODUCTS[sku].stockCount > 0 ? 'in_stock' : 'out_of_stock';
     }
