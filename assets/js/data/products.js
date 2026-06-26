@@ -1,11 +1,52 @@
 export const PRODUCTS = {
-  RT10:{id:'RT10',slug:'reta-10mg',name:'RETA 10MG',shortName:'RETA',description:'Lyophilised peptide compound.',purity:'99%+',batch:'RT10-2026-06-A',price:54.99,reviewCount:0,image:'./images/reta-single.jpg',category:'peptides',featured:true,stock:'in_stock',stockCount:14,coa:{lab:'Janoshik Analytical',method:'UPLC/MS',status:'VERIFIED'},coaImage:'./images/reta-coa-2026-06.png',coaUrl:'https://verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42'},
+  RT10:{id:'RT10',slug:'reta-10mg',name:'RETA 10MG',shortName:'RETA',description:'Lyophilised peptide compound.',purity:'99%+',batch:'RT10-2026-06-A',price:54.99,reviewCount:0,image:'./images/reta-single.jpg',category:'peptides',featured:true,stock:'in_stock',stockCount:19,coa:{lab:'Janoshik Analytical',method:'UPLC/MS',status:'VERIFIED'},coaImage:'./images/reta-coa-2026-06.png',coaUrl:'https://verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42'},
   RT10X3:{id:'RT10X3',slug:'reta-3-pack',name:'RETA 3-PACK',shortName:'RETA KIT',description:'3x RT10 + 3x BAC.',purity:'99%+',batch:'RT10-2026-06-A',price:149.99,originalPrice:191.96,reviewCount:0,image:'./images/reta-3pack-v2.jpg',category:'bundles',featured:true,stock:'in_stock',stockCount:6,coa:{lab:'Janoshik Analytical',method:'UPLC/MS',status:'VERIFIED'},coaImage:'./images/reta-coa-2026-06.png',coaUrl:'https://verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42'},
   BC5:{id:'BC5',slug:'bpc-157',name:'BPC 157',shortName:'BPC',description:'5mg lyophilised peptide.',purity:'99%+',batch:'BC5-2026-05-B',price:29.99,reviewCount:0,image:'./images/bpc-157.jpg',category:'peptides',featured:false,stock:'coming_soon',stockCount:0,releaseLabel:'Coming soon',coaLabel:'Awaiting COA',coa:{lab:'Janoshik Analytical',method:'HPLC',status:'PENDING'}},
   IP5:{id:'IP5',slug:'ipam-5mg',name:'IPAM 5MG',shortName:'IPAM',description:'5mg peptide.',purity:'99%+',batch:'IP5-2026-05-C',price:24.99,reviewCount:0,image:'./images/ipamorelin.jpg',category:'peptides',featured:false,stock:'coming_soon',stockCount:0,releaseLabel:'Coming soon',coaLabel:'Awaiting COA',coa:{lab:'Janoshik Analytical',method:'MS',status:'PENDING'}},
   NJ500:{id:'NJ500',slug:'nad-500mg',name:'NAD+ 500MG',shortName:'NAD+',description:'High-purity coenzyme.',purity:'99%+',batch:'NJ500-2026-05-D',price:44.99,reviewCount:0,image:'./images/nad-single.jpg',category:'coenzymes',featured:false,stock:'coming_soon',stockCount:0,releaseLabel:'Coming soon',coaLabel:'Awaiting COA',coa:{lab:'Janoshik Analytical',method:'HPLC',status:'PENDING'}},
-  WA10:{id:'WA10',slug:'bac-water',name:'BAC WATER',shortName:'BAC',description:'Bacteriostatic water for laboratory reconstitution.',purity:'UKMAXX Internal QC',batch:'WA10-2026-05-E',price:8.99,reviewCount:0,image:'./images/bac-water-box.jpg',category:'support',featured:false,stock:'in_stock',stockCount:48,coa:{lab:'UKMAXX Internal QC',method:'Internal QC',status:'VERIFIED'},coaLabel:'UKMAXX Internal QC'}
+  WA10:{id:'WA10',slug:'bac-water',name:'BAC WATER',shortName:'BAC',description:'Bacteriostatic water for laboratory reconstitution.',purity:'UKMAXX Internal QC',batch:'WA10-2026-05-E',price:8.99,reviewCount:0,image:'./images/bac-water-box.jpg',category:'support',featured:false,stock:'in_stock',stockCount:20,coa:{lab:'UKMAXX Internal QC',method:'Internal QC',status:'VERIFIED'},coaLabel:'UKMAXX Internal QC'}
 };
+
+export const BUNDLE_COMPONENTS = {
+  RT10X3: { RT10: 3, WA10: 3 },
+};
+
+export function getBundleStock(sku, source = PRODUCTS) {
+  const components = BUNDLE_COMPONENTS[sku];
+  if (!components) return Number(source[sku]?.stockCount || 0);
+  return Math.max(0, Math.min(...Object.entries(components).map(([componentSku, qty]) => {
+    return Math.floor(Number(source[componentSku]?.stockCount || 0) / qty);
+  })));
+}
+
+export function syncBundleStock(source = PRODUCTS) {
+  Object.keys(BUNDLE_COMPONENTS).forEach((sku) => {
+    if (!source[sku]) return;
+    source[sku].stockCount = getBundleStock(sku, source);
+    source[sku].stock = source[sku].stockCount > 0 ? 'in_stock' : 'out_of_stock';
+  });
+}
+
+export async function refreshLiveStock() {
+  try {
+    const res = await fetch('/api/products-stock', { headers: { Accept: 'application/json' } });
+    if (!res.ok) return false;
+    const data = await res.json();
+    for (const item of data.products || []) {
+      const sku = String(item.sku || '').toUpperCase();
+      if (!PRODUCTS[sku]) continue;
+      PRODUCTS[sku].stockCount = Math.max(0, Number(item.stockCount || 0));
+      PRODUCTS[sku].stock = item.isActive && PRODUCTS[sku].stockCount > 0 ? 'in_stock' : 'out_of_stock';
+    }
+    syncBundleStock();
+    return true;
+  } catch {
+    syncBundleStock();
+    return false;
+  }
+}
+
+syncBundleStock();
 
 export const COA = {'RT10-2026-06-A':{sample:'Retatrutide 10mg',purity:'99.223%',method:'UPLC/MS',lab:'Janoshik Analytical',url:'https://verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42'}};
 

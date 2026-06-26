@@ -73,6 +73,18 @@ module.exports = async (req, res) => {
         await handleReview(token, chatId, args);
         break;
 
+      case '/stock':
+        await handleStock(token, chatId);
+        break;
+
+      case '/setstock':
+        await handleSetStock(token, chatId, args);
+        break;
+
+      case '/addstock':
+        await handleAddStock(token, chatId, args);
+        break;
+
       default:
         await sendTelegram(token, chatId, `Unknown command: ${cmd}\n\n${HELP_TEXT}`);
     }
@@ -102,7 +114,16 @@ const HELP_TEXT = `<b>UKMAXX Admin Bot</b>
    Process Stripe refund
 
 /review &lt;orderNumber&gt;
-   Send the Trustpilot review request email`;
+   Send the Trustpilot review request email
+
+/stock
+   Show live stock
+
+/setstock &lt;sku&gt; &lt;quantity&gt;
+   Set base stock. Example: /setstock RT10 19
+
+/addstock &lt;sku&gt; &lt;quantity&gt;
+   Add stock. Example: /addstock WA10 20`;
 
 /* ---------- Send Telegram helper ---------- */
 
@@ -132,6 +153,107 @@ async function getItems(supabase, orderId) {
     .select('product_name, sku, qty, line_total')
     .eq('order_id', orderId);
   return items || [];
+}
+
+const BUNDLE_COMPONENTS = {
+  RT10X3: { RT10: 3, WA10: 3 },
+};
+
+function calculateBundleStock(productsBySku, sku) {
+  const components = BUNDLE_COMPONENTS[sku];
+  if (!components) return Number(productsBySku.get(sku)?.stock_quantity || 0);
+  return Math.max(0, Math.min(...Object.entries(components).map(([componentSku, qty]) => {
+    return Math.floor(Number(productsBySku.get(componentSku)?.stock_quantity || 0) / qty);
+  })));
+}
+
+async function getStockProducts(supabase) {
+  const { data, error } = await supabase
+    .from('products')
+    .select('sku,name,stock_quantity,is_active')
+    .in('sku', ['RT10', 'WA10', 'RT10X3', 'BC5', 'IP5', 'NJ500'])
+    .order('sku', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+/* ---------- /stock ---------- */
+
+async function handleStock(token, chatId) {
+  const supabase = getSupabaseAdmin();
+  const products = await getStockProducts(supabase);
+  const bySku = new Map(products.map((product) => [product.sku, product]));
+  const bundleStock = calculateBundleStock(bySku, 'RT10X3');
+  const lines = [
+    '<b>UKMAXX Live Stock</b>',
+    '',
+    `RETA 10MG (RT10): <b>${Number(bySku.get('RT10')?.stock_quantity || 0)}</b>`,
+    `BAC Water (WA10): <b>${Number(bySku.get('WA10')?.stock_quantity || 0)}</b>`,
+    `RETA 3-Pack (RT10X3): <b>${bundleStock}</b> bundles available`,
+    '',
+    'Bundle stock is calculated from 3x RT10 + 3x WA10.',
+  ];
+  await sendTelegram(token, chatId, lines.join('\n'));
+}
+
+/* ---------- /setstock ---------- */
+
+async function handleSetStock(token, chatId, args) {
+  const sku = String(args[0] || '').trim().toUpperCase();
+  const qty = Number(args[1]);
+  if (!sku || !Number.isSafeInteger(qty) || qty < 0 || qty > 10000) {
+    return sendTelegram(token, chatId, 'Usage: /setstock &lt;sku&gt; &lt;quantity&gt;\nExample: /setstock RT10 19');
+  }
+  if (BUNDLE_COMPONENTS[sku]) {
+    return sendTelegram(token, chatId, '❌ Bundle stock is calculated automatically. Set RT10 and WA10 instead.');
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from('products')
+    .update({ stock_quantity: qty, updated_at: new Date().toISOString() })
+    .eq('sku', sku)
+    .select('sku,name,stock_quantity')
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return sendTelegram(token, chatId, `❌ Unknown SKU: ${sku}`);
+
+  await sendTelegram(token, chatId, `✅ <b>Stock updated</b>\n${data.name} (${data.sku}): ${data.stock_quantity}`);
+  await handleStock(token, chatId);
+}
+
+/* ---------- /addstock ---------- */
+
+async function handleAddStock(token, chatId, args) {
+  const sku = String(args[0] || '').trim().toUpperCase();
+  const addQty = Number(args[1]);
+  if (!sku || !Number.isSafeInteger(addQty) || addQty <= 0 || addQty > 10000) {
+    return sendTelegram(token, chatId, 'Usage: /addstock &lt;sku&gt; &lt;quantity&gt;\nExample: /addstock WA10 20');
+  }
+  if (BUNDLE_COMPONENTS[sku]) {
+    return sendTelegram(token, chatId, '❌ Bundle stock is calculated automatically. Add RT10 and WA10 instead.');
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data: current, error: currentError } = await supabase
+    .from('products')
+    .select('sku,name,stock_quantity')
+    .eq('sku', sku)
+    .maybeSingle();
+  if (currentError) throw currentError;
+  if (!current) return sendTelegram(token, chatId, `❌ Unknown SKU: ${sku}`);
+
+  const nextQty = Number(current.stock_quantity || 0) + addQty;
+  const { data, error } = await supabase
+    .from('products')
+    .update({ stock_quantity: nextQty, updated_at: new Date().toISOString() })
+    .eq('sku', sku)
+    .select('sku,name,stock_quantity')
+    .maybeSingle();
+  if (error) throw error;
+
+  await sendTelegram(token, chatId, `✅ <b>Stock added</b>\n${data.name} (${data.sku}): ${current.stock_quantity} → ${data.stock_quantity}`);
+  await handleStock(token, chatId);
 }
 
 /* ---------- /dispatch ---------- */

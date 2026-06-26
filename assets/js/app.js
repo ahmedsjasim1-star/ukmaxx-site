@@ -12,10 +12,12 @@ import { setupTracking } from './modules/tracking.js';
 import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js';
 import { setupAccountPage } from './modules/account.js';
 import { updateHeroBatchChips } from './modules/heroBatch.js';
+import { refreshLiveStock } from './data/products.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initAuth();
   initAgeGate();
+  await refreshLiveStock();
   updateHeroBatchChips();
   renderProducts();
   renderReviews();

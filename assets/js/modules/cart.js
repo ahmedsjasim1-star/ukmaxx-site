@@ -28,9 +28,10 @@ function sanitizeCart(arr = []) {
     const sku = normalizeSku(i?.sku || '');
     const qty = Math.max(0, Number(i?.qty || 0));
     if (!sku || !PRODUCTS[sku] || !isPurchasable(PRODUCTS[sku]) || !qty) return;
-    map.set(sku, (map.get(sku) || 0) + qty);
+    const maxQty = Math.max(0, Number(PRODUCTS[sku].stockCount || 0));
+    map.set(sku, Math.min(maxQty, (map.get(sku) || 0) + qty));
   });
-  return [...map.entries()].map(([sku, qty]) => ({ sku, qty }));
+  return [...map.entries()].filter(([, qty]) => qty > 0).map(([sku, qty]) => ({ sku, qty }));
 }
 
 function getCart() { return sanitizeCart(getStorage(CART_KEY) || []); }
@@ -177,6 +178,11 @@ export function addSku(s) {
   }
   const c = getCart();
   const f = c.find(x => x.sku === s);
+  const maxQty = Math.max(1, Number(p.stockCount || 1));
+  if (f && f.qty >= maxQty) {
+    toast('Stock limit reached', `Only ${maxQty} ${p.category === 'bundles' ? 'bundles' : 'available'} right now.`, 'error');
+    return;
+  }
   if (f) f.qty++; else c.push({ sku: s, qty: 1 });
   setCart(c);
   renderCart();
@@ -192,7 +198,9 @@ export function addSkuQty(s, qty) {
   const num = Math.max(1, Math.min(99, Number(qty) || 1));
   const c = getCart();
   const f = c.find(x => x.sku === s);
-  if (f) f.qty += num; else c.push({ sku: s, qty: num });
+  const maxQty = Math.max(1, Number(p.stockCount || 1));
+  const nextQty = Math.min(maxQty, (f?.qty || 0) + num);
+  if (f) f.qty = nextQty; else c.push({ sku: s, qty: Math.min(maxQty, num) });
   setCart(c);
   renderCart();
   if (p) toast('Added to basket', `${num}× ${p.name} added.`);
@@ -203,6 +211,7 @@ function chg(s, d) {
   const f = c.find(x => x.sku === s);
   if (!f) return;
   f.qty += d;
+  f.qty = Math.min(f.qty, Math.max(1, Number(PRODUCTS[s]?.stockCount || 1)));
   if (f.qty <= 0) c.splice(c.indexOf(f), 1);
   setCart(c);
   renderCart();

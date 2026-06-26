@@ -40,7 +40,7 @@ export function renderProductDetail() {
         <div class="pd-attr"><strong>Batch</strong><span>${p.batch}</span></div>
         <div class="pd-attr"><strong>Lab</strong><span>${purchasable ? p.coa.lab : 'Awaiting COA'}</span></div>
         <div class="pd-attr"><strong>Method</strong><span>${purchasable ? p.coa.method : getReleaseLabel(p)}</span></div>
-        <div class="pd-attr"><strong>Status</strong><span class="stock-${p.stock}">${purchasable ? `${p.stockCount} vials` : getReleaseLabel(p)}</span></div>
+        <div class="pd-attr"><strong>Status</strong><span class="stock-${p.stock}">${purchasable ? `${p.stockCount} ${p.category === 'bundles' ? 'bundles' : 'vials'}` : getReleaseLabel(p)}</span></div>
       </div>
       <button class="btn btn-dark btn-lg" ${purchasable ? `data-add="${p.id}"` : 'disabled aria-disabled="true"'}>${purchasable ? `Add to basket — ${money(p.price)}` : `${getReleaseLabel(p)} — ${getCoaStatusLabel(p)}`}</button>
     </div>
@@ -147,7 +147,7 @@ function renderPdpProduct(root) {
   setText('pdpRating', hasReviews ? rating.toFixed(1) : 'New batch');
   setText('pdpReviewCount', hasReviews ? p.reviewCount + ' reviews' : 'Awaiting verified reviews');
   setText('pdpStockText', purchasable ? 'In stock' : getReleaseLabel(p));
-  setText('pdpStockSub', purchasable ? '\u00B7 ' + p.stockCount + ' vials ready' : '\u00B7 ' + getCoaStatusLabel(p));
+  setText('pdpStockSub', purchasable ? '\u00B7 ' + p.stockCount + ' ' + (p.category === 'bundles' ? 'bundles' : 'vials') + ' ready' : '\u00B7 ' + getCoaStatusLabel(p));
   const stockDot = $('.pdp-stock-dot', root);
   if (stockDot) stockDot.className = 'pdp-stock-dot stock-' + p.stock;
 

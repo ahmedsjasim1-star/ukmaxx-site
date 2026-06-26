@@ -3,6 +3,9 @@ const { getSupabaseAdmin } = require('./_lib/supabase');
 
 const SITE_URL = process.env.SITE_URL || 'https://www.ukmaxx.co.uk';
 const COA_PENDING_SKUS = new Set(['BC5', 'IP5', 'NJ500']);
+const BUNDLE_COMPONENTS = {
+  RT10X3: { RT10: 3, WA10: 3 },
+};
 
 function getBearerToken(req) {
   const value = String(req.headers.authorization || '');
@@ -18,6 +21,17 @@ function normalizeCart(cartItems) {
     quantities.set(sku, (quantities.get(sku) || 0) + qty);
   }
   return [...quantities].map(([sku, qty]) => ({ sku, qty })).filter((item) => item.qty <= 50);
+}
+
+function addRequiredStock(requirements, sku, qty) {
+  const components = BUNDLE_COMPONENTS[sku];
+  if (components) {
+    for (const [componentSku, componentQty] of Object.entries(components)) {
+      requirements.set(componentSku, (requirements.get(componentSku) || 0) + componentQty * qty);
+    }
+    return;
+  }
+  requirements.set(sku, (requirements.get(sku) || 0) + qty);
 }
 
 module.exports = async (req, res) => {
@@ -39,7 +53,9 @@ module.exports = async (req, res) => {
     const normalized = normalizeCart(req.body?.cartItems);
     if (!normalized.length) return res.status(400).json({ error: 'Cart is empty or invalid' });
 
-    const skus = normalized.map((item) => item.sku);
+    const stockRequirements = new Map();
+    normalized.forEach((item) => addRequiredStock(stockRequirements, item.sku, item.qty));
+    const skus = [...new Set([...normalized.map((item) => item.sku), ...stockRequirements.keys()])];
     const { data: products, error: productsError } = await supabase
       .from('products')
       .select('sku,name,price,stock_quantity,is_active')
@@ -53,9 +69,6 @@ module.exports = async (req, res) => {
       const product = bySku.get(item.sku);
       if (!product || !product.is_active) return res.status(400).json({ error: `Unavailable SKU: ${item.sku}` });
       if (COA_PENDING_SKUS.has(item.sku)) return res.status(400).json({ error: `${item.sku} is coming soon and awaiting COA` });
-      if (Number(product.stock_quantity) < item.qty) {
-        return res.status(409).json({ error: `Insufficient stock for ${item.sku}` });
-      }
       const unitAmount = Math.round(Number(product.price) * 100);
       subtotalPence += unitAmount * item.qty;
       lineItems.push({
@@ -66,6 +79,13 @@ module.exports = async (req, res) => {
         },
         quantity: item.qty,
       });
+    }
+    for (const [sku, qty] of stockRequirements.entries()) {
+      const product = bySku.get(sku);
+      if (!product || !product.is_active) return res.status(400).json({ error: `Unavailable SKU: ${sku}` });
+      if (Number(product.stock_quantity) < qty) {
+        return res.status(409).json({ error: `Insufficient stock for ${sku}` });
+      }
     }
 
     const email = String(authData?.user?.email || '').trim().toLowerCase();

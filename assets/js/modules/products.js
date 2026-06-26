@@ -7,8 +7,9 @@ const CATS = CATEGORIES;
 function productCard(p, bundle = false) {
   const purchasable = isPurchasable(p);
   const stockLow = p.stockCount && p.stockCount <= 10;
+  const stockUnit = p.category === 'bundles' ? 'bundles' : 'left';
   const stockBadge = purchasable
-    ? (stockLow ? `<span class="badge badge-low">Only ${p.stockCount} left</span>` : `<span class="badge badge-stock">In stock</span>`)
+    ? (stockLow ? `<span class="badge badge-low">Only ${p.stockCount} ${stockUnit}</span>` : `<span class="badge badge-stock">In stock</span>`)
     : `<span class="badge badge-coming">${getReleaseLabel(p)}</span>`;
   const coaBadge = !p.coaUrl && !purchasable ? `<span class="badge badge-awaiting">${getCoaStatusLabel(p)}</span>` : '';
   const bestBadge = p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Top seller'}</span>` : '';
