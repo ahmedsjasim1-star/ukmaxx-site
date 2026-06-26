@@ -88,8 +88,9 @@ module.exports = async (req, res) => {
 
 const HELP_TEXT = `<b>UKMAXX Admin Bot</b>
 
-/dispatch &lt;orderNumber&gt; [trackingNumber]
-   Mark order as dispatched
+/dispatch &lt;orderNumber&gt; &lt;trackingNumber&gt;
+   Mark order as dispatched and email tracking
+   Example: /dispatch UKM-12345 RM123456789GB
 
 /deliver &lt;orderNumber&gt;
    Mark order as delivered
@@ -137,9 +138,13 @@ async function getItems(supabase, orderId) {
 
 async function handleDispatch(token, chatId, args) {
   const orderNumber = args[0];
-  if (!orderNumber) return sendTelegram(token, chatId, 'Usage: /dispatch &lt;orderNumber&gt; [trackingNumber]');
+  if (!orderNumber) return sendTelegram(token, chatId, 'Usage: /dispatch &lt;orderNumber&gt; &lt;trackingNumber&gt;\nExample: /dispatch UKM-12345 RM123456789GB');
 
-  const trackingNumber = args.slice(1).join(' ') || null;
+  const trackingNumber = args.slice(1).join(' ').trim().replace(/\s+/g, '').toUpperCase();
+  if (!trackingNumber) {
+    return sendTelegram(token, chatId, `❌ Tracking number required.\n\nUse:\n/dispatch ${orderNumber} RM123456789GB\n\nNo dispatch email has been sent.`);
+  }
+
   const supabase = getSupabaseAdmin();
   const order = await findOrder(supabase, orderNumber);
   if (!order) return sendTelegram(token, chatId, '❌ Order not found.');
@@ -149,21 +154,31 @@ async function handleDispatch(token, chatId, args) {
 
   const items = await getItems(supabase, order.id);
   const now = new Date().toISOString();
+  const trackingUrl = royalMailTrackingUrl(trackingNumber);
 
-  await supabase.from('orders').update({ status: 'dispatched', tracking_number: trackingNumber, dispatched_at: now }).eq('id', order.id);
+  await supabase.from('orders').update({
+    status: 'dispatched',
+    tracking_number: trackingNumber,
+    tracking_url: trackingUrl,
+    dispatched_at: now,
+  }).eq('id', order.id);
 
   await sendOrderDispatchedEmail({
     to: order.email, orderNumber: order.order_number, items, total: order.total,
-    trackingNumber: trackingNumber || '—', expectedDate: '—', packedDate: '—',
+    trackingNumber, expectedDate: '—', packedDate: '—',
     dispatchedDate: new Date().toLocaleDateString('en-GB'),
   });
 
   await supabase.from('admin_audit_log').insert({
     action: 'order_dispatched', order_id: order.id,
-    payload: { order_number: orderNumber, tracking_number: trackingNumber, source: 'telegram_bot' },
+    payload: { order_number: orderNumber, tracking_number: trackingNumber, tracking_url: trackingUrl, source: 'telegram_bot' },
   });
 
-  await sendTelegram(token, chatId, `✅ <b>Order dispatched</b>\nOrder: ${orderNumber}\nTracking: ${trackingNumber || '—'}\nEmail sent to ${order.email}`);
+  await sendTelegram(token, chatId, `✅ <b>Order dispatched</b>\nOrder: ${orderNumber}\nTracking: ${trackingNumber}\nEmail sent to ${order.email}`);
+}
+
+function royalMailTrackingUrl(trackingNumber) {
+  return `https://www.royalmail.com/track-your-item#/tracking-results/${encodeURIComponent(trackingNumber)}`;
 }
 
 /* ---------- /deliver ---------- */
