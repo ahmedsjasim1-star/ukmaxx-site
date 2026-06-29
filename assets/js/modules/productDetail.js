@@ -251,7 +251,7 @@ function renderPdpProduct(root) {
       '1\u00D7 ' + p.name + ' vial',
       purchasable ? 'Batch ' + p.batch + ' \u2014 ' + (p.id === 'WA10' ? getQualityLabel(p) : p.purity + ' purity') : getReleaseLabel(p),
       purchasable ? (p.id === 'WA10' ? getQualityLabel(p) : 'COA verified by ' + p.coa.lab + ' (' + p.coa.method + ')') : getCoaStatusLabel(p),
-      'Insulated cold-chain packaging',
+      'Discreet, tamper-evident packaging',
       'Free UK Tracked 24 over \u00A3100'
     ];
     if (sku === 'RT10X3') { features.unshift('3\u00D7 Retatrutide 10mg vials', '3\u00D7 10ml BAC Water vials'); }
