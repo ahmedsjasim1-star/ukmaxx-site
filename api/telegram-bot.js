@@ -114,7 +114,7 @@ const HELP_TEXT = `<b>UKMAXX Admin Bot</b>
    Process Stripe refund
 
 /review &lt;orderNumber&gt;
-   Send the Trustpilot review request email
+   Send the post-delivery feedback request email
 
 /stock
    Show live stock

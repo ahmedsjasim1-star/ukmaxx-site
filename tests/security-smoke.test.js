@@ -65,16 +65,6 @@ test('Telegram endpoint is unavailable until its webhook secret is configured', 
   assert.equal(res.statusCode, 503);
 });
 
-test('Trustpilot endpoint stays safe until API configuration is added', async () => {
-  delete process.env.TRUSTPILOT_API_KEY;
-  delete process.env.TRUSTPILOT_BUSINESS_UNIT_ID;
-  const handler = require('../api/trustpilot');
-  const res = response();
-  await handler({ method: 'GET', headers: {}, body: {} }, res);
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.body.configured, false);
-});
-
 test('Stripe webhook is unavailable until both Stripe secrets are configured', async () => {
   delete process.env.STRIPE_SECRET_KEY;
   delete process.env.STRIPE_WEBHOOK_SECRET;
