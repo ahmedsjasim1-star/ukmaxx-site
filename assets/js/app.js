@@ -5,7 +5,6 @@ import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js';
 import { setupLightbox } from './modules/lightbox.js';
 import { setupExitIntent } from './modules/exitIntent.js?v=20260625-alerts';
-import { setupCookieBanner } from './modules/cookieBanner.js';
 import { setupNewsletter } from './modules/newsletter.js';
 import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js';
 import { setupTracking } from './modules/tracking.js';
@@ -30,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupMobileStickyCta();
   setupLightbox();
   setupExitIntent();
-  setupCookieBanner();
+  import('./modules/siteNotice.js').then(({ setupCookieBanner }) => setupCookieBanner()).catch(() => {});
   setupNewsletter();
   initAuthGate();
   setupAuthForms();
