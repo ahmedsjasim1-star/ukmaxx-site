@@ -63,7 +63,7 @@
 }
 </script>
 
-<script>if(localStorage.getItem('ukmaxx_age_verified')!=='true'){document.documentElement.classList.add('needs-age-gate');document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('pre-gate'));}</script>
+<script>try{if(localStorage.getItem('ukmaxx_age_verified')!=='true'){document.documentElement.classList.add('needs-age-gate');document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('pre-gate'));}}catch(e){document.documentElement.classList.add('needs-age-gate');}</script>
 
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
