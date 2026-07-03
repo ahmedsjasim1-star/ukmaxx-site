@@ -227,6 +227,7 @@ function rmv(s) {
 export async function openCheckout() {
   const c = getCart();
   if (!c.length) { toast('Basket empty', 'Add products to begin checkout.', 'error'); return; }
+  prefillCheckoutFields();
   const m = byId('checkoutBackdrop');
   m.classList.add('is-open');
   m.setAttribute('aria-hidden', 'false');
@@ -241,18 +242,55 @@ export function closeCheckout() {
   document.body.style.overflow = '';
 }
 
+function checkoutValue(id) {
+  return String(byId(id)?.value || '').trim();
+}
+
+function setCheckoutValue(id, value) {
+  const el = byId(id);
+  if (el && !el.value) el.value = value || '';
+}
+
+function prefillCheckoutFields() {
+  const user = getCurrentUser();
+  if (!user) return;
+  const first = user.user_metadata?.first_name || '';
+  const last = user.user_metadata?.last_name || '';
+  setCheckoutValue('checkoutEmail', user.email || '');
+  setCheckoutValue('checkoutFullName', `${first} ${last}`.trim());
+}
+
+function collectCheckoutDetails() {
+  const details = {
+    email: checkoutValue('checkoutEmail').toLowerCase(),
+    fullName: checkoutValue('checkoutFullName'),
+    phone: checkoutValue('checkoutPhone'),
+    address: {
+      line1: checkoutValue('checkoutAddress1'),
+      line2: checkoutValue('checkoutAddress2'),
+      city: checkoutValue('checkoutCity'),
+      postcode: checkoutValue('checkoutPostcode').toUpperCase(),
+      country: 'GB',
+    },
+  };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email)) throw new Error('Please enter a valid email address.');
+  if (details.fullName.length < 2) throw new Error('Please enter your full name.');
+  if (details.address.line1.length < 3) throw new Error('Please enter address line 1.');
+  if (details.address.city.length < 2) throw new Error('Please enter your town or city.');
+  if (details.address.postcode.length < 4) throw new Error('Please enter a valid postcode.');
+  return details;
+}
+
 async function startCheckout() {
   const c = getCart();
   if (!c.length) { toast('Basket empty', 'Add products to begin checkout.', 'error'); return; }
-  const user = getCurrentUser();
-  const email = user?.email || '';
-  const fullName = (user?.user_metadata?.first_name || '') + ' ' + (user?.user_metadata?.last_name || '');
   const promoCode = getPromoCode();
   const err = byId('checkoutError');
   const payBtn = byId('payBtn');
   if (err) { err.classList.remove('is-shown'); err.textContent = ''; }
   const label = payBtn?.querySelector('.payBtnLabel');
   try {
+    const details = collectCheckoutDetails();
     if (payBtn) { payBtn.disabled = true; if (label) label.textContent = 'Processing…'; }
     const controller = new AbortController();
     const to = setTimeout(() => controller.abort(), 15000);
@@ -266,10 +304,10 @@ async function startCheckout() {
     }
     const headers = { 'Content-Type': 'application/json' };
     if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-    const res = await fetch('/api/create-checkout-session', {
+    const res = await fetch('/api/create-fena-payment', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ cartItems: c, email, fullName, promoOptIn: false, promoCode, guestCheckoutId, address: {} }),
+      body: JSON.stringify({ cartItems: c, promoOptIn: false, promoCode, guestCheckoutId, ...details }),
       signal: controller.signal
     });
     clearTimeout(to);
@@ -282,11 +320,11 @@ async function startCheckout() {
     window.location.href = data.url;
   } catch (e) {
     if (err) {
-      err.textContent = e?.name === 'AbortError' ? 'Payment request timed out. Please try again.' : 'Unable to start payment. Network error.';
+      err.textContent = e?.name === 'AbortError' ? 'Payment request timed out. Please try again.' : (e?.message || 'Unable to start payment. Network error.');
       err.classList.add('is-shown');
     }
   } finally {
-    if (payBtn) { payBtn.disabled = false; if (label) label.textContent = 'Continue to payment'; }
+    if (payBtn) { payBtn.disabled = false; if (label) label.textContent = 'Continue to Pay by Bank'; }
   }
 }
 
@@ -373,12 +411,13 @@ export function initCart() {
   });
 
   const params = new URLSearchParams(location.search);
-  if (params.get('payment') === 'success') {
+  if (params.get('payment') === 'success' || params.get('payment') === 'fena-return') {
     setCart([]);
     renderCart();
     const sm = byId('successModal');
     const ref = byId('orderRef');
-    if (ref) ref.textContent = `Order Reference: ${orderRef()}`;
+    const returnedRef = params.get('order_id') || params.get('reference') || '';
+    if (ref) ref.textContent = returnedRef ? `Order Reference: ${returnedRef}` : `Order Reference: ${orderRef()}`;
     if (sm) { sm.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
     byId('backToShop')?.addEventListener('click', () => {
       if (sm) sm.style.display = 'none';

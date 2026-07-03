@@ -73,3 +73,21 @@ test('Stripe webhook is unavailable until both Stripe secrets are configured', a
   await handler({ method: 'POST', headers: {} }, res);
   assert.equal(res.statusCode, 503);
 });
+
+test('Fena checkout is unavailable until terminal credentials are configured', async () => {
+  delete process.env.FENA_TERMINAL_ID;
+  delete process.env.FENA_TERMINAL_SECRET;
+  const handler = require('../api/create-fena-payment');
+  const res = response();
+  await handler({ method: 'POST', headers: {}, body: {} }, res);
+  assert.equal(res.statusCode, 503);
+});
+
+test('Fena webhook is unavailable until terminal credentials are configured', async () => {
+  delete process.env.FENA_TERMINAL_ID;
+  delete process.env.FENA_TERMINAL_SECRET;
+  const handler = require('../api/fena-webhook');
+  const res = response();
+  await handler({ method: 'POST', headers: {}, body: {} }, res);
+  assert.equal(res.statusCode, 503);
+});

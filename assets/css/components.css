@@ -257,6 +257,13 @@
 .checkout-step.is-active{display:block}
 .checkout-step h4{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px}
 .checkout-step-sub{font-size:13px;color:var(--dim);margin-bottom:20px}
+.checkout-fields{display:flex;flex-direction:column;gap:12px;margin:18px 0 16px}
+.checkout-field{display:flex;flex-direction:column;gap:6px}
+.checkout-field span{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);font-family:'IBM Plex Mono',monospace}
+.checkout-field input{width:100%;height:44px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);font:500 14px/1.2 'Inter',sans-serif;padding:0 12px;outline:none;transition:border-color .15s ease,box-shadow .15s ease}
+.checkout-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(10,126,140,.12)}
+.checkout-field-row{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:560px){.checkout-field-row{grid-template-columns:1fr .72fr}}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:.01em}
 .field label .req{color:var(--danger);margin-left:2px}

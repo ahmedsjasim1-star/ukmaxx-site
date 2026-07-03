@@ -152,7 +152,7 @@ async function handleCancel({ res, supabase }, { orderNumber, reason, refund }) 
   const order = await getOrder(
     supabase,
     orderNumber,
-    'id, order_number, email, total, status, stripe_session_id',
+    'id, order_number, email, total, status, stripe_session_id, payment_provider, payment_reference, fena_payment_id',
   );
   if (!order) return res.status(404).json({ error: 'Order not found' });
   if (!['pending', 'paid', 'processing', 'dispatched'].includes(order.status)) {
@@ -163,6 +163,9 @@ async function handleCancel({ res, supabase }, { orderNumber, reason, refund }) 
   const wasPaid = ['paid', 'processing', 'dispatched'].includes(order.status);
   const shouldRefund = wasPaid && refund !== false;
   let stripeRefund = null;
+  if (shouldRefund && order.payment_provider === 'fena') {
+    return res.status(400).json({ error: 'Fena Pay by Bank refunds must be handled in Fena as a reverse payment/manual refund flow.' });
+  }
   if (shouldRefund) stripeRefund = await createStripeRefund(order, reason);
 
   const update = {
@@ -199,12 +202,15 @@ async function handleRefund({ res, supabase }, { orderNumber, reason }) {
   const order = await getOrder(
     supabase,
     orderNumber,
-    'id, order_number, email, total, status, stripe_session_id',
+    'id, order_number, email, total, status, stripe_session_id, payment_provider, payment_reference, fena_payment_id',
   );
   if (!order) return res.status(404).json({ error: 'Order not found' });
   if (order.status === 'refunded') return res.status(409).json({ error: 'Order has already been refunded' });
   if (!['paid', 'processing', 'dispatched', 'delivered', 'cancelled'].includes(order.status)) {
     return res.status(400).json({ error: `Cannot refund order with status "${order.status}".` });
+  }
+  if (order.payment_provider === 'fena') {
+    return res.status(400).json({ error: 'Fena Pay by Bank refunds must be handled in Fena as a reverse payment/manual refund flow.' });
   }
 
   const stripeRefund = await createStripeRefund(order, reason);

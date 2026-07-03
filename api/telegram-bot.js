@@ -141,7 +141,7 @@ async function sendTelegram(token, chatId, text) {
 async function findOrder(supabase, orderNumber) {
   const { data: order } = await supabase
     .from('orders')
-    .select('id, order_number, email, total, status, stripe_session_id, delivered_at, review_request_sent_at')
+    .select('id, order_number, email, total, status, stripe_session_id, payment_provider, payment_reference, fena_payment_id, delivered_at, review_request_sent_at')
     .eq('order_number', orderNumber)
     .maybeSingle();
   return order;
@@ -390,6 +390,9 @@ async function handleCancel(token, chatId, args) {
   const wasPaid = ['paid', 'processing', 'dispatched'].includes(order.status);
   let stripeRefund = null;
   if (wasPaid) {
+    if (order.payment_provider === 'fena') {
+      return sendTelegram(token, chatId, '⚠️ This is a Fena Pay by Bank order. Create the reverse payment/refund in Fena first, then cancel the order without an automatic Stripe refund.');
+    }
     if (!process.env.STRIPE_SECRET_KEY) return sendTelegram(token, chatId, '❌ Missing Stripe config.');
     if (!order.stripe_session_id) return sendTelegram(token, chatId, '❌ No Stripe session found for this order.');
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);

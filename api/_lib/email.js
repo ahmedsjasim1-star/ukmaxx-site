@@ -78,7 +78,7 @@ async function sendAdminOrderAlertEmail({ orderNumber, customerEmail, fullName, 
     <strong>Name:</strong> ${fullName || 'N/A'}<br/>
     <strong>Phone:</strong> ${phone || 'N/A'}<br/>
     <strong>Address:</strong> ${address || 'N/A'}<br/>
-    <strong>Stripe Session:</strong> ${stripeSessionId}</p>
+    <strong>Payment reference:</strong> ${stripeSessionId}</p>
     <p><strong>Items</strong><br/>${lines}</p>
   </div>`;
 
