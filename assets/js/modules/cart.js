@@ -411,7 +411,12 @@ export function initCart() {
   });
 
   const params = new URLSearchParams(location.search);
-  if (params.get('payment') === 'success' || params.get('payment') === 'fena-return') {
+  const paymentReturn = params.get('payment');
+  const fenaStatus = String(params.get('status') || '').trim().toLowerCase();
+  const fenaSuccess = paymentReturn === 'fena-return' && fenaStatus === 'paid';
+  const fenaFailed = paymentReturn === 'fena-return' && ['rejected', 'cancelled', 'overdue', 'refund rejected'].includes(fenaStatus);
+
+  if (paymentReturn === 'success' || fenaSuccess) {
     setCart([]);
     renderCart();
     const sm = byId('successModal');
@@ -425,6 +430,12 @@ export function initCart() {
       history.replaceState({}, '', location.pathname);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+  } else if (fenaFailed) {
+    toast('Payment unsuccessful', 'Your bank payment was not completed. Your basket has been saved so you can try again.', 'error');
+    history.replaceState({}, '', location.pathname);
+  } else if (paymentReturn === 'fena-return') {
+    toast('Payment not completed', 'Your basket has been saved. Please try again or contact support if money has left your account.', 'error');
+    history.replaceState({}, '', location.pathname);
   } else if (params.get('payment') === 'cancelled') {
     toast('Payment cancelled', 'Your basket has been saved - try again whenever you are ready.');
     history.replaceState({}, '', location.pathname);
