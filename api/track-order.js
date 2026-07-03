@@ -21,10 +21,8 @@ module.exports = async (req, res) => {
 
     let query = supabase
       .from('orders')
-      .select('id,order_number,status,created_at,subtotal,shipping,total,currency,full_name,shipping_address_line1,shipping_address_line2,shipping_city,shipping_postcode,shipping_country,tracking_number,tracking_url,dispatched_at,delivered_at')
+      .select('id,order_number,email,status,created_at,subtotal,shipping,total,currency,full_name,shipping_address_line1,shipping_address_line2,shipping_city,shipping_postcode,shipping_country,tracking_number,tracking_url,dispatched_at,delivered_at')
       .eq('order_number', normRef);
-
-    if (normEmail) query = query.eq('email', normEmail);
 
     const { data: order, error } = await query.maybeSingle();
 
@@ -50,6 +48,8 @@ module.exports = async (req, res) => {
       return { ...i, image_url: prod?.image_url || null };
     }));
 
+    const canShowPrivateDetails = !!normEmail && String(order.email || '').toLowerCase() === normEmail;
+
     return res.json({
       order: {
         order_number: order.order_number,
@@ -59,12 +59,12 @@ module.exports = async (req, res) => {
         shipping: order.shipping,
         total: order.total,
         currency: order.currency,
-        full_name: normEmail ? order.full_name : null,
-        shipping_address_line1: normEmail ? order.shipping_address_line1 : null,
-        shipping_address_line2: normEmail ? order.shipping_address_line2 : null,
-        shipping_city: normEmail ? order.shipping_city : null,
-        shipping_postcode: normEmail ? order.shipping_postcode : null,
-        shipping_country: normEmail ? order.shipping_country : null,
+        full_name: canShowPrivateDetails ? order.full_name : null,
+        shipping_address_line1: canShowPrivateDetails ? order.shipping_address_line1 : null,
+        shipping_address_line2: canShowPrivateDetails ? order.shipping_address_line2 : null,
+        shipping_city: canShowPrivateDetails ? order.shipping_city : null,
+        shipping_postcode: canShowPrivateDetails ? order.shipping_postcode : null,
+        shipping_country: canShowPrivateDetails ? order.shipping_country : null,
         carrier: 'Royal Mail · Tracked 24',
         tracking_number: order.tracking_number,
         tracking_url: order.tracking_url,
