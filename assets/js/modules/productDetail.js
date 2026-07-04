@@ -247,14 +247,16 @@ function renderPdpProduct(root) {
   }
   const featureList = byId('pdpFeatureList');
   if (featureList) {
-    let features = [
+    let features = sku === 'RT10X3' ? [
+      '3\u00D7 Retatrutide 10mg vials',
+      '3\u00D7 10ml BAC Water vials',
+    ] : [
       '1\u00D7 ' + p.name + ' vial',
-      purchasable ? 'Batch ' + p.batch + ' \u2014 ' + (p.id === 'WA10' ? getQualityLabel(p) : p.purity + ' purity') : getReleaseLabel(p),
-      purchasable ? (p.id === 'WA10' ? getQualityLabel(p) : 'COA verified by ' + p.coa.lab + ' (' + p.coa.method + ')') : getCoaStatusLabel(p),
+    ];
+    features = features.concat([
       'Discreet, tamper-evident packaging',
       'Free UK Tracked 24 over \u00A3100'
-    ];
-    if (sku === 'RT10X3') { features.unshift('3\u00D7 Retatrutide 10mg vials', '3\u00D7 10ml BAC Water vials'); }
+    ]);
     featureList.innerHTML = features.map(function (f) {
       return '<li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> ' + f + '</li>';
     }).join('');
