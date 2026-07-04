@@ -3,7 +3,7 @@ import { byId } from '../utils/dom.js';
 import { getSupabase } from '../data/supabase.js';
 
 const STATUS_ORDER = ['paid', 'processing', 'dispatched', 'delivered'];
-const STATUS_LABELS = { paid: 'Paid', processing: 'Processing', dispatched: 'Dispatched', delivered: 'Delivered', cancelled: 'Cancelled', refunded: 'Refunded' };
+const STATUS_LABELS = { paid: 'Processing', processing: 'Processing', dispatched: 'Dispatched', delivered: 'Delivered', cancelled: 'Cancelled', refunded: 'Refunded' };
 
 export function setupTracking() {
   const params = new URLSearchParams(location.search);

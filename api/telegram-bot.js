@@ -138,11 +138,18 @@ async function sendTelegram(token, chatId, text) {
 
 /* ---------- Handler helpers ---------- */
 
+function normalizeOrderNumber(orderNumber) {
+  return String(orderNumber || '').trim().toUpperCase();
+}
+
 async function findOrder(supabase, orderNumber) {
+  const normalizedOrderNumber = normalizeOrderNumber(orderNumber);
+  if (!normalizedOrderNumber) return null;
+
   const { data: order } = await supabase
     .from('orders')
     .select('id, order_number, email, total, status, stripe_session_id, payment_provider, payment_reference, fena_payment_id, delivered_at, review_request_sent_at')
-    .eq('order_number', orderNumber)
+    .eq('order_number', normalizedOrderNumber)
     .maybeSingle();
   return order;
 }
@@ -259,7 +266,7 @@ async function handleAddStock(token, chatId, args) {
 /* ---------- /dispatch ---------- */
 
 async function handleDispatch(token, chatId, args) {
-  const orderNumber = args[0];
+  const orderNumber = normalizeOrderNumber(args[0]);
   if (!orderNumber) return sendTelegram(token, chatId, 'Usage: /dispatch &lt;orderNumber&gt; &lt;trackingNumber&gt;\nExample: /dispatch UKM-12345 RM123456789GB');
 
   const trackingNumber = args.slice(1).join(' ').trim().replace(/\s+/g, '').toUpperCase();
@@ -306,7 +313,7 @@ function royalMailTrackingUrl(trackingNumber) {
 /* ---------- /deliver ---------- */
 
 async function handleDeliver(token, chatId, args) {
-  const orderNumber = args[0];
+  const orderNumber = normalizeOrderNumber(args[0]);
   if (!orderNumber) return sendTelegram(token, chatId, 'Usage: /deliver &lt;orderNumber&gt;');
 
   const supabase = getSupabaseAdmin();
@@ -337,7 +344,7 @@ async function handleDeliver(token, chatId, args) {
 /* ---------- /review ---------- */
 
 async function handleReview(token, chatId, args) {
-  const orderNumber = args[0];
+  const orderNumber = normalizeOrderNumber(args[0]);
   if (!orderNumber) return sendTelegram(token, chatId, 'Usage: /review &lt;orderNumber&gt;');
 
   const supabase = getSupabaseAdmin();
@@ -373,7 +380,7 @@ async function handleReview(token, chatId, args) {
 
 async function handleCancel(token, chatId, args) {
   const Stripe = require('stripe');
-  const orderNumber = args[0];
+  const orderNumber = normalizeOrderNumber(args[0]);
   if (!orderNumber) return sendTelegram(token, chatId, 'Usage: /cancel &lt;orderNumber&gt; [reason]');
 
   const reason = args.slice(1).join(' ') || null;
@@ -437,7 +444,7 @@ async function handleCancel(token, chatId, args) {
 async function handleRefund(token, chatId, args) {
   const Stripe = require('stripe');
 
-  const orderNumber = args[0];
+  const orderNumber = normalizeOrderNumber(args[0]);
   if (!orderNumber) return sendTelegram(token, chatId, 'Usage: /refund &lt;orderNumber&gt; [reason]');
 
   const reason = args.slice(1).join(' ') || null;
