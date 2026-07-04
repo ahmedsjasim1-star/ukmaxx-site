@@ -1,5 +1,5 @@
 import { requireAuth } from './auth.js';
-import { PRODUCTS, DETAIL_DATA, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 
@@ -261,7 +261,10 @@ function renderPdpProduct(root) {
   }
 
   const scienceText = byId('pdpScienceText');
-  if (scienceText) scienceText.innerHTML = '<p>' + (d.science || 'Research data available upon request.') + '</p>';
+  if (scienceText) {
+    const focus = RESEARCH_FOCUS[sku] || d.science || 'Research data available upon request.';
+    scienceText.innerHTML = '<p>' + focus + '</p>' + renderFurtherReading(FURTHER_READING[sku]);
+  }
 
   const specsGrid = byId('pdpSpecsGrid');
   if (specsGrid && d.specs) {
@@ -353,6 +356,22 @@ function renderPdpProduct(root) {
   }
 
   setupPdpTabs();
+}
+
+function renderFurtherReading(links) {
+  if (!Array.isArray(links) || !links.length) return '';
+  return '<div class="pdp-reading-card">'
+    + '<div class="pdp-reading-kicker">Further reading</div>'
+    + '<p>Independent research links for context. These are educational references, not usage guidance.</p>'
+    + '<div class="pdp-reading-links">'
+    + links.map(function (link) {
+      return '<a href="' + link.url + '" target="_blank" rel="noopener noreferrer">'
+        + '<span>' + link.label + '</span>'
+        + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>'
+        + '</a>';
+    }).join('')
+    + '</div>'
+    + '</div>';
 }
 
 function setupPdpTabs() {

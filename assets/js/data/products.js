@@ -104,4 +104,42 @@ export const DETAIL_DATA = {
   WA10:{science:'Bacteriostatic water containing 0.9% benzyl alcohol for laboratory reconstitution workflows. Multi-draw safe due to bacteriostatic properties.',specs:'Form: Aqueous solution\nVolume: 10ml per vial\nComposition: 0.9% benzyl alcohol in water for injection\nStorage: Room temperature (unopened) / 4°C (opened)\nShelf life: 24 months unopened / 28 days opened',coa:'QC: UKMAXX Internal QC\nBatch: WA10-2026-05-E'}
 };
 
+export const RESEARCH_FOCUS = {
+  RT10: 'Retatrutide is a multi-receptor research peptide studied for activity across GLP-1, GIP and glucagon receptor pathways. Research groups commonly investigate how these pathways interact with metabolic signalling, energy balance, glucose-response models and body-composition endpoints. UKMAXX supplies this material strictly for laboratory and in-vitro research use only — not for human consumption.',
+  RT10X3: 'This bundle is designed for repeat Retatrutide research workflows: three 10mg Retatrutide vials from the same verified batch plus three 10ml bacteriostatic water vials for laboratory reconstitution. It is useful when a project needs consistent batch traceability across multiple test runs.',
+  BC5: 'BPC-157 is a synthetic peptide used in pre-clinical research models. Published research commonly examines tissue-response pathways, angiogenesis signalling, inflammatory markers and musculoskeletal repair models. UKMAXX will only release this SKU once the matching batch COA is available.',
+  IP5: 'Ipamorelin is a growth hormone secretagogue research peptide studied for ghrelin receptor activity and GH-pulse signalling models. Research focus areas include endocrine pathway selectivity, IGF-1 signalling, metabolic-response models and comparison against less selective secretagogues.',
+  NJ500: 'NAD+ is a coenzyme researched for its role in redox reactions, mitochondrial metabolism and cellular energy pathways. Research areas include sirtuin signalling, DNA-repair mechanisms, oxidative-stress models and age-related cellular function studies.',
+  WA10: 'Bacteriostatic water is used in laboratory reconstitution workflows where a multi-draw diluent is required for research handling. It contains 0.9% benzyl alcohol and is supplied as a support item for compatible laboratory compounds.',
+};
+
+export const FURTHER_READING = {
+  RT10: [
+    { label: 'Retatrutide research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=retatrutide' },
+    { label: 'Retatrutide clinical trial records', url: 'https://clinicaltrials.gov/search?term=retatrutide' },
+    { label: 'GLP-1, GIP and glucagon receptor research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=GLP-1+GIP+glucagon+receptor+agonist' },
+  ],
+  RT10X3: [
+    { label: 'Retatrutide research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=retatrutide' },
+    { label: 'Retatrutide clinical trial records', url: 'https://clinicaltrials.gov/search?term=retatrutide' },
+    { label: 'Peptide UPLC/MS analysis research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=peptide+UPLC+MS+analysis' },
+  ],
+  BC5: [
+    { label: 'BPC-157 research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=BPC-157' },
+    { label: 'Peptide tissue-repair model research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=peptide+tissue+repair+model' },
+  ],
+  IP5: [
+    { label: 'Ipamorelin research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=ipamorelin' },
+    { label: 'Ghrelin receptor and GH secretagogue studies', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=ghrelin+receptor+growth+hormone+secretagogue' },
+  ],
+  NJ500: [
+    { label: 'NAD+ research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=NAD%2B' },
+    { label: 'NAD+ and mitochondrial research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=NAD%2B+mitochondrial+function' },
+  ],
+  WA10: [
+    { label: 'Bacteriostatic water and benzyl alcohol references', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=bacteriostatic+water+benzyl+alcohol' },
+    { label: 'Benzyl alcohol preservative research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=benzyl+alcohol+preservative' },
+  ],
+};
+
 export const SAMPLE_REVIEWS = [];

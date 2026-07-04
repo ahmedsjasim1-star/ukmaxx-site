@@ -10,8 +10,14 @@ export function setupExitIntent() {
   if (getRaw(EXIT_KEY)) return;
 
   let shown = false;
+  const checkoutIsOpen = () => {
+    const checkout = byId('checkoutBackdrop');
+    return Boolean(checkout && (checkout.classList.contains('is-open') || checkout.getAttribute('aria-hidden') === 'false'));
+  };
+
   const show = () => {
     if (shown) return;
+    if (checkoutIsOpen()) return;
     shown = true;
     backdrop.classList.add('is-open');
     backdrop.setAttribute('aria-hidden', 'false');
