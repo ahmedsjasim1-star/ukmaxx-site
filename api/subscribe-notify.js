@@ -54,7 +54,7 @@ module.exports = async (req, res) => {
                 </td></tr>
                 <tr><td style="padding:16px 30px 30px;text-align:center">
                   <a href="https://t.me/ukmaxx" target="_blank" style="display:inline-block;background:#0A7E8C;color:#ffffff;text-decoration:none;border-radius:8px;padding:13px 22px;font-weight:700;font-size:14px">Join UKMAXX on Telegram</a>
-                  <p style="margin:16px 0 0;color:#5B7B82;font-size:13px;line-height:1.55">Follow launch notes and product updates on <a href="https://x.com/ukmaxx" target="_blank" style="color:#0A7E8C;text-decoration:none;font-weight:700">X</a>.</p>
+                  <p style="margin:16px 0 0;color:#5B7B82;font-size:13px;line-height:1.55">Follow launch notes and product updates on <a href="https://x.com/UKMAXXofficial" target="_blank" style="color:#0A7E8C;text-decoration:none;font-weight:700">X</a>.</p>
                 </td></tr>
                 <tr><td style="padding:22px 30px;background:#F8FBFC;border-top:1px solid #E6F0F2;text-align:center">
                   <p style="margin:0 0 8px;color:#5B7B82;font-size:12px;line-height:1.55">If this wasn’t you, unsubscribe here:</p>
