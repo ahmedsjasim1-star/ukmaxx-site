@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COA &amp; Batch Verification — UKMAXX</title>
+  <meta name="description" content="Verify UKMAXX product batches, view COA status, lab, method, test date and external certificate links.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="UKMAXX COA &amp; Batch Verification">
+  <meta property="og:description" content="Check UKMAXX batch codes and view published COA records.">
+  <meta property="og:url" content="https://www.ukmaxx.co.uk/coa.html">
+  <meta property="og:image" content="https://www.ukmaxx.co.uk/images/og-ukmaxx.jpg?v=20260708-products">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://www.ukmaxx.co.uk/images/og-ukmaxx.jpg?v=20260708-products">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="canonical" href="https://www.ukmaxx.co.uk/coa.html">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>try{if(localStorage.getItem('ukmaxx_age_verified')!=='true'){document.documentElement.classList.add('needs-age-gate');document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('pre-gate'));}}catch(e){document.documentElement.classList.add('needs-age-gate');}</script>
+
+  <link rel="stylesheet" href="./assets/css/variables.css">
+  <link rel="stylesheet" href="./assets/css/reset.css">
+  <link rel="stylesheet" href="./assets/css/base.css">
+  <link rel="stylesheet" href="./assets/css/components.css">
+  <link rel="stylesheet" href="./assets/css/pages/coa.css">
+  <script src="./assets/html/bundle.js"></script>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div id="ageGate" class="age-gate" aria-modal="true" role="dialog" aria-labelledby="ageGateTitle" aria-describedby="ageGateDesc">
+  <div class="age-gate-card">
+    <div class="age-gate-logo"><span class="logo-mark" aria-hidden="true"></span>UKMAXX</div>
+    <h1 id="ageGateTitle" class="age-gate-title">Research Compounds — Age Verification</h1>
+    <p id="ageGateDesc" class="age-gate-copy">You must be 18 or older to access this site. All products are supplied strictly for laboratory and in-vitro research use only. Not for human consumption.</p>
+    <div class="age-gate-actions">
+      <button id="ageEnterBtn" class="btn btn-primary btn-lg" type="button" style="flex:1">I am 18 or older — Enter</button>
+      <button id="ageExitBtn" class="btn btn-ghost btn-lg" type="button" style="flex:1">I am under 18</button>
+    </div>
+    <p class="age-gate-foot">By entering you confirm you are a qualified researcher aged 18 or older acting in compliance with all applicable laws.</p>
+  </div>
+</div>
+
+<script>document.write(window.__html.topbar)</script>
+<script>document.write(window.__html.header)</script>
+
+<main id="main">
+  <section class="coa-hero" id="coaPage">
+    <div class="container">
+      <div class="coa-hero-grid">
+        <div>
+          <span class="section-eyebrow">Batch verification</span>
+          <h1>COA &amp; batch checker</h1>
+          <p>Scan your UKMAXX card or enter a batch code to check published certificate details, lab, method and test date. This page is the permanent QR destination for UKMAXX batch verification cards.</p>
+          <div class="coa-hero-actions">
+            <a href="#batch-checker" class="btn btn-primary btn-lg">Check a batch</a>
+            <a href="#all-coas" class="btn btn-ghost btn-lg">View all records</a>
+          </div>
+        </div>
+        <div class="coa-qr-card" aria-label="QR card destination">
+          <div class="coa-qr-label">QR destination</div>
+          <code>ukmaxx.co.uk/coa.html</code>
+          <p>Use this URL on printed order cards. It stays stable while the table below grows as new COAs arrive.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="coa-check-section" id="batch-checker">
+    <div class="container">
+      <div class="coa-check-card">
+        <div>
+          <span class="section-eyebrow">Enter batch or SKU</span>
+          <h2>Batch checker</h2>
+          <p>Try a batch code, product SKU, or product name. Example: <button type="button" class="coa-inline-chip" data-coa-check="RT10-2026-06-A">RT10-2026-06-A</button></p>
+        </div>
+        <form class="coa-check-form" id="coaCheckerForm">
+          <label class="sr-only" for="coaCheckerInput">Batch code or SKU</label>
+          <input id="coaCheckerInput" name="batch" type="text" placeholder="e.g. RT10-2026-06-A" autocomplete="off">
+          <button class="btn btn-primary" type="submit">Check batch</button>
+        </form>
+        <div id="coaCheckerResult" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="coa-records-section" id="all-coas">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="section-eyebrow">Published records</span>
+          <h2 class="section-title">All COA &amp; QC records</h2>
+        </div>
+        <p class="section-sub">Third-party COAs are linked externally where available. Support items such as BAC Water may show UKMAXX internal QC rather than a third-party COA.</p>
+      </div>
+      <div class="coa-table-wrap">
+        <table class="coa-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Batch</th>
+              <th>Status</th>
+              <th>Lab</th>
+              <th>Method</th>
+              <th>Test date</th>
+              <th>Certificate</th>
+            </tr>
+          </thead>
+          <tbody id="coaTableBody"></tbody>
+        </table>
+      </div>
+      <div class="coa-note">
+        <strong>Printed card copy:</strong> use <code>https://www.ukmaxx.co.uk/coa.html</code> for the QR. If you want a batch pre-filled later, use <code>/coa.html?batch=RT10-2026-06-A</code>.
+      </div>
+    </div>
+  </section>
+
+  <script>document.write(window.__html.footer)</script>
+</main>
+
+<script>document.write(window.__html.mobileNav)</script>
+<script>document.write(window.__html.cartDrawer)</script>
+<script>document.write(window.__html.toast)</script>
+<script>document.write(window.__html.cookieBanner)</script>
+<script type="module" src="./assets/js/app.js?v=20260708-coa-page"></script>
+</body>
+</html>

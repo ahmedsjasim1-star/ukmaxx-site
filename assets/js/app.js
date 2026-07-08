@@ -12,6 +12,7 @@ import { renderProductDetail, renderRelatedProducts } from './modules/productDet
 import { setupAccountPage } from './modules/account.js';
 import { updateHeroBatchChips } from './modules/heroBatch.js';
 import { refreshLiveStock } from './data/products.js';
+import { setupCoaPage } from './modules/coaPage.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   initAuth();
@@ -39,4 +40,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupProfileDropdown();
   setupTracking();
   setupAccountPage();
+  setupCoaPage();
 });

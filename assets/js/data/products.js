@@ -58,7 +58,38 @@ export async function refreshLiveStock() {
 
 syncBundleStock();
 
-export const COA = {'RT10-2026-06-A':{sample:'Retatrutide 10mg',purity:'99.223%',method:'UPLC/MS',lab:'Janoshik Analytical',url:'https://verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42'}};
+export const COA = {
+  'RT10-2026-06-A': {
+    batch: 'RT10-2026-06-A',
+    sku: 'RT10',
+    product: 'RETA 10MG',
+    sample: 'Retatrutide 10mg',
+    status: 'VERIFIED',
+    statusLabel: 'Third-party verified',
+    purity: '99.223%',
+    method: 'UPLC/MS',
+    lab: 'Janoshik Analytical',
+    report: '#193587',
+    testDate: '22 Jun 2026',
+    image: './images/reta-coa-2026-06.png',
+    url: 'https://verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42',
+  },
+  'WA10-2026-05-E': {
+    batch: 'WA10-2026-05-E',
+    sku: 'WA10',
+    product: 'BAC WATER',
+    sample: 'Bacteriostatic Water 10ml',
+    status: 'INTERNAL_QC',
+    statusLabel: 'UKMAXX Internal QC',
+    purity: 'UKMAXX Internal QC',
+    method: 'Internal QC',
+    lab: 'UKMAXX',
+    report: 'Internal QC record',
+    testDate: 'May 2026',
+    image: './images/ukmaxx-bac-water.png',
+    url: '',
+  },
+};
 
 export const FREE_SHIPPING_THRESHOLD = 100;
 export const FLAT_SHIPPING = 4.99;
