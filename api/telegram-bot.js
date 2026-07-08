@@ -163,7 +163,7 @@ async function getItems(supabase, orderId) {
 }
 
 const BUNDLE_COMPONENTS = {
-  RT10X3: { RT10: 3, WA10: 3 },
+  RT10X3: { RT10: 3, WA10: 1 },
 };
 
 function calculateBundleStock(productsBySku, sku) {
@@ -198,7 +198,7 @@ async function handleStock(token, chatId) {
     `BAC Water (WA10): <b>${Number(bySku.get('WA10')?.stock_quantity || 0)}</b>`,
     `RETA 3-Pack (RT10X3): <b>${bundleStock}</b> bundles available`,
     '',
-    'Bundle stock is calculated from 3x RT10 + 3x WA10.',
+    'Bundle stock is calculated from 3x RT10 + 1x WA10.',
   ];
   await sendTelegram(token, chatId, lines.join('\n'));
 }

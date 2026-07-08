@@ -254,7 +254,7 @@ function renderPdpProduct(root) {
   if (featureList) {
     let features = sku === 'RT10X3' ? [
       '3\u00D7 Retatrutide 10mg vials',
-      '3\u00D7 10ml BAC Water vials',
+      '1\u00D7 10ml BAC Water vial',
     ] : [
       '1\u00D7 ' + p.name + ' vial',
     ];
