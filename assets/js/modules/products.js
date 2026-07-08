@@ -17,7 +17,10 @@ function productCard(p, bundle = false) {
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
   const starsStr = hasReviews ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '';
-  const priceWrap = p.originalPrice
+  const hasPrice = Number.isFinite(Number(p.price));
+  const priceWrap = !hasPrice
+    ? `<div class="product-price product-price--tbc">TBC</div>`
+    : p.originalPrice
     ? `<div class="product-price-wrap"><div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div><span class="product-price-original">${money(p.originalPrice)}</span></div>`
     : `<div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div>`;
 

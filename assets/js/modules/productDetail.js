@@ -14,6 +14,7 @@ export function renderProductDetail() {
   if (!p) { container.innerHTML = '<div class="product-404"><h2>Product not found</h2><p>This product does not exist or has been removed.</p><a class="btn btn-dark" href="/">Back to shop</a></div>'; return; }
   const d = DETAIL_DATA[sku] || {};
   const purchasable = isPurchasable(p);
+  const priceLabel = Number.isFinite(Number(p.price)) ? money(p.price) : 'TBC';
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
   const starsStr = hasReviews ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '';
@@ -31,7 +32,7 @@ export function renderProductDetail() {
         <a class="count" href="#reviews">(${p.reviewCount} reviews)</a>` : '<span class="count">New batch · awaiting reviews</span>'}
       </div>
       <div class="pd-price-row">
-        <span class="pd-price">${money(p.price)}</span>
+        <span class="pd-price">${priceLabel}</span>
         ${p.originalPrice ? `<span class="pd-price-original">${money(p.originalPrice)}</span><span class="pd-badge">Save ${money(p.originalPrice - p.price)}</span>` : ''}
       </div>
       <div class="pd-desc">${p.description}</div>
@@ -42,7 +43,7 @@ export function renderProductDetail() {
         <div class="pd-attr"><strong>Method</strong><span>${purchasable ? p.coa.method : getReleaseLabel(p)}</span></div>
         <div class="pd-attr"><strong>Status</strong><span class="stock-${p.stock}">${purchasable ? `${p.stockCount} ${p.category === 'bundles' ? 'bundles' : 'vials'}` : getReleaseLabel(p)}</span></div>
       </div>
-      <button class="btn btn-dark btn-lg" ${purchasable ? `data-add="${p.id}"` : 'disabled aria-disabled="true"'}>${purchasable ? `Add to basket — ${money(p.price)}` : `${getReleaseLabel(p)} — ${getCoaStatusLabel(p)}`}</button>
+      <button class="btn btn-dark btn-lg" ${purchasable ? `data-add="${p.id}"` : 'disabled aria-disabled="true"'}>${purchasable ? `Add to basket — ${priceLabel}` : `${getReleaseLabel(p)} — ${getCoaStatusLabel(p)}`}</button>
     </div>
   </div>
   <div class="pd-tabs">
@@ -90,6 +91,7 @@ function renderPdpProduct(root) {
 
   const d = DETAIL_DATA[sku] || {};
   const purchasable = isPurchasable(p);
+  const priceLabel = Number.isFinite(Number(p.price)) ? money(p.price) : 'TBC';
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
   setText('pageTitle', p.name + ' \u2014 UKMAXX');
@@ -112,7 +114,7 @@ function renderPdpProduct(root) {
         '@type': 'Offer',
         url: 'https://www.ukmaxx.co.uk/product.html?sku=' + sku,
         priceCurrency: 'GBP',
-        price: p.price,
+        ...(Number.isFinite(Number(p.price)) ? { price: p.price } : {}),
         availability: p.stock === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
       }
     });
@@ -121,7 +123,10 @@ function renderPdpProduct(root) {
   setText('pdpBreadcrumbCurrent', p.name);
   setText('pdpSku', p.id + ' \u00B7 ' + p.shortName);
   setText('pdpName', p.name);
-  setText('pdpPrice', p.price.toFixed(2));
+  const hasNumericPrice = Number.isFinite(Number(p.price));
+  setText('pdpPrice', hasNumericPrice ? p.price.toFixed(2) : 'TBC');
+  const pdpCurrency = $('#pdpPriceRow .currency');
+  if (pdpCurrency) pdpCurrency.style.display = hasNumericPrice ? '' : 'none';
 
   if (p.originalPrice) {
     const origEl = byId('pdpPriceOriginal');
@@ -183,7 +188,7 @@ function renderPdpProduct(root) {
     }
   }
   setText('pdpMobileName', p.name);
-  setText('pdpMobilePrice', money(p.price));
+  setText('pdpMobilePrice', priceLabel);
   const mobileAdd = byId('pdpMobileAdd');
   if (mobileAdd) {
     if (purchasable) {
@@ -228,7 +233,7 @@ function renderPdpProduct(root) {
     setTimeout(function () { window.openCheckout(); }, 300);
   });
 
-  const upsellSkus = ['RT10', 'BC5', 'IP5', 'NJ500'];
+  const upsellSkus = ['RT10', 'BC5', 'IP5', 'GHKCU', 'NJ500'];
   const upsell = byId('pdpUpsell');
   if (upsellSkus.includes(sku)) {
     if (upsell) upsell.style.display = '';
