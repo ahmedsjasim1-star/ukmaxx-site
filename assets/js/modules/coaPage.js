@@ -34,9 +34,10 @@ function coaRecords() {
     skus: Object.values(PRODUCTS)
       .filter((product) => product.batch === record.batch)
       .map((product) => product.id),
-  }));
+  })).filter((record) => PRODUCTS[record.sku]?.category !== 'support');
 
   Object.values(PRODUCTS).forEach((product) => {
+    if (product.category === 'support') return;
     if (!product.batch || COA[product.batch]) return;
     records.push({
       batch: product.batch,
@@ -70,7 +71,7 @@ function renderRows(records) {
     const skus = record.skus?.length ? record.skus : [record.sku];
     const action = record.url
       ? `<a href="${record.url}" target="_blank" rel="noopener noreferrer" class="coa-link">Verify externally</a>`
-      : `<span class="coa-muted">${record.status === 'PENDING' ? 'Pending release' : 'No external link'}</span>`;
+      : `<span class="coa-muted">${record.status === 'PENDING' ? 'Pending release' : 'Available on request'}</span>`;
     return `
       <tr>
         <td>
