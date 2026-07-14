@@ -93,7 +93,7 @@ async function handleReviewsList(req, res) {
       .select('initials,product,rating,review_text,review_date,created_at')
       .order('review_date', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(24);
+      .limit(200);
 
     if (product) query = query.eq('product', product);
 

@@ -3,6 +3,31 @@ import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
 const CATS = CATEGORIES;
+const REVIEWS_ENDPOINT = '/api/track-order?type=reviews';
+
+export async function refreshProductReviewStats() {
+  try {
+    const res = await fetch(REVIEWS_ENDPOINT, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => ({}));
+    const rows = Array.isArray(data.reviews) ? data.reviews : [];
+    const stats = {};
+    rows.forEach((review) => {
+      const sku = String(review.product || '').trim().toUpperCase();
+      if (!PRODUCTS[sku]) return;
+      if (!stats[sku]) stats[sku] = { count: 0, total: 0 };
+      stats[sku].count += 1;
+      stats[sku].total += Number(review.rating || 0);
+    });
+    Object.entries(stats).forEach(([sku, stat]) => {
+      PRODUCTS[sku].reviewCount = stat.count;
+      PRODUCTS[sku].rating = stat.count ? stat.total / stat.count : 0;
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function productCard(p, bundle = false) {
   const purchasable = isPurchasable(p);
@@ -17,6 +42,9 @@ function productCard(p, bundle = false) {
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
   const starsStr = hasReviews ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '';
+  const primaryAttr = getQualityLabel(p);
+  const secondaryAttr = purchasable ? p.coa.lab : getReleaseLabel(p);
+  const attrs = [primaryAttr, secondaryAttr].filter((value, index, list) => value && list.indexOf(value) === index);
   const hasPrice = Number.isFinite(Number(p.price));
   const priceWrap = !hasPrice
     ? `<div class="product-price product-price--tbc">TBC</div>`
@@ -37,8 +65,7 @@ function productCard(p, bundle = false) {
       </div>
       <p class="product-desc">${p.description}</p>
       <div class="product-attrs">
-        <span class="product-attr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> ${getQualityLabel(p)}</span>
-        <span class="product-attr">${purchasable ? p.coa.lab : getReleaseLabel(p)}</span>
+        ${attrs.map((attr, index) => `<span class="product-attr">${index === 0 ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> ' : ''}${attr}</span>`).join('')}
       </div>
       <div class="product-foot">
         ${priceWrap}

@@ -1,4 +1,4 @@
-import { renderProducts } from './modules/products.js';
+import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260715-review-stats';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260714-review-polish';
 import { renderCart, initCart } from './modules/cart.js?v=20260625-promo-fix';
 import { initAgeGate } from './modules/ageGate.js';
@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initAuth();
   initAgeGate();
   await refreshLiveStock();
+  await refreshProductReviewStats();
   updateHeroBatchChips();
   renderProducts();
   renderReviews();
