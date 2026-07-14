@@ -160,10 +160,10 @@ async function processPaidPayment({ supabase, attempt, verifiedPayment }) {
     if (error) console.error('fena-checkout-optin-error', { orderId: order.id, error: error.message });
   }
 
-  if (String(payload.promo_code || '').toUpperCase() === 'MAXX15' && order.email) {
+  if (String(payload.promo_code || '').toUpperCase() === 'MAXX10' && order.email) {
     const { error } = await supabase.from('promo_redemptions').upsert({
       email: order.email,
-      promo_code: 'MAXX15',
+      promo_code: 'MAXX10',
       stripe_session_id: null,
       payment_provider: 'fena',
       payment_reference: reference,

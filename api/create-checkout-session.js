@@ -90,24 +90,24 @@ module.exports = async (req, res) => {
 
     const email = String(authData?.user?.email || '').trim().toLowerCase();
     const requestedPromo = String(req.body?.promoCode || '').trim().toUpperCase();
-    const validPromo = requestedPromo === 'MAXX15';
+    const validPromo = requestedPromo === 'MAXX10';
     if (validPromo && email) {
       const { data: prior, error: priorError } = await supabase
         .from('promo_redemptions')
         .select('id')
         .eq('email', email)
-        .eq('promo_code', 'MAXX15')
+        .eq('promo_code', 'MAXX10')
         .limit(1);
       if (priorError) throw priorError;
-      if (prior?.length) return res.status(409).json({ error: 'MAXX15 has already been used for this account.' });
-      if (!process.env.STRIPE_MAXX15_COUPON_ID) {
+      if (prior?.length) return res.status(409).json({ error: 'MAXX10 has already been used for this account.' });
+      if (!process.env.STRIPE_MAXX10_COUPON_ID) {
         return res.status(503).json({ error: 'Promo code is temporarily unavailable' });
       }
-    } else if (validPromo && !process.env.STRIPE_MAXX15_COUPON_ID) {
+    } else if (validPromo && !process.env.STRIPE_MAXX10_COUPON_ID) {
       return res.status(503).json({ error: 'Promo code is temporarily unavailable' });
     }
 
-    const estimatedDiscountPence = validPromo ? Math.round(subtotalPence * 0.15) : 0;
+    const estimatedDiscountPence = validPromo ? Math.round(subtotalPence * 0.10) : 0;
     const shippingPence = subtotalPence - estimatedDiscountPence >= 10000 ? 0 : 499;
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const session = await stripe.checkout.sessions.create({
@@ -120,7 +120,7 @@ module.exports = async (req, res) => {
       phone_number_collection: { enabled: true },
       success_url: `${SITE_URL}/index.html?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${SITE_URL}/index.html?payment=cancelled`,
-      discounts: validPromo ? [{ coupon: process.env.STRIPE_MAXX15_COUPON_ID }] : undefined,
+      discounts: validPromo ? [{ coupon: process.env.STRIPE_MAXX10_COUPON_ID }] : undefined,
       shipping_options: shippingPence > 0 ? [{
         shipping_rate_data: {
           type: 'fixed_amount',
@@ -136,11 +136,11 @@ module.exports = async (req, res) => {
         user_id: authData?.user?.id || '',
         checkout_type: authData?.user?.id ? 'account' : 'guest',
         promo_opt_in: req.body?.promoOptIn ? 'true' : 'false',
-        promo_code: validPromo ? 'MAXX15' : '',
+        promo_code: validPromo ? 'MAXX10' : '',
         cart: JSON.stringify(normalized),
       },
     }, {
-      idempotencyKey: `checkout-${authData?.user?.id || String(req.body?.guestCheckoutId || 'guest').slice(0, 64)}-${Buffer.from(JSON.stringify(normalized)).toString('base64url')}-${validPromo ? 'maxx15' : 'none'}`,
+      idempotencyKey: `checkout-${authData?.user?.id || String(req.body?.guestCheckoutId || 'guest').slice(0, 64)}-${Buffer.from(JSON.stringify(normalized)).toString('base64url')}-${validPromo ? 'maxx10' : 'none'}`,
     });
 
     return res.status(200).json({ url: session.url });

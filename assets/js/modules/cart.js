@@ -8,7 +8,7 @@ import { getSupabase } from '../data/supabase.js';
 
 const SHIP_THRESHOLD = FREE_SHIPPING_THRESHOLD || 100;
 const SHIP_FLAT = FLAT_SHIPPING || 4.99;
-const PROMOS = PROMO_CODES || { MAXX15: { type: 'percent', value: 0.15, label: '15% off' } };
+const PROMOS = PROMO_CODES || { MAXX10: { type: 'percent', value: 0.10, label: '10% off' } };
 
 function normalizeSku(raw = '') {
   const t = String(raw).trim();

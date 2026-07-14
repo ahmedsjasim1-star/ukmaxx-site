@@ -93,7 +93,7 @@ export const COA = {
 
 export const FREE_SHIPPING_THRESHOLD = 100;
 export const FLAT_SHIPPING = 4.99;
-export const PROMO_CODES = {'MAXX15':{type:'percent',value:0.15,label:'15% off'}};
+export const PROMO_CODES = {'MAXX10':{type:'percent',value:0.10,label:'10% off'}};
 export function isPurchasable(product) {
   return Boolean(product && product.stock === 'in_stock' && Number(product.stockCount || 0) > 0);
 }

@@ -123,19 +123,19 @@ module.exports = async (req, res) => {
     }
 
     const requestedPromo = String(req.body?.promoCode || '').trim().toUpperCase();
-    const validPromo = requestedPromo === 'MAXX15';
+    const validPromo = requestedPromo === 'MAXX10';
     if (validPromo) {
       const { data: prior, error: priorError } = await supabase
         .from('promo_redemptions')
         .select('id')
         .eq('email', checkout.email)
-        .eq('promo_code', 'MAXX15')
+        .eq('promo_code', 'MAXX10')
         .limit(1);
       if (priorError) throw priorError;
-      if (prior?.length) return res.status(409).json({ error: 'MAXX15 has already been used for this email.' });
+      if (prior?.length) return res.status(409).json({ error: 'MAXX10 has already been used for this email.' });
     }
 
-    const discount = validPromo ? Number((subtotal * 0.15).toFixed(2)) : 0;
+    const discount = validPromo ? Number((subtotal * 0.10).toFixed(2)) : 0;
     const discounted = subtotal - discount;
     const shipping = discounted >= 100 ? 0 : 4.99;
     const total = Number((discounted + shipping).toFixed(2));
@@ -157,7 +157,7 @@ module.exports = async (req, res) => {
       total,
       currency: 'gbp',
       promo_opt_in: !!req.body?.promoOptIn,
-      promo_code: validPromo ? 'MAXX15' : '',
+      promo_code: validPromo ? 'MAXX10' : '',
       items: orderItems,
     };
 

@@ -198,10 +198,10 @@ async function processCheckoutSession({ stripe, supabase, session }) {
     if (error) console.error('checkout-optin-error', { orderId: order.id, error: error.message });
   }
 
-  if (String(session.metadata?.promo_code || '').toUpperCase() === 'MAXX15' && order.email) {
+  if (String(session.metadata?.promo_code || '').toUpperCase() === 'MAXX10' && order.email) {
     const { error } = await supabase.from('promo_redemptions').upsert({
       email: order.email,
-      promo_code: 'MAXX15',
+      promo_code: 'MAXX10',
       stripe_session_id: session.id,
       order_id: order.id,
       redeemed_at: new Date().toISOString(),
