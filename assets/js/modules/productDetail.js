@@ -2,7 +2,7 @@ import { requireAuth } from './auth.js';
 import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
-import { renderProductReviewsSummary } from './reviews.js?v=20260714-verified-reviews';
+import { renderProductReviewsSummary } from './reviews.js?v=20260714-review-polish';
 
 export function renderProductDetail() {
   const root = byId('pdpRoot');

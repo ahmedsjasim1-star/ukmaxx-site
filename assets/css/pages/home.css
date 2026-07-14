@@ -96,7 +96,7 @@
 .tp-summary-score span{font-size:18px;color:var(--dim);font-weight:500}
 .tp-summary-meta{font-size:12px;color:var(--dim);font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
 .tp-summary-meta strong{color:var(--text);font-weight:600}
-.tp-invite{background:linear-gradient(135deg,#F0FBF5 0%,#E8F7EF 100%);border:1px solid var(--tp-border);border-radius:var(--radius-lg);padding:32px;display:flex;flex-direction:column;gap:20px;align-items:center;text-align:center;margin-top:0;position:relative;overflow:hidden}
+.tp-invite{background:linear-gradient(135deg,#F0FBF5 0%,#E8F7EF 100%);border:1px solid var(--tp-border);border-radius:var(--radius-lg);padding:32px;display:flex;flex-direction:column;gap:20px;align-items:center;text-align:center;margin-top:8px;position:relative;overflow:hidden}
 @media (min-width:768px){.tp-invite{flex-direction:row;text-align:left;justify-content:space-between;padding:36px 40px}}
 .tp-invite::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(0,182,122,.15),transparent 70%);border-radius:50%;pointer-events:none}
 .tp-invite-content{position:relative;z-index:1}

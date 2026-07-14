@@ -2,6 +2,15 @@ import { tpStars } from '../utils/money.js';
 import { $, byId } from '../utils/dom.js';
 
 const REVIEW_ENDPOINT = '/api/track-order';
+const PRODUCT_LABELS = {
+  RT10: 'RETA 10mg',
+  RT10X3: 'RETA 3-pack bundle',
+  BC5: 'BPC-157',
+  IP5: 'Ipamorelin',
+  NJ500: 'NAD+ 500mg',
+  WA10: 'BAC Water',
+  GHKCU: 'GHK-Cu 50mg',
+};
 
 function escapeHtml(value) {
   return String(value || '')
@@ -21,10 +30,15 @@ function reviewDate(value) {
   }
 }
 
+function productLabel(product) {
+  const key = String(product || '').trim().toUpperCase();
+  return PRODUCT_LABELS[key] || product || 'UKMAXX';
+}
+
 function reviewCard(review) {
   const rating = Math.max(1, Math.min(5, Number(review.rating || 5)));
   return `<article class="review-card">
-    <div class="review-card-head"><span>${escapeHtml(review.product || 'UKMAXX')}</span><span>${escapeHtml(reviewDate(review.review_date || review.created_at))}</span></div>
+    <div class="review-card-head"><span>${escapeHtml(productLabel(review.product))}</span><span>${escapeHtml(reviewDate(review.review_date || review.created_at))}</span></div>
     ${tpStars(rating)}
     <div class="review-card-badge"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Verified order</div>
     <p class="review-card-text">${escapeHtml(review.review_text)}</p>
@@ -40,7 +54,6 @@ function emptyCard(message = 'Customer feedback will appear here once fulfilled 
       Awaiting reviews
     </div>
     <p class="review-card-text">${escapeHtml(message)}</p>
-    <div class="review-card-author">No placeholders shown</div>
   </article>`;
 }
 
@@ -73,9 +86,7 @@ function renderBars(container, rows, variant = 'home') {
   if (!rows.length) {
     container.innerHTML = variant === 'product'
       ? '<p class="pdp-reviews-empty">No verified reviews yet for this product.</p>'
-      : `<div class="review-bar-row"><span class="review-bar-label">1</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">Real orders only</span></div>
-        <div class="review-bar-row"><span class="review-bar-label">2</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">Approved before publishing</span></div>
-        <div class="review-bar-row"><span class="review-bar-label">3</span><span class="review-bar-track"><span class="review-bar-fill" style="width:100%"></span></span><span class="review-bar-pct">No placeholders</span></div>`;
+      : '';
     return;
   }
   const counts = ratingBreakdown(rows);
@@ -101,6 +112,8 @@ export async function renderReviews() {
   if (summary) summary.style.display = '';
 
   if (!rows.length) {
+    const meta = $('.tp-summary-meta');
+    if (meta) meta.textContent = 'Be one of the first UKMAXX customers to leave feedback.';
     renderBars(byId('feedbackBars'), []);
     return;
   }
