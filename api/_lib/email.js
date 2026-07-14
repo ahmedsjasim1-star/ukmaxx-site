@@ -150,6 +150,7 @@ async function sendOrderDeliveredEmail({ to, orderNumber, items, total, delivere
     deliveredTime: deliveredTime || '—',
     items: items || [],
     email: to,
+    reviewUrl: `${BASE_URL}/?review=1&order=${encodeURIComponent(orderNumber)}#reviews`,
   });
   await resend.emails.send({
     from: FROM,
@@ -167,6 +168,7 @@ async function sendReviewRequestEmail({ to, orderNumber, items }) {
     orderNumber,
     items: items || [],
     email: to,
+    reviewUrl: `${BASE_URL}/?review=1&order=${encodeURIComponent(orderNumber)}#reviews`,
   });
   await resend.emails.send({
     from: FROM,

@@ -1,5 +1,5 @@
 import { renderProducts } from './modules/products.js';
-import { renderReviews } from './modules/reviews.js?v=20260629-feedback';
+import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260714-verified-reviews';
 import { renderCart, initCart } from './modules/cart.js?v=20260625-promo-fix';
 import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js';
@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateHeroBatchChips();
   renderProducts();
   renderReviews();
+  setupReviewDrawer();
   renderCart();
   initCart();
   renderProductDetail();

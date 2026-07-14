@@ -86,7 +86,6 @@
 .reviews-score-num{font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:700;line-height:1;color:var(--text);letter-spacing:-.02em}
 .reviews-score-stars{color:#F59E0B;font-size:18px;letter-spacing:2px;margin:6px 0}
 .reviews-score-count{font-size:12px;color:var(--dim);font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;text-transform:uppercase}
-#reviews .section-head,#reviews .reviews-summary,#reviewsGrid{display:none}
 .tp-summary{display:flex;flex-direction:column;align-items:flex-start;gap:6px;flex-shrink:0;min-width:200px}
 .tp-summary-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
 .tp-summary-badge{background:var(--tp);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.06em;padding:4px 10px;border-radius:4px;text-transform:uppercase}
