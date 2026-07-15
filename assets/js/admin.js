@@ -1,11 +1,37 @@
-import { getSupabase } from './data/supabase.js';
-
 const SITE_URL = window.location.origin;
+let adminClient = null;
+let adminClientPromise = null;
 
 const $ = (id) => document.getElementById(id);
 const money = (value) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(Number(value || 0));
 const number = (value) => new Intl.NumberFormat('en-GB').format(Number(value || 0));
 const date = (value) => value ? new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) : '—';
+
+async function getAdminSupabase() {
+  if (adminClient) return adminClient;
+  if (adminClientPromise) return adminClientPromise;
+  adminClientPromise = (async () => {
+    const res = await fetch('/api/supabase-config');
+    if (!res.ok) throw new Error('Unable to load login configuration.');
+    const { url, anonKey } = await res.json();
+    const mod = await import('https://esm.sh/@supabase/supabase-js@2.49.8');
+    adminClient = mod.createClient(url, anonKey, {
+      auth: {
+        storageKey: 'ukmaxx_auth',
+        persistSession: true,
+        detectSessionInUrl: true,
+        autoRefreshToken: true,
+        flowType: 'implicit',
+      },
+    });
+    adminClientPromise = null;
+    return adminClient;
+  })().catch((err) => {
+    adminClientPromise = null;
+    throw err;
+  });
+  return adminClientPromise;
+}
 
 function showAlert(message) {
   const alert = $('adminAlert');
@@ -42,7 +68,7 @@ async function signIn() {
   const btn = $('adminGoogleBtn');
   if (btn) btn.disabled = true;
   try {
-    const supabase = await getSupabase();
+    const supabase = await getAdminSupabase();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -58,7 +84,7 @@ async function signIn() {
 }
 
 async function signOut() {
-  const supabase = await getSupabase();
+  const supabase = await getAdminSupabase();
   await supabase.auth.signOut();
   showLock();
 }
@@ -166,16 +192,12 @@ function renderDashboard(data) {
 
 async function loadDashboard() {
   clearAlert();
-  const supabase = await getSupabase();
+  const supabase = await getAdminSupabase();
   const params = new URLSearchParams(window.location.search);
   if (params.has('code')) {
-    const { error } = await supabase.auth.exchangeCodeForSession(params.get('code'));
-    const cleanUrl = `${window.location.pathname}${window.location.hash || ''}`;
-    window.history.replaceState({}, document.title, cleanUrl);
-    if (error) {
-      showLock('Sign-in could not be completed. Please try again.');
-      return;
-    }
+    window.history.replaceState({}, document.title, window.location.pathname);
+    showLock('Sign-in could not be completed. Please try again.');
+    return;
   }
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) {
@@ -197,7 +219,7 @@ $('adminGoogleBtn')?.addEventListener('click', signIn);
 $('adminSignOutBtn')?.addEventListener('click', signOut);
 $('adminRefreshBtn')?.addEventListener('click', loadDashboard);
 
-getSupabase().then((supabase) => {
+getAdminSupabase().then((supabase) => {
   supabase.auth.onAuthStateChange(() => loadDashboard());
   return loadDashboard();
 }).catch((err) => showLock(`Unable to initialise admin login: ${err.message}`));
