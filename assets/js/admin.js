@@ -1,6 +1,5 @@
 import { getSupabase } from './data/supabase.js';
 
-const ADMIN_EMAIL = 'support@ukmaxx.co.uk';
 const SITE_URL = window.location.origin;
 
 const $ = (id) => document.getElementById(id);
@@ -31,7 +30,7 @@ function showLock(message = '') {
   $('adminLock').hidden = false;
   $('adminDashboard').hidden = true;
   const note = $('adminLockNote');
-  if (note) note.textContent = message || `Allowed admin email: ${ADMIN_EMAIL}`;
+  if (note) note.textContent = message || 'Authorised UKMAXX administrators only.';
 }
 
 function showDashboard() {
@@ -69,7 +68,7 @@ async function fetchDashboard(session) {
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
   if (res.status === 401) throw new Error('Please sign in again.');
-  if (res.status === 403) throw new Error(`This dashboard is restricted to ${ADMIN_EMAIL}.`);
+  if (res.status === 403) throw new Error('This Google account is not authorised for the UKMAXX dashboard.');
   if (!res.ok) throw new Error('Unable to load dashboard metrics.');
   return res.json();
 }
@@ -133,7 +132,7 @@ function renderDashboard(data) {
   const seven = summary.sevenDays || {};
   const thirty = summary.thirtyDays || {};
 
-  setText('adminEmail', data.adminEmail || ADMIN_EMAIL);
+  setText('adminEmail', data.adminEmail || 'Admin');
   setText('dashboardUpdated', `Updated ${date(data.generatedAt)}`);
   setText('revenueToday', money(today.revenue));
   setText('ordersToday', `${number(today.orders)} order${today.orders === 1 ? '' : 's'} today`);
@@ -168,6 +167,16 @@ function renderDashboard(data) {
 async function loadDashboard() {
   clearAlert();
   const supabase = await getSupabase();
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('code')) {
+    const { error } = await supabase.auth.exchangeCodeForSession(params.get('code'));
+    const cleanUrl = `${window.location.pathname}${window.location.hash || ''}`;
+    window.history.replaceState({}, document.title, cleanUrl);
+    if (error) {
+      showLock('Sign-in could not be completed. Please try again.');
+      return;
+    }
+  }
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) {
     showLock();

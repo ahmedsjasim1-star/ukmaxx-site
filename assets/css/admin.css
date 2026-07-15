@@ -1,4 +1,5 @@
 .admin-page{min-height:100vh;background:radial-gradient(circle at top left,rgba(10,126,140,.24),transparent 32%),linear-gradient(135deg,#061417 0%,#092126 48%,#041013 100%);color:#e9fbfd;font-family:Inter,system-ui,sans-serif}
+[hidden],.admin-lock[hidden],.admin-dashboard[hidden]{display:none!important}
 .admin-shell{width:min(1240px,calc(100% - 32px));margin:0 auto;padding:32px 0 54px}
 .admin-logo{display:inline-flex;align-items:center;gap:10px;font-family:"Space Grotesk",sans-serif;font-size:23px;font-weight:700;letter-spacing:.03em;color:#fff;text-decoration:none}
 .admin-logo .logo-mark{width:30px;height:30px;background:#0fa3b1;display:inline-flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)}
