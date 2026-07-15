@@ -2,6 +2,16 @@ const crypto = require('crypto');
 const { getSupabaseAdmin } = require('./_lib/supabase');
 const { sendTelegramAdminAlert } = require('./_lib/notify');
 
+const PRODUCT_LABELS = {
+  RT10: 'RETA 10mg',
+  RT10X3: 'RETA 3-Pack',
+  BC5: 'BPC 157',
+  IP5: 'IPAM 5mg',
+  NJ500: 'NAD+ 500mg',
+  WA10: 'BAC Water',
+  GHKCU: 'GHK-Cu 50mg',
+};
+
 module.exports = async (req, res) => {
   if (req.method === 'GET' && req.query?.type === 'reviews') return handleReviewsList(req, res);
   if (req.method === 'POST' && req.body?.type === 'submit-review') return handleReviewSubmit(req, res);
@@ -168,12 +178,22 @@ async function handleReviewSubmit(req, res) {
       source: 'onsite_verified_order',
     };
 
-    const { error } = await supabase.from('reviews_pending').insert(insert);
+    const { data: pendingReview, error } = await supabase
+      .from('reviews_pending')
+      .insert(insert)
+      .select('id')
+      .single();
     if (error) throw error;
 
-    sendTelegramAdminAlert(
-      `<b>New UKMAXX review pending</b>\n\nOrder: <code>${escapeTelegram(order.order_number)}</code>\nProduct: <b>${escapeTelegram(cleanProduct)}</b>\nRating: ${'★'.repeat(cleanRating)}${'☆'.repeat(5 - cleanRating)}\nName: ${escapeTelegram(cleanReviewerName)}\nPublic initials: ${escapeTelegram(cleanInitials)}\n\n${escapeTelegram(cleanText)}\n\nApprove or reject it in Supabase → reviews_pending.`
-    ).catch((err) => console.error('review-telegram-alert-failed', { message: err?.message }));
+    const productLabel = PRODUCT_LABELS[cleanProduct] || cleanProduct;
+    const reviewCode = String(pendingReview?.id || '').slice(0, 8);
+    try {
+      await sendTelegramAdminAlert(
+        `<b>New UKMAXX review pending</b>\n\nReview code: <code>${escapeTelegram(reviewCode)}</code>\nOrder: <code>${escapeTelegram(order.order_number)}</code>\nProduct: <b>${escapeTelegram(productLabel)}</b>\nRating: ${cleanRating}/5\nName: ${escapeTelegram(cleanReviewerName)}\nPublic initials: ${escapeTelegram(cleanInitials)}\n\n${escapeTelegram(cleanText)}\n\nApprove: <code>/approvereview ${escapeTelegram(reviewCode)}</code>\nReject: <code>/rejectreview ${escapeTelegram(reviewCode)}</code>`
+      );
+    } catch (err) {
+      console.error('review-telegram-alert-failed', { message: err?.message });
+    }
 
     return res.status(200).json({ ok: true });
   } catch (e) {

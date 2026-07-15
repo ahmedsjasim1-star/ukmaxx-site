@@ -1,6 +1,6 @@
 const Stripe = require('stripe');
 const { getSupabaseAdmin } = require('./_lib/supabase');
-const { sendTelegramAdminAlert } = require('./_lib/notify');
+const { sendTelegramOrderAlert } = require('./_lib/notify');
 const { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } = require('./_lib/email');
 
 function moneyFromPence(value) {
@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
       await notifyFailure('Async payment failed', event.data.object);
     } else if (event.type === 'payment_intent.payment_failed') {
       const paymentIntent = event.data.object;
-      await sendTelegramAdminAlert(
+      await sendTelegramOrderAlert(
         `❌ <b>Payment failed</b>\nEmail: ${paymentIntent.receipt_email || 'unknown'}\n`
         + `Payment intent: <code>${paymentIntent.id}</code>\n`
         + `Error: ${paymentIntent.last_payment_error?.message || 'No details'}`,
@@ -99,7 +99,7 @@ module.exports = async (req, res) => {
 
 async function notifyFailure(label, session) {
   try {
-    await sendTelegramAdminAlert(
+    await sendTelegramOrderAlert(
       `⚠️ <b>${label}</b>\nEmail: ${session.customer_details?.email || session.customer_email || 'unknown'}\n`
       + `Session: <code>${session.id}</code>`,
     );
@@ -240,7 +240,7 @@ async function sendNotifications(supabase, order, orderItems, stripeSessionId) {
   ].filter(Boolean).join(', ');
 
   try {
-    await sendTelegramAdminAlert(
+    await sendTelegramOrderAlert(
       `✅ <b>NEW ORDER</b>\nOrder: <b>${order.order_number}</b>\n`
       + `Total: <b>£${Number(order.total).toFixed(2)}</b>\nCustomer: ${order.email}\n`
       + `Name: ${order.full_name || 'N/A'}\nPhone: ${order.phone || 'N/A'}\n`

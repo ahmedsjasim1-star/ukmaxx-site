@@ -1,6 +1,6 @@
 const { getSupabaseAdmin } = require('./_lib/supabase');
 const { getPaymentById } = require('./_lib/fena');
-const { sendTelegramAdminAlert } = require('./_lib/notify');
+const { sendTelegramOrderAlert } = require('./_lib/notify');
 const { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } = require('./_lib/email');
 
 function asMoney(value) {
@@ -179,7 +179,7 @@ async function processPaidPayment({ supabase, attempt, verifiedPayment }) {
 
 async function notifyNonPaidStatus(attempt, status, verifiedPayment) {
   try {
-    await sendTelegramAdminAlert(
+    await sendTelegramOrderAlert(
       `⚠️ <b>Fena payment ${status}</b>\n`
       + `Order: <code>${attempt.payment_reference}</code>\n`
       + `Payment: <code>${verifiedPayment.id || attempt.provider_payment_id || 'unknown'}</code>`,
@@ -217,7 +217,7 @@ async function sendNotifications(supabase, order, orderItems, fenaPaymentId) {
   ].filter(Boolean).join(', ');
 
   try {
-    await sendTelegramAdminAlert(
+    await sendTelegramOrderAlert(
       `✅ <b>NEW PAY BY BANK ORDER</b>\nOrder: <b>${order.order_number}</b>\n`
       + `Total: <b>£${Number(order.total).toFixed(2)}</b>\nCustomer: ${order.email}\n`
       + `Name: ${order.full_name || 'N/A'}\nPhone: ${order.phone || 'N/A'}\n`

@@ -10,6 +10,16 @@ const {
 
 const TELEGRAM_API = 'https://api.telegram.org/bot';
 
+const PRODUCT_LABELS = {
+  RT10: 'RETA 10mg',
+  RT10X3: 'RETA 3-Pack',
+  BC5: 'BPC 157',
+  IP5: 'IPAM 5mg',
+  NJ500: 'NAD+ 500mg',
+  WA10: 'BAC Water',
+  GHKCU: 'GHK-Cu 50mg',
+};
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
@@ -73,6 +83,14 @@ module.exports = async (req, res) => {
         await handleReview(token, chatId, args);
         break;
 
+      case '/approvereview':
+        await handleApproveReview(token, chatId, args);
+        break;
+
+      case '/rejectreview':
+        await handleRejectReview(token, chatId, args);
+        break;
+
       case '/stock':
         await handleStock(token, chatId);
         break;
@@ -116,6 +134,12 @@ const HELP_TEXT = `<b>UKMAXX Admin Bot</b>
 /review &lt;orderNumber&gt;
    Send the post-delivery feedback request email
 
+/approvereview &lt;reviewCode&gt;
+   Publish a pending onsite review
+
+/rejectreview &lt;reviewCode&gt; [reason]
+   Reject a pending onsite review
+
 /stock
    Show live stock
 
@@ -134,6 +158,13 @@ async function sendTelegram(token, chatId, text) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
   });
+}
+
+function escapeTelegram(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 /* ---------- Handler helpers ---------- */
@@ -374,6 +405,95 @@ async function handleReview(token, chatId, args) {
   });
 
   await sendTelegram(token, chatId, `✅ <b>Review request sent</b>\nOrder: ${orderNumber}\nEmail sent to ${order.email}`);
+}
+
+/* ---------- /approvereview + /rejectreview ---------- */
+
+async function findPendingReviewByCode(supabase, code) {
+  const cleanCode = String(code || '').trim().toLowerCase();
+  if (!cleanCode || cleanCode.length < 6 || !/^[a-f0-9-]+$/.test(cleanCode)) {
+    return { error: 'invalid_code' };
+  }
+
+  const { data, error } = await supabase
+    .from('reviews_pending')
+    .select('id, initials, product, rating, review_text, status, reviewer_name, order_number, created_at')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw error;
+
+  const matches = (data || []).filter((review) => String(review.id || '').toLowerCase().startsWith(cleanCode));
+  if (matches.length === 0) return { error: 'not_found' };
+  if (matches.length > 1) return { error: 'ambiguous' };
+  return { review: matches[0] };
+}
+
+async function handleApproveReview(token, chatId, args) {
+  const reviewCode = String(args[0] || '').trim();
+  if (!reviewCode) return sendTelegram(token, chatId, 'Usage: /approvereview &lt;reviewCode&gt;');
+
+  const supabase = getSupabaseAdmin();
+  const found = await findPendingReviewByCode(supabase, reviewCode);
+  if (found.error === 'invalid_code') return sendTelegram(token, chatId, 'Invalid review code. Use the code from the pending review alert.');
+  if (found.error === 'not_found') return sendTelegram(token, chatId, `Review not found for code: ${escapeTelegram(reviewCode)}`);
+  if (found.error === 'ambiguous') return sendTelegram(token, chatId, `More than one review matches ${escapeTelegram(reviewCode)}. Use a longer code.`);
+
+  const review = found.review;
+  if (review.status !== 'pending') {
+    return sendTelegram(token, chatId, `Review ${escapeTelegram(reviewCode)} is already ${escapeTelegram(review.status)}.`);
+  }
+
+  const { error: insertError } = await supabase.from('reviews_public').insert({
+    initials: review.initials,
+    product: review.product,
+    rating: review.rating,
+    review_text: review.review_text,
+    review_date: new Date().toISOString().slice(0, 10),
+  });
+  if (insertError) throw insertError;
+
+  const { error: updateError } = await supabase
+    .from('reviews_pending')
+    .update({ status: 'approved' })
+    .eq('id', review.id);
+  if (updateError) throw updateError;
+
+  const productLabel = PRODUCT_LABELS[review.product] || review.product;
+  await sendTelegram(
+    token,
+    chatId,
+    `OK <b>Review approved and published</b>\nCode: <code>${escapeTelegram(String(review.id).slice(0, 8))}</code>\nProduct: ${escapeTelegram(productLabel)}\nRating: ${review.rating}/5`
+  );
+}
+
+async function handleRejectReview(token, chatId, args) {
+  const reviewCode = String(args[0] || '').trim();
+  const reason = args.slice(1).join(' ').trim();
+  if (!reviewCode) return sendTelegram(token, chatId, 'Usage: /rejectreview &lt;reviewCode&gt; [reason]');
+
+  const supabase = getSupabaseAdmin();
+  const found = await findPendingReviewByCode(supabase, reviewCode);
+  if (found.error === 'invalid_code') return sendTelegram(token, chatId, 'Invalid review code. Use the code from the pending review alert.');
+  if (found.error === 'not_found') return sendTelegram(token, chatId, `Review not found for code: ${escapeTelegram(reviewCode)}`);
+  if (found.error === 'ambiguous') return sendTelegram(token, chatId, `More than one review matches ${escapeTelegram(reviewCode)}. Use a longer code.`);
+
+  const review = found.review;
+  if (review.status !== 'pending') {
+    return sendTelegram(token, chatId, `Review ${escapeTelegram(reviewCode)} is already ${escapeTelegram(review.status)}.`);
+  }
+
+  const { error } = await supabase
+    .from('reviews_pending')
+    .update({ status: 'rejected' })
+    .eq('id', review.id);
+  if (error) throw error;
+
+  const productLabel = PRODUCT_LABELS[review.product] || review.product;
+  await sendTelegram(
+    token,
+    chatId,
+    `OK <b>Review rejected</b>\nCode: <code>${escapeTelegram(String(review.id).slice(0, 8))}</code>\nProduct: ${escapeTelegram(productLabel)}${reason ? `\nReason: ${escapeTelegram(reason)}` : ''}`
+  );
 }
 
 /* ---------- /cancel ---------- */

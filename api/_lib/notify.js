@@ -1,12 +1,10 @@
-async function sendTelegramAdminAlert(text) {
-  const token = process.env.TELEGRAM_ORDER_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_ORDER_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+async function sendTelegramMessage({ text, token, chatId, logPrefix }) {
   if (!token || !chatId) {
-    console.error('telegram-env-missing', {
+    console.error(`${logPrefix}-env-missing`, {
       hasToken: Boolean(token),
       hasChatId: Boolean(chatId),
     });
-    throw new Error('telegram_env_missing');
+    throw new Error(`${logPrefix}_env_missing`);
   }
 
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
@@ -18,20 +16,42 @@ async function sendTelegramAdminAlert(text) {
 
   const data = await r.json().catch(() => ({}));
   if (!r.ok || data.ok === false) {
-    console.error('telegram-send-failed', {
+    console.error(`${logPrefix}-send-failed`, {
       status: r.status,
       ok: data?.ok,
       description: data?.description,
       errorCode: data?.error_code,
       chatIdSuffix: String(chatId).slice(-4),
     });
-    throw new Error(`telegram_send_failed:${data.description || r.status}`);
+    throw new Error(`${logPrefix}_send_failed:${data.description || r.status}`);
   }
 
-  console.log('telegram-send-ok', {
+  console.log(`${logPrefix}-send-ok`, {
     chatIdSuffix: String(chatId).slice(-4),
     messageId: data?.result?.message_id,
   });
 }
 
-module.exports = { sendTelegramAdminAlert };
+async function sendTelegramOrderAlert(text) {
+  const token = process.env.TELEGRAM_ORDER_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_ORDER_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+  return sendTelegramMessage({
+    text,
+    token,
+    chatId,
+    logPrefix: 'telegram-order',
+  });
+}
+
+async function sendTelegramAdminAlert(text) {
+  const token = process.env.TELEGRAM_ADMIN_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+  return sendTelegramMessage({
+    text,
+    token,
+    chatId,
+    logPrefix: 'telegram-admin',
+  });
+}
+
+module.exports = { sendTelegramAdminAlert, sendTelegramOrderAlert };
