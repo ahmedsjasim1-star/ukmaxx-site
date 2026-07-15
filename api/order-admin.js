@@ -10,6 +10,11 @@ const {
 } = require('./_lib/email');
 
 const ACTIONS = ['dispatch', 'deliver', 'cancel', 'refund', 'send-review-request'];
+const PAID_STATUSES = new Set(['paid', 'processing', 'dispatched', 'delivered']);
+const FINAL_BAD_STATUSES = new Set(['cancelled', 'refunded']);
+const BUNDLE_COMPONENTS = {
+  RT10X3: { RT10: 3, WA10: 1 },
+};
 
 function isAuthorized(req) {
   const expected = process.env.ADMIN_API_KEY || '';
@@ -21,6 +26,7 @@ function isAuthorized(req) {
 }
 
 module.exports = async (req, res) => {
+  if (req.method === 'GET' && req.query?.type === 'dashboard') return handleDashboard(req, res);
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!isAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -47,6 +53,254 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: `Failed to ${action} order` });
   }
 };
+
+function allowedAdminEmails() {
+  return String(process.env.ADMIN_EMAILS || 'support@ukmaxx.co.uk')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+async function requireAdminUser(req) {
+  const authorization = String(req.headers.authorization || '');
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+  if (!token) return { error: 'missing_token' };
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user?.email) return { error: 'invalid_token' };
+
+  const email = String(data.user.email || '').toLowerCase();
+  if (!allowedAdminEmails().includes(email)) return { error: 'forbidden', email };
+  return { supabase, user: data.user, email };
+}
+
+async function handleDashboard(req, res) {
+  try {
+    const auth = await requireAdminUser(req);
+    if (auth.error === 'missing_token' || auth.error === 'invalid_token') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (auth.error === 'forbidden') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const data = await buildDashboard(auth.supabase);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json({
+      adminEmail: auth.email,
+      generatedAt: new Date().toISOString(),
+      ...data,
+    });
+  } catch (err) {
+    console.error('admin-dashboard-error', { message: err?.message, stack: err?.stack });
+    return res.status(500).json({ error: 'Failed to load dashboard' });
+  }
+}
+
+async function safeSelect(supabase, table, select, options = {}) {
+  let query = supabase.from(table).select(select);
+  if (options.order) query = query.order(options.order.column, { ascending: options.order.ascending });
+  if (options.limit) query = query.limit(options.limit);
+  const { data, error } = await query;
+  if (error) {
+    console.error('admin-dashboard-query-error', { table, message: error.message });
+    return [];
+  }
+  return data || [];
+}
+
+function asNumber(value) {
+  return Number(value || 0);
+}
+
+function money(value) {
+  return Number(asNumber(value).toFixed(2));
+}
+
+function isSince(row, from) {
+  return new Date(row.created_at || 0).getTime() >= from.getTime();
+}
+
+function countBy(rows, key) {
+  return rows.reduce((acc, row) => {
+    const value = String(row[key] || 'unknown').toLowerCase();
+    acc[value] = (acc[value] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function sumRevenue(rows) {
+  return money(rows.reduce((sum, order) => sum + asNumber(order.total), 0));
+}
+
+function averageOrderValue(rows) {
+  return rows.length ? money(sumRevenue(rows) / rows.length) : 0;
+}
+
+function periodSummary(orders, from) {
+  const rows = orders.filter((order) => PAID_STATUSES.has(order.status) && isSince(order, from));
+  return {
+    orders: rows.length,
+    revenue: sumRevenue(rows),
+    averageOrderValue: averageOrderValue(rows),
+  };
+}
+
+function topProducts(orders, items) {
+  const paidOrderIds = new Set(orders.filter((order) => PAID_STATUSES.has(order.status)).map((order) => order.id));
+  const map = new Map();
+  for (const item of items) {
+    if (!paidOrderIds.has(item.order_id)) continue;
+    const sku = item.sku || 'UNKNOWN';
+    const current = map.get(sku) || { sku, name: item.product_name || sku, quantity: 0, revenue: 0 };
+    current.quantity += asNumber(item.qty);
+    current.revenue = money(current.revenue + asNumber(item.line_total));
+    map.set(sku, current);
+  }
+  return [...map.values()]
+    .sort((a, b) => b.revenue - a.revenue || b.quantity - a.quantity)
+    .slice(0, 6);
+}
+
+function revenueByProduct(orders, items) {
+  return topProducts(orders, items).map((product) => ({
+    label: product.name,
+    value: product.revenue,
+  }));
+}
+
+function customerStats(orders) {
+  const paid = orders.filter((order) => PAID_STATUSES.has(order.status));
+  const customers = new Map();
+  for (const order of paid) {
+    const email = String(order.email || '').toLowerCase();
+    if (!email) continue;
+    const current = customers.get(email) || { orders: 0, revenue: 0 };
+    current.orders += 1;
+    current.revenue += asNumber(order.total);
+    customers.set(email, current);
+  }
+  const repeat = [...customers.values()].filter((customer) => customer.orders > 1);
+  return {
+    uniqueCustomers: customers.size,
+    repeatCustomers: repeat.length,
+    repeatRate: customers.size ? Math.round((repeat.length / customers.size) * 100) : 0,
+  };
+}
+
+function stockSummary(products) {
+  const bySku = new Map(products.map((product) => [product.sku, product]));
+  const rows = products.map((product) => ({
+    sku: product.sku,
+    name: product.name,
+    stock: asNumber(product.stock_quantity),
+    price: asNumber(product.price),
+    active: Boolean(product.is_active),
+  }));
+  for (const [bundleSku, components] of Object.entries(BUNDLE_COMPONENTS)) {
+    const bundle = bySku.get(bundleSku);
+    if (!bundle) continue;
+    const available = Math.max(0, Math.min(...Object.entries(components).map(([sku, qty]) => {
+      return Math.floor(asNumber(bySku.get(sku)?.stock_quantity) / qty);
+    })));
+    const existing = rows.find((row) => row.sku === bundleSku);
+    if (existing) existing.stock = available;
+  }
+  const lowStock = rows.filter((product) => product.active && product.stock <= 5);
+  return {
+    products: rows.sort((a, b) => a.sku.localeCompare(b.sku)),
+    lowStock,
+  };
+}
+
+function paymentSummary(attempts) {
+  const counts = countBy(attempts, 'status');
+  const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
+  const abandoned = attempts.filter((attempt) => {
+    const status = String(attempt.status || '').toLowerCase();
+    return ['created', 'pending'].includes(status) && new Date(attempt.created_at || 0).getTime() < thirtyMinutesAgo;
+  }).length;
+  return {
+    totalAttempts: attempts.length,
+    counts,
+    abandoned,
+    rejectedOrCancelled: attempts.filter((attempt) => ['rejected', 'cancelled', 'overdue'].includes(String(attempt.status || '').toLowerCase())).length,
+  };
+}
+
+function recentOrders(orders) {
+  return orders.slice(0, 10).map((order) => ({
+    orderNumber: order.order_number,
+    email: order.email,
+    total: asNumber(order.total),
+    status: order.status,
+    paymentProvider: order.payment_provider || 'stripe',
+    createdAt: order.created_at,
+  }));
+}
+
+async function buildDashboard(supabase) {
+  const [
+    orders,
+    items,
+    products,
+    attempts,
+    pendingReviews,
+    publicReviews,
+    subscribers,
+    promoRedemptions,
+  ] = await Promise.all([
+    safeSelect(supabase, 'orders', 'id,order_number,email,total,subtotal,discount,shipping,status,created_at,delivered_at,dispatched_at,payment_provider,promo_opt_in', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
+    safeSelect(supabase, 'order_items', 'order_id,sku,product_name,qty,line_total', { limit: 5000 }),
+    safeSelect(supabase, 'products', 'sku,name,price,stock_quantity,is_active', { limit: 200 }),
+    safeSelect(supabase, 'payment_attempts', 'status,amount,email,created_at,payment_provider', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
+    safeSelect(supabase, 'reviews_pending', 'id,status,created_at', { limit: 1000 }),
+    safeSelect(supabase, 'reviews_public', 'id,rating,created_at', { limit: 1000 }),
+    safeSelect(supabase, 'subscribers', 'id,unsubscribed_at,created_at', { limit: 5000 }),
+    safeSelect(supabase, 'promo_redemptions', 'id,promo_code,redeemed_at', { limit: 5000 }),
+  ]);
+
+  const now = new Date();
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const paidOrders = orders.filter((order) => PAID_STATUSES.has(order.status));
+  const activeSubscribers = subscribers.filter((sub) => !sub.unsubscribed_at);
+  const approvedRatings = publicReviews.map((review) => asNumber(review.rating)).filter(Boolean);
+
+  return {
+    summary: {
+      today: periodSummary(orders, today),
+      sevenDays: periodSummary(orders, sevenDaysAgo),
+      thirtyDays: periodSummary(orders, thirtyDaysAgo),
+      allTimeRevenue: sumRevenue(paidOrders),
+      allTimeOrders: paidOrders.length,
+      averageOrderValue: averageOrderValue(paidOrders),
+      promoRedemptions: promoRedemptions.length,
+      subscribers: activeSubscribers.length,
+    },
+    customers: customerStats(orders),
+    orders: {
+      byStatus: countBy(orders, 'status'),
+      recent: recentOrders(orders),
+      openFulfilment: orders.filter((order) => ['paid', 'processing', 'dispatched'].includes(order.status)).length,
+      problemOrders: orders.filter((order) => FINAL_BAD_STATUSES.has(order.status)).length,
+    },
+    payments: paymentSummary(attempts),
+    products: {
+      top: topProducts(orders, items),
+      revenue: revenueByProduct(orders, items),
+      stock: stockSummary(products),
+    },
+    reviews: {
+      pending: pendingReviews.filter((review) => review.status === 'pending').length,
+      approved: publicReviews.length,
+      averageRating: approvedRatings.length ? Number((approvedRatings.reduce((sum, rating) => sum + rating, 0) / approvedRatings.length).toFixed(1)) : 0,
+    },
+  };
+}
 
 async function getOrder(supabase, orderNumber, fields) {
   const { data, error } = await supabase

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UKMAXX Admin Dashboard</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#071b1f">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/css/variables.css">
+<link rel="stylesheet" href="./assets/css/reset.css">
+<link rel="stylesheet" href="./assets/css/base.css">
+<link rel="stylesheet" href="./assets/css/admin.css?v=20260715-admin-dashboard">
+</head>
+<body class="admin-page">
+  <main class="admin-shell">
+    <section class="admin-lock" id="adminLock">
+      <div class="admin-lock-card">
+        <a class="admin-logo" href="./" aria-label="UKMAXX home">
+          <span class="logo-mark" aria-hidden="true"></span>
+          <span>UKMAXX</span>
+        </a>
+        <p class="eyebrow">Private business dashboard</p>
+        <h1>Admin access required</h1>
+        <p class="admin-lock-copy">Sign in with the approved UKMAXX Google Workspace account to view business metrics. Customer accounts cannot access this page.</p>
+        <button class="admin-btn admin-btn-primary" id="adminGoogleBtn" type="button">
+          Continue with Google
+        </button>
+        <p class="admin-lock-note" id="adminLockNote">Allowed admin email: support@ukmaxx.co.uk</p>
+      </div>
+    </section>
+
+    <section class="admin-dashboard" id="adminDashboard" hidden>
+      <header class="admin-header">
+        <a class="admin-logo" href="./" aria-label="UKMAXX home">
+          <span class="logo-mark" aria-hidden="true"></span>
+          <span>UKMAXX</span>
+        </a>
+        <div class="admin-header-copy">
+          <p class="eyebrow">Business cockpit</p>
+          <h1>Dashboard</h1>
+          <p id="dashboardUpdated">Loading live metrics…</p>
+        </div>
+        <div class="admin-header-actions">
+          <span class="admin-user-pill" id="adminEmail">Signed in</span>
+          <button class="admin-btn admin-btn-ghost" id="adminRefreshBtn" type="button">Refresh</button>
+          <button class="admin-btn admin-btn-dark" id="adminSignOutBtn" type="button">Sign out</button>
+        </div>
+      </header>
+
+      <div class="admin-alert" id="adminAlert" hidden></div>
+
+      <section class="metric-grid" aria-label="Headline metrics">
+        <article class="metric-card metric-card-primary">
+          <span>Revenue today</span>
+          <strong id="revenueToday">—</strong>
+          <small id="ordersToday">—</small>
+        </article>
+        <article class="metric-card">
+          <span>7-day revenue</span>
+          <strong id="revenueSeven">—</strong>
+          <small id="ordersSeven">—</small>
+        </article>
+        <article class="metric-card">
+          <span>30-day revenue</span>
+          <strong id="revenueThirty">—</strong>
+          <small id="ordersThirty">—</small>
+        </article>
+        <article class="metric-card">
+          <span>Average order value</span>
+          <strong id="averageOrderValue">—</strong>
+          <small id="allTimeOrders">—</small>
+        </article>
+      </section>
+
+      <section class="admin-grid admin-grid-main">
+        <article class="admin-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Sales</p>
+              <h2>Top products</h2>
+            </div>
+            <span class="panel-chip" id="topProductChip">—</span>
+          </div>
+          <div class="bar-list" id="topProducts"></div>
+        </article>
+
+        <article class="admin-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Operations</p>
+              <h2>Order pipeline</h2>
+            </div>
+          </div>
+          <div class="status-grid" id="orderStatus"></div>
+        </article>
+      </section>
+
+      <section class="admin-grid admin-grid-three">
+        <article class="admin-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Stock</p>
+              <h2>Inventory health</h2>
+            </div>
+            <span class="panel-chip warning" id="lowStockChip">—</span>
+          </div>
+          <div class="stock-list" id="stockList"></div>
+        </article>
+
+        <article class="admin-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Customers</p>
+              <h2>Retention</h2>
+            </div>
+          </div>
+          <div class="mini-metrics">
+            <div><strong id="uniqueCustomers">—</strong><span>Unique customers</span></div>
+            <div><strong id="repeatCustomers">—</strong><span>Repeat customers</span></div>
+            <div><strong id="repeatRate">—</strong><span>Repeat rate</span></div>
+            <div><strong id="subscribers">—</strong><span>Subscribers</span></div>
+          </div>
+        </article>
+
+        <article class="admin-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Payments & reviews</p>
+              <h2>Attention</h2>
+            </div>
+          </div>
+          <div class="mini-metrics">
+            <div><strong id="paymentAttempts">—</strong><span>Payment attempts</span></div>
+            <div><strong id="paymentIssues">—</strong><span>Rejected/cancelled</span></div>
+            <div><strong id="pendingReviews">—</strong><span>Pending reviews</span></div>
+            <div><strong id="approvedReviews">—</strong><span>Approved reviews</span></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Live feed</p>
+            <h2>Recent orders</h2>
+          </div>
+          <span class="panel-chip" id="openFulfilment">—</span>
+        </div>
+        <div class="orders-table-wrap">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Total</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="recentOrders"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./assets/js/admin.js?v=20260715-admin-dashboard"></script>
+</body>
+</html>
