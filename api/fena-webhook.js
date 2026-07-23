@@ -2,6 +2,7 @@ const { getSupabaseAdmin } = require('./_lib/supabase');
 const { getPaymentById } = require('./_lib/fena');
 const { sendTelegramOrderAlert } = require('./_lib/notify');
 const { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } = require('./_lib/email');
+const { syncRoyalMailOrderToSupabase } = require('./_lib/royalmail');
 
 function asMoney(value) {
   return Number(Number(value || 0).toFixed(2));
@@ -113,7 +114,8 @@ async function processPaidPayment({ supabase, attempt, verifiedPayment }) {
   if (existing.error) throw existing.error;
   if (existing.data) {
     const items = await getOrderItems(supabase, existing.data.id);
-    await sendNotifications(supabase, existing.data, items, verifiedPayment.id || attempt.provider_payment_id);
+    const fulfilment = await ensureRoyalMailFulfilment(supabase, existing.data, items);
+    await sendNotifications(supabase, existing.data, items, verifiedPayment.id || attempt.provider_payment_id, fulfilment);
     return;
   }
 
@@ -174,7 +176,8 @@ async function processPaidPayment({ supabase, attempt, verifiedPayment }) {
     if (error) throw error;
   }
 
-  await sendNotifications(supabase, order, payload.items || [], verifiedPayment.id || attempt.provider_payment_id);
+  const fulfilment = await ensureRoyalMailFulfilment(supabase, order, payload.items || []);
+  await sendNotifications(supabase, order, payload.items || [], verifiedPayment.id || attempt.provider_payment_id, fulfilment);
 }
 
 async function notifyNonPaidStatus(attempt, status, verifiedPayment) {
@@ -198,7 +201,30 @@ async function getOrderItems(supabase, orderId) {
   return data || [];
 }
 
-async function sendNotifications(supabase, order, orderItems, fenaPaymentId) {
+async function ensureRoyalMailFulfilment(supabase, order, orderItems) {
+  try {
+    return await syncRoyalMailOrderToSupabase(supabase, order, orderItems);
+  } catch (error) {
+    console.error('royalmail-auto-label-failed', {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      message: error?.message,
+    });
+
+    await supabase.from('admin_audit_log').insert({
+      action: 'royalmail_order_failed',
+      order_id: order.id,
+      payload: {
+        order_number: order.order_number,
+        message: error?.message || 'Unknown Royal Mail error',
+      },
+    }).catch(() => {});
+
+    return { error: error?.message || 'Royal Mail label failed', orderNumber: order.order_number };
+  }
+}
+
+async function sendNotifications(supabase, order, orderItems, fenaPaymentId, fulfilment = {}) {
   const { data: sent } = await supabase
     .from('admin_audit_log')
     .select('id')
@@ -221,7 +247,8 @@ async function sendNotifications(supabase, order, orderItems, fenaPaymentId) {
       `✅ <b>NEW PAY BY BANK ORDER</b>\nOrder: <b>${order.order_number}</b>\n`
       + `Total: <b>£${Number(order.total).toFixed(2)}</b>\nCustomer: ${order.email}\n`
       + `Name: ${order.full_name || 'N/A'}\nPhone: ${order.phone || 'N/A'}\n`
-      + `${itemText}\nAddress: ${address}\nFena payment: <code>${fenaPaymentId || 'N/A'}</code>`,
+      + `${itemText}\nAddress: ${address}\nFena payment: <code>${fenaPaymentId || 'N/A'}</code>\n`
+      + fulfilmentLine(fulfilment),
     );
   } catch (error) {
     console.error('fena-telegram-alert-failed', { orderId: order.id, error: error?.message });
@@ -260,7 +287,35 @@ async function sendNotifications(supabase, order, orderItems, fenaPaymentId) {
   const { error } = await supabase.from('admin_audit_log').insert({
     action: 'notifications_sent',
     order_id: order.id,
-    payload: { payment_provider: 'fena', fena_payment_id: fenaPaymentId || null },
+    payload: {
+      payment_provider: 'fena',
+      fena_payment_id: fenaPaymentId || null,
+      royalmail: fulfilment?.error ? { error: fulfilment.error } : {
+        tracking_number: fulfilment?.trackingNumber || null,
+        order_identifier: fulfilment?.orderIdentifier || null,
+        skipped: fulfilment?.skipped || false,
+      },
+    },
   });
   if (error) throw error;
+}
+
+function fulfilmentLine(fulfilment = {}) {
+  if (fulfilment.error) {
+    return `\nâš ï¸ Royal Mail label: <b>FAILED</b>\nUse <code>/label ${escapeHtml(fulfilment.orderNumber || '')}</code> after checking settings.`;
+  }
+  if (fulfilment.trackingNumber) {
+    return `\nðŸ“¦ Royal Mail label: <b>created</b>\nTracking: <code>${escapeHtml(fulfilment.trackingNumber)}</code>`;
+  }
+  if (fulfilment.skipped) {
+    return `\nðŸ“¦ Royal Mail label: ${escapeHtml(fulfilment.reason || 'skipped')}`;
+  }
+  return '\nðŸ“¦ Royal Mail label: pending';
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }

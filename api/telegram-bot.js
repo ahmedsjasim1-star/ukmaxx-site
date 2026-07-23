@@ -7,6 +7,7 @@ const {
   sendOrderRefundedEmail,
   sendReviewRequestEmail,
 } = require('./_lib/email');
+const { syncRoyalMailOrderToSupabase } = require('./_lib/royalmail');
 
 const TELEGRAM_API = 'https://api.telegram.org/bot';
 
@@ -67,6 +68,11 @@ module.exports = async (req, res) => {
         await handleDispatch(token, chatId, args);
         break;
 
+      case '/label':
+      case '/retrylabel':
+        await handleLabel(token, chatId, args);
+        break;
+
       case '/deliver':
         await handleDeliver(token, chatId, args);
         break;
@@ -121,6 +127,9 @@ const HELP_TEXT = `<b>UKMAXX Admin Bot</b>
 /dispatch &lt;orderNumber&gt; &lt;trackingNumber&gt;
    Mark order as dispatched and email tracking
    Example: /dispatch UKM-12345 RM123456789GB
+
+/label &lt;orderNumber&gt;
+   Create/retry Royal Mail Click & Drop label
 
 /deliver &lt;orderNumber&gt;
    Mark order as delivered
@@ -179,7 +188,7 @@ async function findOrder(supabase, orderNumber) {
 
   const { data: order } = await supabase
     .from('orders')
-    .select('id, order_number, email, total, status, stripe_session_id, payment_provider, payment_reference, fena_payment_id, delivered_at, review_request_sent_at')
+    .select('id, order_number, email, full_name, phone, subtotal, shipping, total, status, created_at, stripe_session_id, payment_provider, payment_reference, fena_payment_id, delivered_at, review_request_sent_at, shipping_address_line1, shipping_address_line2, shipping_city, shipping_postcode, shipping_country, tracking_number, tracking_url, royalmail_order_identifier, royalmail_tracking_number')
     .eq('order_number', normalizedOrderNumber)
     .maybeSingle();
   return order;
@@ -339,6 +348,34 @@ async function handleDispatch(token, chatId, args) {
 
 function royalMailTrackingUrl(trackingNumber) {
   return `https://www.royalmail.com/track-your-item#/tracking-results/${encodeURIComponent(trackingNumber)}`;
+}
+
+/* ---------- /label ---------- */
+
+async function handleLabel(token, chatId, args) {
+  const orderNumber = normalizeOrderNumber(args[0]);
+  if (!orderNumber) return sendTelegram(token, chatId, 'Usage: /label &lt;orderNumber&gt;\nExample: /label UKX26F7RH9K');
+
+  const supabase = getSupabaseAdmin();
+  const order = await findOrder(supabase, orderNumber);
+  if (!order) return sendTelegram(token, chatId, 'âŒ Order not found.');
+  if (!['paid', 'processing'].includes(order.status)) {
+    return sendTelegram(token, chatId, `âŒ Cannot create label for status "${order.status}". Use paid/processing orders only.`);
+  }
+
+  const items = await getItems(supabase, order.id);
+  const result = await syncRoyalMailOrderToSupabase(supabase, order, items);
+  const trackingNumber = result.trackingNumber || order.tracking_number || null;
+
+  if (result.skipped && result.reason === 'already_synced') {
+    return sendTelegram(token, chatId, `âœ… <b>Royal Mail already synced</b>\nOrder: ${orderNumber}\nTracking: <code>${escapeTelegram(trackingNumber || 'N/A')}</code>`);
+  }
+
+  await sendTelegram(
+    token,
+    chatId,
+    `âœ… <b>Royal Mail label created</b>\nOrder: ${orderNumber}\nTracking: <code>${escapeTelegram(trackingNumber || 'pending')}</code>\nLabel status: ${result.labelReturned ? 'label returned by API' : 'created in Click & Drop'}`,
+  );
 }
 
 /* ---------- /deliver ---------- */

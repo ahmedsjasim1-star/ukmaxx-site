@@ -8,8 +8,9 @@ const {
   sendOrderRefundedEmail,
   sendReviewRequestEmail,
 } = require('./_lib/email');
+const { syncRoyalMailOrderToSupabase } = require('./_lib/royalmail');
 
-const ACTIONS = ['dispatch', 'deliver', 'cancel', 'refund', 'send-review-request'];
+const ACTIONS = ['dispatch', 'deliver', 'cancel', 'refund', 'send-review-request', 'create-label'];
 const PAID_STATUSES = new Set(['paid', 'processing', 'dispatched', 'delivered']);
 const FINAL_BAD_STATUSES = new Set(['cancelled', 'refunded']);
 const BUNDLE_COMPONENTS = {
@@ -47,6 +48,7 @@ module.exports = async (req, res) => {
     if (action === 'deliver') return handleDeliver(ctx, { orderNumber, deliveredTime });
     if (action === 'cancel') return handleCancel(ctx, { orderNumber, reason, refund });
     if (action === 'refund') return handleRefund(ctx, { orderNumber, reason });
+    if (action === 'create-label') return handleCreateLabel(ctx, { orderNumber });
     return handleReviewRequest(ctx, { orderNumber });
   } catch (err) {
     console.error(`order-admin-${action}-error`, { message: err?.message, stack: err?.stack });
@@ -360,6 +362,29 @@ async function handleDispatch({ res, supabase }, details) {
     tracking_number: details.trackingNumber || null,
   });
   return res.status(200).json({ success: true, orderNumber: order.order_number });
+}
+
+async function handleCreateLabel({ res, supabase }, { orderNumber }) {
+  const order = await getOrder(
+    supabase,
+    orderNumber,
+    'id, order_number, email, full_name, phone, subtotal, shipping, total, status, created_at, shipping_address_line1, shipping_address_line2, shipping_city, shipping_postcode, shipping_country, tracking_number, tracking_url, royalmail_order_identifier, royalmail_tracking_number',
+  );
+  if (!order) return res.status(404).json({ error: 'Order not found' });
+  if (!['paid', 'processing'].includes(order.status)) {
+    return res.status(400).json({ error: `Cannot create label for order with status "${order.status}".` });
+  }
+
+  const items = await getItems(supabase, order.id);
+  const result = await syncRoyalMailOrderToSupabase(supabase, order, items);
+  return res.status(200).json({
+    success: true,
+    orderNumber: order.order_number,
+    trackingNumber: result.trackingNumber || order.tracking_number || null,
+    royalmailOrderIdentifier: result.orderIdentifier || order.royalmail_order_identifier || null,
+    skipped: result.skipped || false,
+    reason: result.reason || null,
+  });
 }
 
 async function handleDeliver({ res, supabase }, { orderNumber, deliveredTime }) {
