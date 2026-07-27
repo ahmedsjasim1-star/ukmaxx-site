@@ -229,6 +229,10 @@ export async function openCheckout() {
   if (!c.length) { toast('Basket empty', 'Add products to begin checkout.', 'error'); return; }
   prefillCheckoutFields();
   const m = byId('checkoutBackdrop');
+  if (!m) {
+    toast('Checkout unavailable', 'Please open the shop page and try checkout again.', 'error');
+    return;
+  }
   m.classList.add('is-open');
   m.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
