@@ -172,7 +172,24 @@ function renderPdpProduct(root) {
   }
   const galleryThumbs = byId('pdpGalleryThumbs');
   if (galleryThumbs) {
-    galleryThumbs.innerHTML = '<button class="pdp-thumb is-active" aria-label="' + p.name + '"><img src="' + p.image + '" alt="' + p.name + '" width="80" height="64" loading="lazy"></button>';
+    const thumbs = [
+      { src: p.image, alt: p.name, label: p.name },
+      ...(p.coaSampleImage ? [{ src: p.coaSampleImage, alt: p.name + ' Janoshik sample photo', label: 'Sample photo' }] : []),
+      ...(p.coaImage ? [{ src: p.coaImage, alt: p.name + ' COA report', label: 'COA report' }] : []),
+    ];
+    galleryThumbs.innerHTML = thumbs.map(function (thumb, index) {
+      return '<button class="pdp-thumb' + (index === 0 ? ' is-active' : '') + '" type="button" aria-label="' + thumb.label + '" data-img="' + thumb.src + '" data-alt="' + thumb.alt + '"><img src="' + thumb.src + '" alt="' + thumb.alt + '" width="80" height="64" loading="lazy"></button>';
+    }).join('');
+    galleryThumbs.querySelectorAll('.pdp-thumb').forEach(function (thumb) {
+      thumb.addEventListener('click', function () {
+        if (galleryImg) {
+          galleryImg.src = thumb.dataset.img || p.image;
+          galleryImg.alt = thumb.dataset.alt || p.name;
+        }
+        galleryThumbs.querySelectorAll('.pdp-thumb').forEach(function (btn) { btn.classList.remove('is-active'); });
+        thumb.classList.add('is-active');
+      });
+    });
   }
 
   const addBtn = byId('pdpAddBtn');
