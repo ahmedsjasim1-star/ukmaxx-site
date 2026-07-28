@@ -218,7 +218,7 @@ async function getStockProducts(supabase) {
   const { data, error } = await supabase
     .from('products')
     .select('sku,name,stock_quantity,is_active')
-    .in('sku', ['RT10', 'WA10', 'RT10X3', 'BC5', 'IP5', 'NJ500'])
+    .in('sku', ['RT10', 'WA10', 'RT10X3', 'BC5', 'IP5', 'NJ500', 'GHKCU'])
     .order('sku', { ascending: true });
   if (error) throw error;
   return data || [];
@@ -235,6 +235,8 @@ async function handleStock(token, chatId) {
     '<b>UKMAXX Live Stock</b>',
     '',
     `RETA 10MG (RT10): <b>${Number(bySku.get('RT10')?.stock_quantity || 0)}</b>`,
+    `BPC 157 (BC5): <b>${Number(bySku.get('BC5')?.stock_quantity || 0)}</b>`,
+    `GHK-Cu 50MG (GHKCU): <b>${Number(bySku.get('GHKCU')?.stock_quantity || 0)}</b>`,
     `BAC Water (WA10): <b>${Number(bySku.get('WA10')?.stock_quantity || 0)}</b>`,
     `RETA 3-Pack (RT10X3): <b>${bundleStock}</b> bundles available`,
     '',
