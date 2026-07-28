@@ -343,7 +343,9 @@ export function initCart() {
     const sku = btn.dataset.add;
     const originalHtml = btn.dataset.originalHtml || btn.innerHTML;
     btn.dataset.originalHtml = originalHtml;
-    addSku(sku);
+    const qtyInput = btn.dataset.qtyInput ? byId(btn.dataset.qtyInput) : null;
+    if (qtyInput) addSkuQty(sku, qtyInput.value);
+    else addSku(sku);
     btn.classList.add('is-adding');
     btn.textContent = '✓ Added';
     setTimeout(() => {

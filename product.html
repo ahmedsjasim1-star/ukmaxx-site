@@ -134,7 +134,7 @@
 <input type="number" id="pdpQtyInput" value="1" min="1" max="99" aria-label="Quantity">
 <button type="button" id="pdpQtyInc" aria-label="Increase quantity">+</button>
 </div>
-<button class="btn btn-primary pdp-add" id="pdpAddBtn">
+<button class="btn btn-primary pdp-add" id="pdpAddBtn" data-qty-input="pdpQtyInput">
 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="9" cy="20" r="1.3"/>
 <circle cx="18" cy="20" r="1.3"/>
@@ -439,7 +439,7 @@
 <input type="number" id="pdpMobileQtyInput" value="1" min="1" max="99" aria-label="Quantity">
 <button type="button" id="pdpMobileQtyInc" aria-label="Increase">+</button>
 </div>
-<button type="button" class="pdp-mobile-bar-btn" id="pdpMobileAdd">
+<button type="button" class="pdp-mobile-bar-btn" id="pdpMobileAdd" data-qty-input="pdpMobileQtyInput">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="9" cy="20" r="1.3"/>
 <circle cx="18" cy="20" r="1.3"/>
@@ -448,6 +448,6 @@
 <span id="pdpMobileAddLabel">Add</span>
 </button>
 </div>
-<script type="module" src="./assets/js/app.js?v=20260715-review-stats"></script>
+<script type="module" src="./assets/js/app.js?v=20260728-cart-qty"></script>
 </body>
 </html>

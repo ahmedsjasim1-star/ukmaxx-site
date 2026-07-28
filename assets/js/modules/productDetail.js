@@ -197,10 +197,12 @@ function renderPdpProduct(root) {
   if (addBtn) {
     if (purchasable) {
       addBtn.dataset.add = p.id;
+      addBtn.dataset.qtyInput = 'pdpQtyInput';
       addBtn.disabled = false;
       if (addBtnLabel) addBtnLabel.textContent = 'Add to basket';
     } else {
       delete addBtn.dataset.add;
+      delete addBtn.dataset.qtyInput;
       addBtn.disabled = true;
       if (addBtnLabel) addBtnLabel.textContent = getReleaseLabel(p);
     }
@@ -211,10 +213,12 @@ function renderPdpProduct(root) {
   if (mobileAdd) {
     if (purchasable) {
       mobileAdd.dataset.add = p.id;
+      mobileAdd.dataset.qtyInput = 'pdpMobileQtyInput';
       mobileAdd.disabled = false;
       setText('pdpMobileAddLabel', 'Add');
     } else {
       delete mobileAdd.dataset.add;
+      delete mobileAdd.dataset.qtyInput;
       mobileAdd.disabled = true;
       setText('pdpMobileAddLabel', 'Soon');
     }

@@ -1,6 +1,6 @@
-import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260715-review-stats';
+import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260728-product-order';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260714-review-polish';
-import { renderCart, initCart } from './modules/cart.js?v=20260625-promo-fix';
+import { renderCart, initCart } from './modules/cart.js?v=20260728-cart-qty';
 import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js';
 import { setupLightbox } from './modules/lightbox.js';
@@ -8,7 +8,7 @@ import { setupExitIntent } from './modules/exitIntent.js?v=20260625-alerts';
 import { setupNewsletter } from './modules/newsletter.js';
 import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js';
 import { setupTracking } from './modules/tracking.js';
-import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js';
+import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js?v=20260728-cart-qty';
 import { setupAccountPage } from './modules/account.js';
 import { updateHeroBatchChips } from './modules/heroBatch.js';
 import { refreshLiveStock } from './data/products.js';
