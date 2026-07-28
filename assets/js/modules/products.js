@@ -78,18 +78,32 @@ function productCard(p, bundle = false) {
   </article>`;
 }
 
+function productDisplayRank(p) {
+  if (p.category === 'support') return 2;
+  if (isPurchasable(p)) return 0;
+  return 1;
+}
+
+function sortForProductGrid(items) {
+  return [...items].sort((a, b) =>
+    productDisplayRank(a) - productDisplayRank(b) ||
+    Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999) ||
+    a.name.localeCompare(b.name)
+  );
+}
+
 export function renderProducts() {
   const grid = byId('productsGrid');
   const bgrid = byId('bundlesGrid');
   if (!grid) return;
   const all = Object.values(PRODUCTS);
-  const bundles = all.filter(p => p.category === 'bundles');
-  const products = all.filter(p => p.category !== 'bundles');
+  const bundles = sortForProductGrid(all.filter(p => p.category === 'bundles'));
+  const products = sortForProductGrid(all.filter(p => p.category !== 'bundles'));
   if (bgrid) {
     bgrid.innerHTML = bundles.map(p => productCard(p, true)).join('');
     grid.innerHTML = products.map(p => productCard(p)).join('');
   } else {
-    grid.innerHTML = all.map(p => productCard(p, p.category === 'bundles')).join('');
+    grid.innerHTML = sortForProductGrid(all).map(p => productCard(p, p.category === 'bundles')).join('');
   }
 
   const tabs = byId('filterTabs');
