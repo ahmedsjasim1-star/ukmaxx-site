@@ -6,7 +6,7 @@ import { renderProductReviewsSummary } from './reviews.js?v=20260714-review-poli
 
 export function renderProductDetail() {
   const root = byId('pdpRoot');
-  if (root) { renderPdpProduct(root); return; }
+  if (root) { renderPdpProduct(root); setupDispatchCountdown(); return; }
   const container = byId('productDetail');
   if (!container) return;
   const params = new URLSearchParams(location.search);
@@ -269,7 +269,7 @@ function renderPdpProduct(root) {
     overviewText.innerHTML = purchasable
       ? (p.id === 'WA10'
         ? '<p>' + p.description + '</p><p>Quality: <strong>' + getQualityLabel(p) + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>'
-        : '<p>' + p.description + '</p><p>Each vial independently tested by <strong>' + p.coa.lab + '</strong> using <strong>' + p.coa.method + '</strong>. Purity verified at <strong>' + p.purity + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>')
+        : '<p>' + p.description + '</p><p>This batch was independently tested by <strong>' + p.coa.lab + '</strong> using <strong>' + p.coa.method + '</strong>. Purity verified at <strong>' + p.purity + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>')
       : '<p>' + p.description + '</p><p><strong>' + getReleaseLabel(p) + '.</strong> This product is awaiting its COA before release, so ordering is disabled until the batch documentation is ready.</p>';
   }
   const featureList = byId('pdpFeatureList');
@@ -386,6 +386,46 @@ function renderPdpProduct(root) {
 
   setupPdpTabs();
   renderProductReviewsSummary(p.id);
+}
+
+function getUkTimeParts() {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).formatToParts(new Date()).reduce(function (acc, part) {
+    if (part.type !== 'literal') acc[part.type] = Number(part.value);
+    return acc;
+  }, {});
+  return {
+    hour: Number(parts.hour || 0),
+    minute: Number(parts.minute || 0),
+    second: Number(parts.second || 0)
+  };
+}
+
+function formatDispatchCountdown(totalSeconds) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  if (hours > 0) return hours + 'h ' + String(minutes).padStart(2, '0') + 'm';
+  return Math.max(1, minutes) + 'm';
+}
+
+function setupDispatchCountdown() {
+  const el = byId('pdpDispatchCountdown');
+  if (!el) return;
+  const update = function () {
+    const uk = getUkTimeParts();
+    const secondsNow = (uk.hour * 3600) + (uk.minute * 60) + uk.second;
+    const secondsUntilCutoff = (14 * 3600) - secondsNow;
+    el.textContent = secondsUntilCutoff > 0
+      ? 'Free over £100 · order within ' + formatDispatchCountdown(secondsUntilCutoff) + ' for same-day dispatch'
+      : 'Free over £100 · order before 2PM UK time for same-day dispatch';
+  };
+  update();
+  setInterval(update, 60000);
 }
 
 function renderFurtherReading(links) {
