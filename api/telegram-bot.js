@@ -135,10 +135,10 @@ const HELP_TEXT = `<b>UKMAXX Admin Bot</b>
    Mark order as delivered
 
 /cancel &lt;orderNumber&gt; [reason]
-   Cancel order (auto-refunds if paid)
+   Cancel order (refund separately if payment was captured)
 
 /refund &lt;orderNumber&gt; [reason]
-   Process Stripe refund
+   Process refund where supported
 
 /review &lt;orderNumber&gt;
    Send the post-delivery feedback request email
@@ -557,10 +557,10 @@ async function handleCancel(token, chatId, args) {
   let stripeRefund = null;
   if (wasPaid) {
     if (order.payment_provider === 'fena') {
-      return sendTelegram(token, chatId, '⚠️ This is a Fena Pay by Bank order. Create the reverse payment/refund in Fena first, then cancel the order without an automatic Stripe refund.');
+      return sendTelegram(token, chatId, '⚠️ This is a Fena Pay by Bank order. Create the reverse payment/refund in Fena first, then cancel the order without an automatic refund.');
     }
-    if (!process.env.STRIPE_SECRET_KEY) return sendTelegram(token, chatId, '❌ Missing Stripe config.');
-    if (!order.stripe_session_id) return sendTelegram(token, chatId, '❌ No Stripe session found for this order.');
+    if (!process.env.STRIPE_SECRET_KEY) return sendTelegram(token, chatId, '❌ Missing legacy card refund config.');
+    if (!order.stripe_session_id) return sendTelegram(token, chatId, '❌ No legacy card payment session found for this order.');
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id);
     if (!session.payment_intent) return sendTelegram(token, chatId, '❌ No payment intent found for this order.');
@@ -608,13 +608,13 @@ async function handleRefund(token, chatId, args) {
 
   const reason = args.slice(1).join(' ') || null;
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
-  if (!process.env.STRIPE_SECRET_KEY) return sendTelegram(token, chatId, '❌ Missing Stripe config.');
+  if (!process.env.STRIPE_SECRET_KEY) return sendTelegram(token, chatId, '❌ Missing legacy card refund config.');
 
   const supabase = getSupabaseAdmin();
   const order = await findOrder(supabase, orderNumber);
   if (!order) return sendTelegram(token, chatId, '❌ Order not found.');
   if (order.status === 'refunded') return sendTelegram(token, chatId, '❌ Order has already been refunded.');
-  if (!order.stripe_session_id) return sendTelegram(token, chatId, '❌ No Stripe session found for this order.');
+  if (!order.stripe_session_id) return sendTelegram(token, chatId, '❌ No legacy card payment session found for this order.');
 
   const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id);
   const paymentIntentId = session.payment_intent;
@@ -641,5 +641,5 @@ async function handleRefund(token, chatId, args) {
     payload: { order_number: orderNumber, stripe_refund_id: stripeRefund.id, amount: refundAmount / 100, source: 'telegram_bot' },
   });
 
-  await sendTelegram(token, chatId, `✅ <b>Refund processed</b>\nOrder: ${orderNumber}\nAmount: £${(refundAmount / 100).toFixed(2)}\nStripe refund: ${stripeRefund.id}\nEmail sent to ${order.email}`);
+  await sendTelegram(token, chatId, `✅ <b>Refund processed</b>\nOrder: ${orderNumber}\nAmount: £${(refundAmount / 100).toFixed(2)}\nRefund ID: ${stripeRefund.id}\nEmail sent to ${order.email}`);
 }
