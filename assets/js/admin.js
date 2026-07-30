@@ -1,37 +1,13 @@
+import { getSupabase } from './data/supabase.js';
+
 const SITE_URL = window.location.origin;
-let adminClient = null;
-let adminClientPromise = null;
 
 const $ = (id) => document.getElementById(id);
 const money = (value) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(Number(value || 0));
 const number = (value) => new Intl.NumberFormat('en-GB').format(Number(value || 0));
 const date = (value) => value ? new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) : '—';
 
-async function getAdminSupabase() {
-  if (adminClient) return adminClient;
-  if (adminClientPromise) return adminClientPromise;
-  adminClientPromise = (async () => {
-    const res = await fetch('/api/supabase-config');
-    if (!res.ok) throw new Error('Unable to load login configuration.');
-    const { url, anonKey } = await res.json();
-    const mod = await import('https://esm.sh/@supabase/supabase-js@2.49.8');
-    adminClient = mod.createClient(url, anonKey, {
-      auth: {
-        storageKey: 'ukmaxx_auth',
-        persistSession: true,
-        detectSessionInUrl: true,
-        autoRefreshToken: true,
-        flowType: 'implicit',
-      },
-    });
-    adminClientPromise = null;
-    return adminClient;
-  })().catch((err) => {
-    adminClientPromise = null;
-    throw err;
-  });
-  return adminClientPromise;
-}
+let currentDashboard = null;
 
 function showAlert(message) {
   const alert = $('adminAlert');
@@ -68,7 +44,7 @@ async function signIn() {
   const btn = $('adminGoogleBtn');
   if (btn) btn.disabled = true;
   try {
-    const supabase = await getAdminSupabase();
+    const supabase = await getSupabase();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -84,8 +60,9 @@ async function signIn() {
 }
 
 async function signOut() {
-  const supabase = await getAdminSupabase();
+  const supabase = await getSupabase();
   await supabase.auth.signOut();
+  closeOrderDrawer();
   showLock();
 }
 
@@ -99,6 +76,15 @@ async function fetchDashboard(session) {
   return res.json();
 }
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function renderBars(rows) {
   const max = Math.max(1, ...rows.map((row) => Number(row.revenue || row.value || 0)));
   if (!rows.length) return '<p class="empty-state">No product sales yet.</p>';
@@ -109,6 +95,22 @@ function renderBars(rows) {
       <span class="bar-name">${escapeHtml(row.name || row.label)}</span>
       <span class="bar-track"><span class="bar-fill" style="width:${width}%"></span></span>
       <span class="bar-value">${money(value)}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderCountBars(rows, emptyText = 'No data yet.') {
+  const max = Math.max(1, ...rows.map((row) => Number(row.value || 0)));
+  if (!rows.length) return `<p class="empty-state">${escapeHtml(emptyText)}</p>`;
+  return rows.map((row) => {
+    const value = Number(row.value || 0);
+    const width = Math.max(value ? 5 : 0, Math.round((value / max) * 100));
+    return `<div class="count-row">
+      <div class="count-row-top">
+        <span>${escapeHtml(row.label)}</span>
+        <strong>${number(value)}</strong>
+      </div>
+      <span class="count-track"><span class="count-fill" style="width:${width}%"></span></span>
     </div>`;
   }).join('');
 }
@@ -133,7 +135,7 @@ function renderStock(stock) {
 
 function renderRecentOrders(rows) {
   if (!rows?.length) return '<tr><td colspan="6" class="empty-state">No orders yet.</td></tr>';
-  return rows.map((order) => `<tr>
+  return rows.map((order) => `<tr data-order-number="${escapeHtml(order.orderNumber)}">
     <td><strong>${escapeHtml(order.orderNumber)}</strong></td>
     <td>${escapeHtml(order.email)}</td>
     <td><span class="status-pill">${escapeHtml(order.status)}</span></td>
@@ -143,20 +145,49 @@ function renderRecentOrders(rows) {
   </tr>`).join('');
 }
 
-function escapeHtml(value) {
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+function detail(label, value) {
+  return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value || '—')}</strong></div>`;
+}
+
+function openOrderDrawer(orderNumber) {
+  const order = currentDashboard?.orders?.recent?.find((row) => row.orderNumber === orderNumber);
+  const drawer = $('orderDrawer');
+  if (!order || !drawer) return;
+  $('orderDrawerTitle').textContent = order.orderNumber;
+  $('orderDrawerBody').innerHTML = [
+    detail('Customer', order.email),
+    detail('Status', order.status),
+    detail('Payment', order.paymentProvider),
+    detail('Subtotal', money(order.subtotal)),
+    detail('Discount', money(order.discount)),
+    detail('Shipping', money(order.shipping)),
+    detail('Total', money(order.total)),
+    detail('Promo opt-in', order.promoOptIn ? 'Yes' : 'No'),
+    detail('Created', date(order.createdAt)),
+    detail('Dispatched', date(order.dispatchedAt)),
+    detail('Delivered', date(order.deliveredAt)),
+  ].join('');
+  drawer.classList.add('is-open');
+  drawer.setAttribute('aria-hidden', 'false');
+}
+
+function closeOrderDrawer() {
+  const drawer = $('orderDrawer');
+  if (!drawer) return;
+  drawer.classList.remove('is-open');
+  drawer.setAttribute('aria-hidden', 'true');
 }
 
 function renderDashboard(data) {
+  currentDashboard = data;
   const summary = data.summary || {};
   const today = summary.today || {};
   const seven = summary.sevenDays || {};
   const thirty = summary.thirtyDays || {};
+  const analytics = data.analytics || {};
+  const trafficToday = analytics.today || {};
+  const trafficSeven = analytics.sevenDays || {};
+  const trafficThirty = analytics.thirtyDays || {};
 
   setText('adminEmail', data.adminEmail || 'Admin');
   setText('dashboardUpdated', `Updated ${date(data.generatedAt)}`);
@@ -169,10 +200,24 @@ function renderDashboard(data) {
   setText('averageOrderValue', money(summary.averageOrderValue));
   setText('allTimeOrders', `${number(summary.allTimeOrders)} paid orders · ${money(summary.allTimeRevenue)} total`);
 
+  setText('visitorsToday', number(trafficToday.visitors));
+  setText('pageviewsToday', `${number(trafficToday.pageviews)} pageviews`);
+  setText('visitorsSeven', number(trafficSeven.visitors));
+  setText('pageviewsSeven', `${number(trafficSeven.pageviews)} pageviews`);
+  setText('conversionToday', `${Number(trafficToday.conversionRate || 0).toFixed(1)}%`);
+  setText('conversionSeven', `7-day conversion ${Number(trafficSeven.conversionRate || 0).toFixed(1)}%`);
+  setText('visitorsThirty', number(trafficThirty.visitors));
+  setText('pageviewsThirty', `${number(trafficThirty.pageviews)} pageviews`);
+
   const top = data.products?.top || [];
   $('topProducts').innerHTML = renderBars(top);
   setText('topProductChip', top[0] ? `${top[0].name} · ${number(top[0].quantity)} sold` : 'No sales yet');
   $('orderStatus').innerHTML = renderStatuses(data.orders?.byStatus);
+  $('topPages').innerHTML = renderCountBars(analytics.topPages || [], 'No page views tracked yet.');
+  $('checkoutFunnel').innerHTML = renderCountBars(analytics.funnel || [], 'No checkout behaviour tracked yet.');
+  $('productViews').innerHTML = renderCountBars(analytics.topProductViews || [], 'No product views tracked yet.');
+  $('trafficSources').innerHTML = renderCountBars(analytics.sources || [], 'No traffic sources tracked yet.');
+  $('deviceSplit').innerHTML = renderCountBars(analytics.devices || [], 'No device split tracked yet.');
   $('stockList').innerHTML = renderStock(data.products?.stock);
   setText('lowStockChip', `${number(data.products?.stock?.lowStock?.length)} low stock`);
 
@@ -192,12 +237,15 @@ function renderDashboard(data) {
 
 async function loadDashboard() {
   clearAlert();
-  const supabase = await getAdminSupabase();
+  const supabase = await getSupabase();
   const params = new URLSearchParams(window.location.search);
   if (params.has('code')) {
+    const { error } = await supabase.auth.exchangeCodeForSession(params.get('code'));
     window.history.replaceState({}, document.title, window.location.pathname);
-    showLock('Sign-in could not be completed. Please try again.');
-    return;
+    if (error) {
+      showLock('Sign-in could not be completed. Please try again.');
+      return;
+    }
   }
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) {
@@ -211,15 +259,24 @@ async function loadDashboard() {
     renderDashboard(data);
   } catch (err) {
     showAlert(err.message);
-    if (/restricted|sign in/i.test(err.message)) showLock(err.message);
+    if (/not authorised|sign in/i.test(err.message)) showLock(err.message);
   }
 }
 
 $('adminGoogleBtn')?.addEventListener('click', signIn);
 $('adminSignOutBtn')?.addEventListener('click', signOut);
 $('adminRefreshBtn')?.addEventListener('click', loadDashboard);
+$('recentOrders')?.addEventListener('click', (event) => {
+  const row = event.target.closest('tr[data-order-number]');
+  if (row) openOrderDrawer(row.getAttribute('data-order-number'));
+});
+$('orderDrawerClose')?.addEventListener('click', closeOrderDrawer);
+$('orderDrawerBackdrop')?.addEventListener('click', closeOrderDrawer);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeOrderDrawer();
+});
 
-getAdminSupabase().then((supabase) => {
+getSupabase().then((supabase) => {
   supabase.auth.onAuthStateChange(() => loadDashboard());
   return loadDashboard();
 }).catch((err) => showLock(`Unable to initialise admin login: ${err.message}`));

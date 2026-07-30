@@ -13,8 +13,10 @@ import { setupAccountPage } from './modules/account.js';
 import { updateHeroBatchChips } from './modules/heroBatch.js';
 import { refreshLiveStock } from './data/products.js';
 import { setupCoaPage } from './modules/coaPage.js';
+import { setupAnalytics } from './modules/analytics.js?v=20260730-admin-analytics';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  setupAnalytics();
   initAuth();
   initAgeGate();
   await refreshLiveStock();

@@ -5,6 +5,7 @@ import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw, setRaw, removeStorage } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
 import { getSupabase } from '../data/supabase.js';
+import { trackEvent } from './analytics.js?v=20260730-admin-analytics';
 
 const SHIP_THRESHOLD = FREE_SHIPPING_THRESHOLD || 100;
 const SHIP_FLAT = FLAT_SHIPPING || 4.99;
@@ -186,6 +187,7 @@ export function addSku(s) {
   if (f) f.qty++; else c.push({ sku: s, qty: 1 });
   setCart(c);
   renderCart();
+  trackEvent('add_to_cart', { productSku: s });
   if (p) toast('Added to basket', `${p.name} added — review your basket or continue shopping.`);
 }
 
@@ -203,6 +205,7 @@ export function addSkuQty(s, qty) {
   if (f) f.qty = nextQty; else c.push({ sku: s, qty: Math.min(maxQty, num) });
   setCart(c);
   renderCart();
+  trackEvent('add_to_cart', { productSku: s });
   if (p) toast('Added to basket', `${num}× ${p.name} added.`);
 }
 
@@ -237,6 +240,7 @@ export async function openCheckout() {
   m.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   renderCheckoutSummary();
+  trackEvent('checkout_opened');
 }
 
 export function closeCheckout() {
@@ -296,6 +300,7 @@ async function startCheckout() {
   try {
     const details = collectCheckoutDetails();
     if (payBtn) { payBtn.disabled = true; if (label) label.textContent = 'Processing…'; }
+    trackEvent('payment_started');
     const controller = new AbortController();
     const to = setTimeout(() => controller.abort(), 15000);
     const supabase = await getSupabase();

@@ -1,5 +1,6 @@
 import { tpStars } from '../utils/money.js';
 import { $, byId } from '../utils/dom.js';
+import { trackEvent } from './analytics.js?v=20260730-admin-analytics';
 
 const REVIEW_ENDPOINT = '/api/track-order';
 const PRODUCT_LABELS = {
@@ -169,6 +170,7 @@ export function setupReviewDrawer() {
     if (productField && product) productField.value = product;
     drawer.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    trackEvent('review_opened', { productSku: product || productField?.value || '' });
   };
   const shut = () => {
     drawer.style.display = 'none';

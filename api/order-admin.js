@@ -132,6 +132,33 @@ function countBy(rows, key) {
   }, {});
 }
 
+function uniqueBy(rows, key) {
+  return new Set(rows.map((row) => row[key]).filter(Boolean)).size;
+}
+
+function cleanPath(path = '') {
+  const raw = String(path || '/');
+  return raw.split('#')[0].split('?')[0] || '/';
+}
+
+function topCounts(rows, getLabel, limit = 6) {
+  const map = new Map();
+  for (const row of rows) {
+    const label = getLabel(row);
+    if (!label) continue;
+    map.set(label, (map.get(label) || 0) + 1);
+  }
+  return [...map.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
+
+function pct(numerator, denominator) {
+  if (!denominator) return 0;
+  return Number(((numerator / denominator) * 100).toFixed(1));
+}
+
 function sumRevenue(rows) {
   return money(rows.reduce((sum, order) => sum + asNumber(order.total), 0));
 }
@@ -235,11 +262,72 @@ function recentOrders(orders) {
   return orders.slice(0, 10).map((order) => ({
     orderNumber: order.order_number,
     email: order.email,
+    subtotal: asNumber(order.subtotal),
+    discount: asNumber(order.discount),
+    shipping: asNumber(order.shipping),
     total: asNumber(order.total),
     status: order.status,
-    paymentProvider: order.payment_provider || 'stripe',
+    paymentProvider: order.payment_provider || 'fena',
+    promoOptIn: Boolean(order.promo_opt_in),
+    dispatchedAt: order.dispatched_at,
+    deliveredAt: order.delivered_at,
     createdAt: order.created_at,
   }));
+}
+
+function analyticsSummary(events, paidOrders, products, today, sevenDaysAgo, thirtyDaysAgo) {
+  const productNames = new Map(products.map((product) => [String(product.sku || '').toUpperCase(), product.name || product.sku]));
+  const pageViews = events.filter((event) => event.event_type === 'page_view');
+  const todayViews = pageViews.filter((event) => isSince(event, today));
+  const sevenDayViews = pageViews.filter((event) => isSince(event, sevenDaysAgo));
+  const thirtyDayViews = pageViews.filter((event) => isSince(event, thirtyDaysAgo));
+  const sevenDayEvents = events.filter((event) => isSince(event, sevenDaysAgo));
+  const todayPaidOrders = paidOrders.filter((order) => isSince(order, today));
+  const sevenDayPaidOrders = paidOrders.filter((order) => isSince(order, sevenDaysAgo));
+
+  const eventCount = (type) => sevenDayEvents.filter((event) => event.event_type === type).length;
+  const sourceLabel = (event) => {
+    if (event.utm_source) return event.utm_source;
+    if (!event.referrer) return 'Direct';
+    try {
+      const host = new URL(event.referrer).hostname.replace(/^www\./, '');
+      return host || 'Referral';
+    } catch {
+      return 'Referral';
+    }
+  };
+
+  return {
+    today: {
+      visitors: uniqueBy(todayViews, 'session_id'),
+      pageviews: todayViews.length,
+      conversionRate: pct(todayPaidOrders.length, uniqueBy(todayViews, 'session_id')),
+    },
+    sevenDays: {
+      visitors: uniqueBy(sevenDayViews, 'session_id'),
+      pageviews: sevenDayViews.length,
+      conversionRate: pct(sevenDayPaidOrders.length, uniqueBy(sevenDayViews, 'session_id')),
+    },
+    thirtyDays: {
+      visitors: uniqueBy(thirtyDayViews, 'session_id'),
+      pageviews: thirtyDayViews.length,
+    },
+    topPages: topCounts(sevenDayViews, (event) => cleanPath(event.page_path), 8),
+    topProductViews: topCounts(sevenDayEvents.filter((event) => event.event_type === 'product_view'), (event) => {
+      const sku = String(event.product_sku || '').toUpperCase();
+      return productNames.get(sku) || sku || cleanPath(event.page_path);
+    }, 8),
+    devices: topCounts(sevenDayViews, (event) => event.device_type || 'unknown', 4),
+    sources: topCounts(sevenDayViews, sourceLabel, 6),
+    funnel: [
+      { label: 'Product views', value: eventCount('product_view') },
+      { label: 'Add to basket', value: eventCount('add_to_cart') },
+      { label: 'Checkout opened', value: eventCount('checkout_opened') },
+      { label: 'Payment started', value: eventCount('payment_started') },
+      { label: 'Payment success', value: eventCount('payment_success') },
+      { label: 'Payment failed', value: eventCount('payment_failed') },
+    ],
+  };
 }
 
 async function buildDashboard(supabase) {
@@ -252,6 +340,7 @@ async function buildDashboard(supabase) {
     publicReviews,
     subscribers,
     promoRedemptions,
+    events,
   ] = await Promise.all([
     safeSelect(supabase, 'orders', 'id,order_number,email,total,subtotal,discount,shipping,status,created_at,delivered_at,dispatched_at,payment_provider,promo_opt_in', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
     safeSelect(supabase, 'order_items', 'order_id,sku,product_name,qty,line_total', { limit: 5000 }),
@@ -261,6 +350,7 @@ async function buildDashboard(supabase) {
     safeSelect(supabase, 'reviews_public', 'id,rating,created_at', { limit: 1000 }),
     safeSelect(supabase, 'subscribers', 'id,unsubscribed_at,created_at', { limit: 5000 }),
     safeSelect(supabase, 'promo_redemptions', 'id,promo_code,redeemed_at', { limit: 5000 }),
+    safeSelect(supabase, 'site_events', 'event_type,session_id,page_path,page_title,product_sku,referrer,utm_source,utm_medium,utm_campaign,device_type,created_at', { order: { column: 'created_at', ascending: false }, limit: 5000 }),
   ]);
 
   const now = new Date();
@@ -291,6 +381,7 @@ async function buildDashboard(supabase) {
       problemOrders: orders.filter((order) => FINAL_BAD_STATUSES.has(order.status)).length,
     },
     payments: paymentSummary(attempts),
+    analytics: analyticsSummary(events, paidOrders, products, today, sevenDaysAgo, thirtyDaysAgo),
     products: {
       top: topProducts(orders, items),
       revenue: revenueByProduct(orders, items),
