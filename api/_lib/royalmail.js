@@ -22,6 +22,35 @@ function sanitize(value, fallback = '') {
   return String(value || fallback).trim();
 }
 
+function collectRoyalMailErrorMessages(value, messages = [], depth = 0) {
+  if (!value || depth > 5) return messages;
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectRoyalMailErrorMessages(item, messages, depth + 1));
+    return messages;
+  }
+
+  if (typeof value !== 'object') return messages;
+
+  const messageParts = ['message', 'errorMessage', 'reason', 'statusMessage', 'description']
+    .map((key) => sanitize(value[key]))
+    .filter(Boolean);
+  const codeParts = ['code', 'field', 'path', 'property']
+    .map((key) => sanitize(value[key]))
+    .filter(Boolean);
+
+  if (messageParts.length || codeParts.length) {
+    messages.push([...messageParts, ...codeParts].join(' '));
+  }
+
+  Object.entries(value).forEach(([key, child]) => {
+    if (['order', 'recipient', 'sender', 'billing', 'address'].includes(key)) return;
+    collectRoyalMailErrorMessages(child, messages, depth + 1);
+  });
+
+  return messages;
+}
+
 function countryCode(value) {
   const raw = sanitize(value || 'GB').toUpperCase();
   if (raw === 'UNITED KINGDOM' || raw === 'UK') return 'GB';
@@ -151,7 +180,9 @@ async function royalMailRequest(path, { method = 'GET', body } = {}) {
     : await response.text().catch(() => '');
 
   if (!response.ok) {
-    const details = typeof data === 'string' ? data : JSON.stringify(data);
+    const details = typeof data === 'string'
+      ? data
+      : collectRoyalMailErrorMessages(data).join('; ') || `Request rejected with status ${response.status}`;
     throw new Error(`Royal Mail API ${response.status}: ${details.slice(0, 600)}`);
   }
 
@@ -162,16 +193,9 @@ function getCreatedOrder(response) {
   const failed = response?.failedOrders || [];
   if (failed.length) {
     const first = failed[0];
-    const errors = Array.isArray(first?.errors) ? first.errors : [];
-    const message = errors
-      .map((err) => [err?.message, err?.code, err?.field].filter(Boolean).join(' '))
+    const message = collectRoyalMailErrorMessages(first)
       .filter(Boolean)
       .join('; ')
-      || first?.message
-      || first?.errorMessage
-      || first?.reason
-      || first?.statusMessage
-      || JSON.stringify(first).slice(0, 600)
       || 'Royal Mail failed to create the order';
     throw new Error(message);
   }
