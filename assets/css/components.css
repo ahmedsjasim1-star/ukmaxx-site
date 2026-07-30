@@ -41,14 +41,20 @@
 .age-gate-foot{margin-top:18px;padding-top:14px;border-top:1px solid rgba(184,216,220,.18);font-size:11px;line-height:1.6;color:#7a9ea4}
 
 /* ===== TOPBAR ===== */
-.topbar{background:var(--accent);color:#fff;min-height:var(--topbar-h);display:flex;align-items:center;justify-content:center;padding:0 20px;font-size:12px;font-weight:500;position:relative;z-index:60}
-.topbar-inner{max-width:var(--container);width:100%;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;letter-spacing:.04em}
+.topbar{background:var(--accent);color:#fff;min-height:var(--topbar-h);display:flex;align-items:center;justify-content:center;padding:0;overflow:hidden;font-size:12px;font-weight:500;position:relative;z-index:60}
+.topbar-inner{width:100%;display:flex;align-items:center;justify-content:center;text-align:center;letter-spacing:.04em;overflow:hidden}
+.topbar-rail{display:flex;align-items:center;gap:26px;white-space:nowrap;animation:topbarRail 28s linear infinite;will-change:transform}
+.topbar-rail span{display:inline-flex;align-items:center;gap:6px;opacity:.96}
+.topbar-rail span::after{content:'•';opacity:.45;margin-left:26px}
+.topbar-rail strong{font-weight:700}
 .topbar-icon{font-size:14px}
 .topbar-text strong{font-weight:600}
 .topbar-divider{opacity:.4;margin:0 6px}
 .topbar-stars{display:inline-flex;gap:2px;margin-left:2px}
 .topbar-stars i{width:13px;height:13px;background:var(--tp);clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);display:inline-block;flex-shrink:0}
-@media (max-width:768px){.topbar{font-size:11px;padding:0 12px}.topbar-divider,.topbar-hide-mobile,.topbar-stars{display:none}}
+@keyframes topbarRail{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.topbar-rail{animation:none;transform:none;justify-content:center;flex-wrap:wrap;gap:8px 18px}.topbar-rail span:nth-child(n+4){display:none}}
+@media (max-width:768px){.topbar{font-size:11px}.topbar-rail{gap:20px;animation-duration:22s}.topbar-rail span::after{margin-left:20px}.topbar-divider,.topbar-hide-mobile,.topbar-stars{display:none}}
 
 /* ===== HEADER ===== */
 .site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transition:box-shadow .2s ease,border-color .2s ease}
