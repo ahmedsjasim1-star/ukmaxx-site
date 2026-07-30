@@ -162,14 +162,22 @@ function getCreatedOrder(response) {
   const failed = response?.failedOrders || [];
   if (failed.length) {
     const first = failed[0];
-    const message = first?.errors?.map((err) => err.message || err.code).filter(Boolean).join('; ')
+    const errors = Array.isArray(first?.errors) ? first.errors : [];
+    const message = errors
+      .map((err) => [err?.message, err?.code, err?.field].filter(Boolean).join(' '))
+      .filter(Boolean)
+      .join('; ')
       || first?.message
+      || first?.errorMessage
+      || first?.reason
+      || first?.statusMessage
+      || JSON.stringify(first).slice(0, 600)
       || 'Royal Mail failed to create the order';
     throw new Error(message);
   }
 
   const created = response?.createdOrders?.[0];
-  if (!created) throw new Error('Royal Mail did not return a created order');
+  if (!created) throw new Error(`Royal Mail did not return a created order: ${JSON.stringify(response).slice(0, 600)}`);
   return created;
 }
 
