@@ -211,14 +211,29 @@ async function ensureRoyalMailFulfilment(supabase, order, orderItems) {
       message: error?.message,
     });
 
-    await supabase.from('admin_audit_log').insert({
-      action: 'royalmail_order_failed',
-      order_id: order.id,
-      payload: {
-        order_number: order.order_number,
-        message: error?.message || 'Unknown Royal Mail error',
-      },
-    }).catch(() => {});
+    try {
+      const { error: auditError } = await supabase.from('admin_audit_log').insert({
+        action: 'royalmail_order_failed',
+        order_id: order.id,
+        payload: {
+          order_number: order.order_number,
+          message: error?.message || 'Unknown Royal Mail error',
+        },
+      });
+      if (auditError) {
+        console.error('royalmail-failure-audit-log-error', {
+          orderId: order.id,
+          orderNumber: order.order_number,
+          message: auditError.message,
+        });
+      }
+    } catch (auditError) {
+      console.error('royalmail-failure-audit-log-error', {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        message: auditError?.message,
+      });
+    }
 
     return { error: error?.message || 'Royal Mail label failed', orderNumber: order.order_number };
   }

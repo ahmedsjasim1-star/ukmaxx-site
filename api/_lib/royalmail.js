@@ -237,17 +237,32 @@ async function syncRoyalMailOrderToSupabase(supabase, order, items = [], options
   const { error } = await supabase.from('orders').update(update).eq('id', order.id);
   if (error) throw error;
 
-  await supabase.from('admin_audit_log').insert({
-    action: 'royalmail_order_created',
-    order_id: order.id,
-    payload: {
-      order_number: order.order_number,
-      royalmail_order_identifier: result.orderIdentifier,
-      tracking_number: result.trackingNumber || null,
-      generated_documents: result.generatedDocuments,
-      label_returned: result.labelReturned,
-    },
-  });
+  try {
+    const { error: auditError } = await supabase.from('admin_audit_log').insert({
+      action: 'royalmail_order_created',
+      order_id: order.id,
+      payload: {
+        order_number: order.order_number,
+        royalmail_order_identifier: result.orderIdentifier,
+        tracking_number: result.trackingNumber || null,
+        generated_documents: result.generatedDocuments,
+        label_returned: result.labelReturned,
+      },
+    });
+    if (auditError) {
+      console.error('royalmail-success-audit-log-error', {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        message: auditError.message,
+      });
+    }
+  } catch (auditError) {
+    console.error('royalmail-success-audit-log-error', {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      message: auditError?.message,
+    });
+  }
 
   return { ...result, trackingUrl };
 }
