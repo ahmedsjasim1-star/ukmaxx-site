@@ -93,7 +93,7 @@ function buildRoyalMailOrderPayload(order, items = [], options = {}) {
   const line2 = sanitize(order.shipping_address_line2);
   const city = sanitize(order.shipping_city);
   const postcode = sanitize(order.shipping_postcode).toUpperCase();
-  const serviceCode = sanitize(options.serviceCode || process.env.ROYALMAIL_SERVICE_CODE || 'TPN24');
+  const serviceCode = sanitize(options.serviceCode || process.env.ROYALMAIL_SERVICE_CODE || 'TOLP24');
   const packageFormatIdentifier = sanitize(options.packageFormatIdentifier || process.env.ROYALMAIL_PACKAGE_FORMAT || 'smallParcel');
   const includeLabelInResponse = options.includeLabelInResponse ?? String(process.env.ROYALMAIL_INCLUDE_LABEL_IN_RESPONSE || '').toLowerCase() === 'true';
 
