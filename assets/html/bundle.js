@@ -283,7 +283,7 @@ window.__html.reviewDrawer = '<div id="reviewDrawer" style="position:fixed;inset
   + '<div style="background:#fff;width:min(540px,100%);max-height:92vh;overflow:auto;border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:24px 24px calc(24px + env(safe-area-inset-bottom));box-shadow:var(--shadow-lg)">'
   + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><h3 style="font-family:\'Space Grotesk\',sans-serif;font-size:20px;font-weight:600;letter-spacing:-.01em">Leave a review</h3><button id="reviewCloseBtn" class="checkout-close" aria-label="Close"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>'
   + '<p style="font-size:13px;color:var(--dim);margin-bottom:16px">Reviews are tied to a verified order. Please share your honest experience.</p>'
-  + '<div class="field"><label for="reviewFullName">Your name</label><input id="reviewFullName" placeholder="e.g. Ahmed" maxlength="60" autocomplete="name"></div>'
+  + '<div class="field"><label for="reviewFullName">Your name</label><input id="reviewFullName" placeholder="e.g. Alex" maxlength="60" autocomplete="name"></div>'
   + '<div class="field"><label for="reviewName">Public initials</label><input id="reviewName" placeholder="e.g. A.K." maxlength="8"></div>'
   + '<div class="field"><label for="reviewOrderNumber">Order number</label><input id="reviewOrderNumber" placeholder="e.g. UKX26..." maxlength="32" autocomplete="off"></div>'
   + '<div class="field"><label for="reviewEmail">Order email</label><input id="reviewEmail" type="email" placeholder="Email used at checkout" maxlength="180" autocomplete="email"></div>'
