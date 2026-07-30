@@ -8,6 +8,7 @@ const number = (value) => new Intl.NumberFormat('en-GB').format(Number(value || 
 const date = (value) => value ? new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) : '—';
 
 let currentDashboard = null;
+let dashboardLoading = false;
 
 function showAlert(message) {
   const alert = $('adminAlert');
@@ -71,7 +72,7 @@ async function fetchDashboard(session) {
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
   if (res.status === 401) throw new Error('Please sign in again.');
-  if (res.status === 403) throw new Error('This Google account is not authorised for the UKMAXX dashboard.');
+  if (res.status === 403) throw new Error('Admin access could not be verified.');
   if (!res.ok) throw new Error('Unable to load dashboard metrics.');
   return res.json();
 }
@@ -236,30 +237,43 @@ function renderDashboard(data) {
 }
 
 async function loadDashboard() {
+  if (dashboardLoading) return;
+  dashboardLoading = true;
   clearAlert();
-  const supabase = await getSupabase();
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('code')) {
-    const { error } = await supabase.auth.exchangeCodeForSession(params.get('code'));
-    window.history.replaceState({}, document.title, window.location.pathname);
-    if (error) {
-      showLock('Sign-in could not be completed. Please try again.');
+  try {
+    const supabase = await getSupabase();
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has('error') || params.has('error_description')) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      showLock('Sign-in was not completed. Please try again.');
       return;
     }
-  }
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) {
-    showLock();
-    return;
-  }
 
-  showDashboard();
-  try {
+    if (params.has('code')) {
+      const { error } = await supabase.auth.exchangeCodeForSession(params.get('code'));
+      window.history.replaceState({}, document.title, window.location.pathname);
+      if (error) {
+        console.error('admin-oauth-exchange-error', error);
+        showLock('Sign-in could not be completed. Please try again.');
+        return;
+      }
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      showLock();
+      return;
+    }
+
+    showDashboard();
     const data = await fetchDashboard(session);
     renderDashboard(data);
   } catch (err) {
     showAlert(err.message);
-    if (/not authorised|sign in/i.test(err.message)) showLock(err.message);
+    if (/access|sign in/i.test(err.message)) showLock(err.message);
+  } finally {
+    dashboardLoading = false;
   }
 }
 
@@ -276,7 +290,13 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeOrderDrawer();
 });
 
-getSupabase().then((supabase) => {
-  supabase.auth.onAuthStateChange(() => loadDashboard());
-  return loadDashboard();
+getSupabase().then(async (supabase) => {
+  await loadDashboard();
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_OUT') {
+      showLock();
+      return;
+    }
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') loadDashboard();
+  });
 }).catch((err) => showLock(`Unable to initialise admin login: ${err.message}`));
