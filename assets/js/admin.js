@@ -77,6 +77,29 @@ async function fetchDashboard(session) {
   return res.json();
 }
 
+async function waitForSession(supabase, timeoutMs = 4500) {
+  const existing = await supabase.auth.getSession();
+  if (existing.data?.session?.access_token) return existing.data.session;
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (session = null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      subscription?.unsubscribe?.();
+      resolve(session);
+    };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.access_token) finish(session);
+    });
+    const timer = setTimeout(async () => {
+      const retry = await supabase.auth.getSession();
+      finish(retry.data?.session || null);
+    }, timeoutMs);
+  });
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -250,14 +273,19 @@ async function loadDashboard() {
       return;
     }
 
-    if (params.has('code')) {
-      const { error } = await supabase.auth.exchangeCodeForSession(params.get('code'));
+    const isOAuthReturn = params.has('code');
+    if (isOAuthReturn) {
+      const session = await waitForSession(supabase);
       window.history.replaceState({}, document.title, window.location.pathname);
-      if (error) {
-        console.error('admin-oauth-exchange-error', error);
+      if (!session?.access_token) {
         showLock('Sign-in could not be completed. Please try again.');
         return;
       }
+
+      showDashboard();
+      const data = await fetchDashboard(session);
+      renderDashboard(data);
+      return;
     }
 
     const { data: { session } } = await supabase.auth.getSession();
