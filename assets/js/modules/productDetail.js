@@ -94,30 +94,72 @@ function renderPdpProduct(root) {
   const priceLabel = Number.isFinite(Number(p.price)) ? money(p.price) : 'TBC';
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
-  setText('pageTitle', p.name + ' \u2014 UKMAXX');
-  setAttr('pageDesc', 'content', p.name + ': ' + p.description + ' Third-party verified.');
-  setText('ogTitle', p.name + ' \u2014 UKMAXX');
-  setAttr('ogDesc', 'content', p.description);
-  setAttr('canonical', 'href', 'https://www.ukmaxx.co.uk/product.html?sku=' + sku);
+  const productUrl = 'https://www.ukmaxx.co.uk/product.html?sku=' + encodeURIComponent(sku);
+  const productImage = absoluteUrl(p.image);
+  const qualityLabel = getQualityLabel(p);
+  const metaTitle = p.name + ' — UKMAXX';
+  const metaDescription = `${p.name}: ${p.description} ${qualityLabel}. UK stock with Royal Mail Tracked 24 dispatch. Research use only.`;
+  setText('pageTitle', metaTitle);
+  setAttr('pageDesc', 'content', metaDescription);
+  setText('ogTitle', metaTitle);
+  setAttr('ogDesc', 'content', metaDescription);
+  setAttr('ogUrl', 'content', productUrl);
+  setAttr('ogImage', 'content', productImage);
+  setAttr('twitterTitle', 'content', metaTitle);
+  setAttr('twitterDesc', 'content', metaDescription);
+  setAttr('twitterImage', 'content', productImage);
+  setAttr('canonical', 'href', productUrl);
 
   const jsonLd = byId('productJsonLd');
   if (jsonLd) {
-    jsonLd.textContent = JSON.stringify({
+    const productSchema = {
       '@context': 'https://schema.org/',
       '@type': 'Product',
       name: p.name,
-      image: p.image,
-      description: p.description,
+      image: productImage,
+      description: metaDescription,
       sku: p.id,
+      category: p.category,
       brand: { '@type': 'Brand', name: 'UKMAXX' },
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Batch', value: p.batch || '' },
+        { '@type': 'PropertyValue', name: 'Quality', value: qualityLabel },
+        { '@type': 'PropertyValue', name: 'COA status', value: getCoaStatusLabel(p) },
+        { '@type': 'PropertyValue', name: 'Research use', value: 'Laboratory and in-vitro research use only. Not for human consumption.' }
+      ].filter(function (prop) { return prop.value; }),
       offers: {
         '@type': 'Offer',
-        url: 'https://www.ukmaxx.co.uk/product.html?sku=' + sku,
+        url: productUrl,
         priceCurrency: 'GBP',
         ...(Number.isFinite(Number(p.price)) ? { price: p.price } : {}),
-        availability: p.stock === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+        availability: p.stock === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        itemCondition: 'https://schema.org/NewCondition',
+        seller: { '@type': 'Organization', name: 'UKMAXX', url: 'https://www.ukmaxx.co.uk/' },
+        shippingDetails: {
+          '@type': 'OfferShippingDetails',
+          shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'GB' },
+          shippingRate: { '@type': 'MonetaryAmount', value: '4.99', currency: 'GBP' },
+          deliveryTime: {
+            '@type': 'ShippingDeliveryTime',
+            handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
+            transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' }
+          }
+        },
+        hasMerchantReturnPolicy: {
+          '@type': 'MerchantReturnPolicy',
+          applicableCountry: 'GB',
+          returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted'
+        }
       }
-    });
+    };
+    if (hasReviews) {
+      productSchema.aggregateRating = {
+        '@type': 'AggregateRating',
+        ratingValue: rating.toFixed(1),
+        reviewCount: Number(p.reviewCount || 0)
+      };
+    }
+    jsonLd.textContent = JSON.stringify(productSchema);
   }
 
   setText('pdpBreadcrumbCurrent', p.name);
@@ -493,6 +535,13 @@ function setText(id, text) {
   var el = byId(id);
   if (el) el.textContent = text;
 }
+
+function absoluteUrl(path) {
+  if (!path) return 'https://www.ukmaxx.co.uk/images/og-ukmaxx.jpg?v=20260708-products';
+  if (/^https?:\/\//i.test(path)) return path;
+  return 'https://www.ukmaxx.co.uk/' + String(path).replace(/^\.?\//, '');
+}
+
 function setAttr(id, attr, value) {
   var el = byId(id);
   if (el) el.setAttribute(attr, value);
