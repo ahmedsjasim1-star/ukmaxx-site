@@ -1,5 +1,5 @@
 const SESSION_KEY = 'ukmaxx_analytics_session';
-const ENDPOINT = '/api/track-event';
+const ENDPOINT = '/api/track-order';
 
 function uuid() {
   try {
@@ -35,6 +35,7 @@ function utm(name) {
 export function trackEvent(eventType, extra = {}) {
   try {
     const payload = {
+      type: 'track-event',
       eventType,
       sessionId: sessionId(),
       pagePath: window.location.pathname + window.location.search + window.location.hash,
