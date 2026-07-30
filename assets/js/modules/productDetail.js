@@ -1,4 +1,3 @@
-import { requireAuth } from './auth.js';
 import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
@@ -249,10 +248,15 @@ function renderPdpProduct(root) {
 
   byId('pdpBuyNow')?.addEventListener('click', async () => {
     if (!purchasable) return;
-    if (!(await requireAuth())) return;
     const qty = Number(byId('pdpQtyInput')?.value || 1);
     window.addSkuQty(p.id, qty);
-    setTimeout(function () { window.openCheckout(); }, 300);
+    setTimeout(function () {
+      if (typeof window.openCheckout === 'function') {
+        window.openCheckout();
+      } else {
+        byId('cartBtn')?.click();
+      }
+    }, 300);
   });
 
   const upsellSkus = ['RT10', 'BC5', 'IP5', 'GHKCU', 'NJ500'];
