@@ -13,7 +13,7 @@ import { setupAccountPage } from './modules/account.js?v=20260731-account-reorde
 import { updateHeroBatchChips } from './modules/heroBatch.js';
 import { refreshLiveStock } from './data/products.js';
 import { setupCoaPage } from './modules/coaPage.js?v=20260731-batch-inventory';
-import { setupAnalytics } from './modules/analytics.js?v=20260730-admin-analytics';
+import { setupAnalytics } from './modules/analytics.js?v=20260731-analytics-phase-a';
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupAnalytics();

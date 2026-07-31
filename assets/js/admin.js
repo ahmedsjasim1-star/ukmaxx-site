@@ -1,6 +1,7 @@
 import { getSupabase } from './data/supabase.js';
 
 const SITE_URL = window.location.origin;
+const ANALYTICS_IGNORE_KEY = 'ukmaxx_analytics_ignore';
 
 const $ = (id) => document.getElementById(id);
 const money = (value) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(Number(value || 0));
@@ -27,6 +28,30 @@ function clearAlert() {
 function setText(id, value) {
   const el = $(id);
   if (el) el.textContent = value;
+}
+
+function analyticsIgnored() {
+  try {
+    return localStorage.getItem(ANALYTICS_IGNORE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function setAnalyticsIgnored(value) {
+  try {
+    localStorage.setItem(ANALYTICS_IGNORE_KEY, value ? 'true' : 'false');
+  } catch {}
+  updateIgnoreBrowserButton();
+}
+
+function updateIgnoreBrowserButton() {
+  const btn = $('adminIgnoreBrowserBtn');
+  if (!btn) return;
+  const ignored = analyticsIgnored();
+  btn.textContent = ignored ? 'Tracking ignored' : 'Ignore this browser';
+  btn.classList.toggle('is-active', ignored);
+  btn.setAttribute('aria-pressed', ignored ? 'true' : 'false');
 }
 
 function showLock(message = '') {
@@ -225,13 +250,13 @@ function renderDashboard(data) {
   setText('allTimeOrders', `${number(summary.allTimeOrders)} paid orders · ${money(summary.allTimeRevenue)} total`);
 
   setText('visitorsToday', number(trafficToday.visitors));
-  setText('pageviewsToday', `${number(trafficToday.pageviews)} pageviews`);
+  setText('pageviewsToday', `${number(trafficToday.sessions || 0)} sessions · ${number(trafficToday.pageviews)} pageviews`);
   setText('visitorsSeven', number(trafficSeven.visitors));
-  setText('pageviewsSeven', `${number(trafficSeven.pageviews)} pageviews`);
+  setText('pageviewsSeven', `${number(trafficSeven.sessions || 0)} sessions · ${number(trafficSeven.pageviews)} pageviews`);
   setText('conversionToday', `${Number(trafficToday.conversionRate || 0).toFixed(1)}%`);
   setText('conversionSeven', `7-day conversion ${Number(trafficSeven.conversionRate || 0).toFixed(1)}%`);
   setText('visitorsThirty', number(trafficThirty.visitors));
-  setText('pageviewsThirty', `${number(trafficThirty.pageviews)} pageviews`);
+  setText('pageviewsThirty', `${number(trafficThirty.sessions || 0)} sessions · ${number(trafficThirty.pageviews)} pageviews`);
 
   const top = data.products?.top || [];
   $('topProducts').innerHTML = renderBars(top);
@@ -241,6 +266,7 @@ function renderDashboard(data) {
   $('checkoutFunnel').innerHTML = renderCountBars(analytics.funnel || [], 'No checkout behaviour tracked yet.');
   $('productViews').innerHTML = renderCountBars(analytics.topProductViews || [], 'No product views tracked yet.');
   $('trafficSources').innerHTML = renderCountBars(analytics.sources || [], 'No traffic sources tracked yet.');
+  $('visitorLocations').innerHTML = renderCountBars(analytics.locations || [], 'No visitor locations yet.');
   $('deviceSplit').innerHTML = renderCountBars(analytics.devices || [], 'No device split tracked yet.');
   $('stockList').innerHTML = renderStock(data.products?.stock);
   setText('lowStockChip', `${number(data.products?.stock?.lowStock?.length)} low stock`);
@@ -308,6 +334,12 @@ async function loadDashboard() {
 $('adminGoogleBtn')?.addEventListener('click', signIn);
 $('adminSignOutBtn')?.addEventListener('click', signOut);
 $('adminRefreshBtn')?.addEventListener('click', loadDashboard);
+$('adminIgnoreBrowserBtn')?.addEventListener('click', () => {
+  setAnalyticsIgnored(!analyticsIgnored());
+  showAlert(analyticsIgnored()
+    ? 'This browser will no longer be counted in public-site analytics.'
+    : 'This browser will be counted in public-site analytics again.');
+});
 $('recentOrders')?.addEventListener('click', (event) => {
   const row = event.target.closest('tr[data-order-number]');
   if (row) openOrderDrawer(row.getAttribute('data-order-number'));
@@ -319,6 +351,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 getSupabase().then(async (supabase) => {
+  updateIgnoreBrowserButton();
   await loadDashboard();
   supabase.auth.onAuthStateChange((event) => {
     if (event === 'SIGNED_OUT') {

@@ -136,6 +136,14 @@ function uniqueBy(rows, key) {
   return new Set(rows.map((row) => row[key]).filter(Boolean)).size;
 }
 
+function uniqueVisitorCount(rows) {
+  return new Set(rows.map((row) => row.visitor_id || row.session_id).filter(Boolean)).size;
+}
+
+function uniqueSessionCount(rows) {
+  return uniqueBy(rows, 'session_id');
+}
+
 function cleanPath(path = '') {
   const raw = String(path || '/');
   return raw.split('#')[0].split('?')[0] || '/';
@@ -152,6 +160,68 @@ function topCounts(rows, getLabel, limit = 6) {
     .map(([label, value]) => ({ label, value }))
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
     .slice(0, limit);
+}
+
+function sourceLabel(event) {
+  const grouped = String(event.source_group || '').trim();
+  if (grouped) return grouped;
+  if (event.utm_source) return String(event.utm_source);
+  if (!event.referrer) return 'Direct';
+  try {
+    const host = new URL(event.referrer).hostname.replace(/^www\./, '').toLowerCase();
+    if (!host) return 'Referral';
+    if (/ukmaxx\.co\.uk$/.test(host)) return 'Internal navigation';
+    if (['t.co', 'x.com', 'twitter.com'].includes(host)) return 'X / Twitter';
+    if (['t.me', 'telegram.org'].includes(host)) return 'Telegram';
+    if (host.includes('google') || host.includes('googlequicksearchbox')) return 'Google';
+    if (host.includes('bing')) return 'Bing';
+    return host;
+  } catch {
+    return 'Referral';
+  }
+}
+
+function topSessionSources(pageViews, limit = 6) {
+  const bySession = new Map();
+  const sorted = [...pageViews].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+  for (const event of sorted) {
+    const session = event.session_id;
+    if (!session || bySession.has(session)) continue;
+    const label = sourceLabel(event);
+    bySession.set(session, label === 'Internal navigation' ? 'Direct' : label);
+  }
+  const rows = [...bySession.values()]
+    .filter((label) => label && label !== 'Internal navigation')
+    .map((label) => ({ label }));
+  return topCounts(rows, (row) => row.label, limit);
+}
+
+function topUniqueLabels(rows, getLabel, getIdentity, limit = 8) {
+  const seen = new Set();
+  const counts = new Map();
+  for (const row of rows) {
+    const label = getLabel(row);
+    const identity = getIdentity(row);
+    if (!label || !identity) continue;
+    const key = `${label}::${identity}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    counts.set(label, (counts.get(label) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
+
+function locationLabel(event) {
+  const city = String(event.city || '').trim();
+  const region = String(event.region || '').trim();
+  const country = String(event.country || '').trim().toUpperCase();
+  if (city && country) return `${city}, ${country}`;
+  if (region && country) return `${region}, ${country}`;
+  if (country) return country;
+  return 'Unknown';
 }
 
 function pct(numerator, denominator) {
@@ -275,57 +345,59 @@ function recentOrders(orders) {
   }));
 }
 
-function analyticsSummary(events, paidOrders, products, today, sevenDaysAgo, thirtyDaysAgo) {
+function analyticsSummary(events, paidOrders, attempts, products, today, sevenDaysAgo, thirtyDaysAgo) {
   const productNames = new Map(products.map((product) => [String(product.sku || '').toUpperCase(), product.name || product.sku]));
-  const pageViews = events.filter((event) => event.event_type === 'page_view');
+  const realEvents = events.filter((event) => !event.is_internal);
+  const internalEvents = events.filter((event) => event.is_internal);
+  const pageViews = realEvents.filter((event) => event.event_type === 'page_view');
   const todayViews = pageViews.filter((event) => isSince(event, today));
   const sevenDayViews = pageViews.filter((event) => isSince(event, sevenDaysAgo));
   const thirtyDayViews = pageViews.filter((event) => isSince(event, thirtyDaysAgo));
-  const sevenDayEvents = events.filter((event) => isSince(event, sevenDaysAgo));
+  const sevenDayEvents = realEvents.filter((event) => isSince(event, sevenDaysAgo));
   const todayPaidOrders = paidOrders.filter((order) => isSince(order, today));
   const sevenDayPaidOrders = paidOrders.filter((order) => isSince(order, sevenDaysAgo));
+  const sevenDayAttempts = attempts.filter((attempt) => isSince(attempt, sevenDaysAgo));
+  const todayVisitors = uniqueVisitorCount(todayViews);
+  const sevenDayVisitors = uniqueVisitorCount(sevenDayViews);
 
   const eventCount = (type) => sevenDayEvents.filter((event) => event.event_type === type).length;
-  const sourceLabel = (event) => {
-    if (event.utm_source) return event.utm_source;
-    if (!event.referrer) return 'Direct';
-    try {
-      const host = new URL(event.referrer).hostname.replace(/^www\./, '');
-      return host || 'Referral';
-    } catch {
-      return 'Referral';
-    }
-  };
+  const paymentAttemptStarted = sevenDayAttempts.filter((attempt) => !['rejected', 'cancelled', 'overdue'].includes(String(attempt.status || '').toLowerCase())).length;
+  const paymentAttemptFailed = sevenDayAttempts.filter((attempt) => ['rejected', 'cancelled', 'overdue'].includes(String(attempt.status || '').toLowerCase())).length;
 
   return {
     today: {
-      visitors: uniqueBy(todayViews, 'session_id'),
+      visitors: todayVisitors,
+      sessions: uniqueSessionCount(todayViews),
       pageviews: todayViews.length,
-      conversionRate: pct(todayPaidOrders.length, uniqueBy(todayViews, 'session_id')),
+      conversionRate: pct(todayPaidOrders.length, todayVisitors),
     },
     sevenDays: {
-      visitors: uniqueBy(sevenDayViews, 'session_id'),
+      visitors: sevenDayVisitors,
+      sessions: uniqueSessionCount(sevenDayViews),
       pageviews: sevenDayViews.length,
-      conversionRate: pct(sevenDayPaidOrders.length, uniqueBy(sevenDayViews, 'session_id')),
+      conversionRate: pct(sevenDayPaidOrders.length, sevenDayVisitors),
     },
     thirtyDays: {
-      visitors: uniqueBy(thirtyDayViews, 'session_id'),
+      visitors: uniqueVisitorCount(thirtyDayViews),
+      sessions: uniqueSessionCount(thirtyDayViews),
       pageviews: thirtyDayViews.length,
     },
+    internalIgnored: internalEvents.length,
     topPages: topCounts(sevenDayViews, (event) => cleanPath(event.page_path), 8),
     topProductViews: topCounts(sevenDayEvents.filter((event) => event.event_type === 'product_view'), (event) => {
       const sku = String(event.product_sku || '').toUpperCase();
       return productNames.get(sku) || sku || cleanPath(event.page_path);
     }, 8),
     devices: topCounts(sevenDayViews, (event) => event.device_type || 'unknown', 4),
-    sources: topCounts(sevenDayViews, sourceLabel, 6),
+    sources: topSessionSources(sevenDayViews, 6),
+    locations: topUniqueLabels(sevenDayViews, locationLabel, (event) => event.visitor_id || event.session_id, 8),
     funnel: [
       { label: 'Product views', value: eventCount('product_view') },
       { label: 'Add to basket', value: eventCount('add_to_cart') },
       { label: 'Checkout opened', value: eventCount('checkout_opened') },
-      { label: 'Payment started', value: eventCount('payment_started') },
-      { label: 'Payment success', value: eventCount('payment_success') },
-      { label: 'Payment failed', value: eventCount('payment_failed') },
+      { label: 'Payment started', value: Math.max(eventCount('payment_started'), paymentAttemptStarted) },
+      { label: 'Payment success', value: Math.max(eventCount('payment_success'), sevenDayPaidOrders.length) },
+      { label: 'Payment failed', value: Math.max(eventCount('payment_failed'), paymentAttemptFailed) },
     ],
   };
 }
@@ -350,7 +422,7 @@ async function buildDashboard(supabase) {
     safeSelect(supabase, 'reviews_public', 'id,rating,created_at', { limit: 1000 }),
     safeSelect(supabase, 'subscribers', 'id,unsubscribed_at,created_at', { limit: 5000 }),
     safeSelect(supabase, 'promo_redemptions', 'id,promo_code,redeemed_at', { limit: 5000 }),
-    safeSelect(supabase, 'site_events', 'event_type,session_id,page_path,page_title,product_sku,referrer,utm_source,utm_medium,utm_campaign,device_type,created_at', { order: { column: 'created_at', ascending: false }, limit: 5000 }),
+    safeSelect(supabase, 'site_events', '*', { order: { column: 'created_at', ascending: false }, limit: 5000 }),
   ]);
 
   const now = new Date();
@@ -381,7 +453,7 @@ async function buildDashboard(supabase) {
       problemOrders: orders.filter((order) => FINAL_BAD_STATUSES.has(order.status)).length,
     },
     payments: paymentSummary(attempts),
-    analytics: analyticsSummary(events, paidOrders, products, today, sevenDaysAgo, thirtyDaysAgo),
+    analytics: analyticsSummary(events, paidOrders, attempts, products, today, sevenDaysAgo, thirtyDaysAgo),
     products: {
       top: topProducts(orders, items),
       revenue: revenueByProduct(orders, items),

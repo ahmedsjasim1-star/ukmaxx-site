@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
-<link rel="stylesheet" href="./assets/css/admin.css?v=20260730-analytics-dashboard">
+<link rel="stylesheet" href="./assets/css/admin.css?v=20260731-analytics-phase-a">
 </head>
 <body class="admin-page">
   <main class="admin-shell">
@@ -46,6 +46,7 @@
         </div>
         <div class="admin-header-actions">
           <span class="admin-user-pill" id="adminEmail">Signed in</span>
+          <button class="admin-btn admin-btn-ghost" id="adminIgnoreBrowserBtn" type="button">Ignore this browser</button>
           <button class="admin-btn admin-btn-ghost" id="adminRefreshBtn" type="button">Refresh</button>
           <button class="admin-btn admin-btn-dark" id="adminSignOutBtn" type="button">Sign out</button>
         </div>
@@ -169,6 +170,16 @@
         <article class="admin-panel">
           <div class="panel-head">
             <div>
+              <p class="eyebrow">Locations</p>
+              <h2>Visitor locations</h2>
+            </div>
+          </div>
+          <div class="count-list" id="visitorLocations"></div>
+        </article>
+
+        <article class="admin-panel">
+          <div class="panel-head">
+            <div>
               <p class="eyebrow">Devices</p>
               <h2>Browsing split</h2>
             </div>
@@ -258,6 +269,6 @@
     </div>
   </aside>
 
-  <script type="module" src="./assets/js/admin.js?v=20260730-analytics-dashboard"></script>
+  <script type="module" src="./assets/js/admin.js?v=20260731-analytics-phase-a"></script>
 </body>
 </html>

@@ -120,11 +120,45 @@ function cleanSessionId(value) {
   return clean(value, 80).replace(/[^a-z0-9_-]/gi, '').slice(0, 80);
 }
 
+function cleanBool(value) {
+  return value === true || value === 'true';
+}
+
+function cleanHeader(value, max = 120) {
+  try {
+    return decodeURIComponent(clean(value, max));
+  } catch {
+    return clean(value, max);
+  }
+}
+
 function detectDevice(userAgent = '') {
   const ua = String(userAgent || '').toLowerCase();
   if (/ipad|tablet/.test(ua)) return 'tablet';
   if (/mobile|iphone|android/.test(ua)) return 'mobile';
   return 'desktop';
+}
+
+function referrerHost(referrer = '') {
+  try {
+    return new URL(referrer).hostname.replace(/^www\./, '').toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function sourceGroup({ referrer = '', utmSource = '' }) {
+  const source = String(utmSource || '').toLowerCase();
+  const host = referrerHost(referrer);
+  const value = source || host;
+  if (!value) return 'Direct';
+  if (/ukmaxx\.co\.uk$/.test(value)) return 'Internal navigation';
+  if (/(^|\.)(t\.co|x\.com|twitter\.com)$/.test(value) || value.includes('twitter') || value === 'x') return 'X / Twitter';
+  if (/(^|\.)(t\.me|telegram\.org)$/.test(value) || value.includes('telegram')) return 'Telegram';
+  if (value.includes('google') || value.includes('googlequicksearchbox')) return 'Google';
+  if (value.includes('bing')) return 'Bing';
+  if (value.includes('facebook') || value.includes('instagram') || value.includes('meta')) return 'Meta';
+  return host || source || 'Referral';
 }
 
 async function handleSiteEvent(req, res) {
@@ -134,22 +168,44 @@ async function handleSiteEvent(req, res) {
     if (!ALLOWED_SITE_EVENTS.has(eventType)) return res.status(400).json({ error: 'Invalid event type' });
 
     const sessionId = cleanSessionId(body.sessionId);
+    const visitorId = cleanSessionId(body.visitorId) || sessionId;
     if (!sessionId || sessionId.length < 10) return res.status(400).json({ error: 'Invalid session' });
 
     const userAgent = clean(req.headers['user-agent'], 320);
-    const supabase = getSupabaseAdmin();
-    const { error } = await supabase.from('site_events').insert({
+    const referrer = clean(body.referrer, 500);
+    const utmSource = clean(body.utmSource, 80);
+    const baseEvent = {
       event_type: eventType,
       session_id: sessionId,
       page_path: cleanPath(body.pagePath),
       page_title: clean(body.pageTitle, 180),
       product_sku: clean(body.productSku, 40).toUpperCase() || null,
-      referrer: clean(body.referrer, 500) || null,
-      utm_source: clean(body.utmSource, 80) || null,
+      referrer: referrer || null,
+      utm_source: utmSource || null,
       utm_medium: clean(body.utmMedium, 80) || null,
       utm_campaign: clean(body.utmCampaign, 120) || null,
       device_type: clean(body.deviceType, 30) || detectDevice(userAgent),
-    });
+    };
+    const enrichedEvent = {
+      ...baseEvent,
+      visitor_id: visitorId,
+      is_internal: cleanBool(body.isInternal),
+      referrer_host: referrerHost(referrer) || null,
+      source_group: sourceGroup({ referrer, utmSource }),
+      country: cleanHeader(req.headers['x-vercel-ip-country'], 2).toUpperCase() || null,
+      region: cleanHeader(req.headers['x-vercel-ip-country-region'], 80) || null,
+      city: cleanHeader(req.headers['x-vercel-ip-city'], 120) || null,
+      timezone: clean(body.timezone, 80) || null,
+      language: clean(body.language, 40) || null,
+    };
+
+    const supabase = getSupabaseAdmin();
+    let { error } = await supabase.from('site_events').insert(enrichedEvent);
+
+    if (error && /column .* does not exist|schema cache/i.test(String(error.message || ''))) {
+      const fallback = await supabase.from('site_events').insert(baseEvent);
+      error = fallback.error;
+    }
 
     if (error) {
       console.error('site-event-insert-error', { message: error.message });
