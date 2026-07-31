@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="./assets/css/reset.css">
   <link rel="stylesheet" href="./assets/css/base.css">
   <link rel="stylesheet" href="./assets/css/components.css">
-  <link rel="stylesheet" href="./assets/css/pages/coa.css">
+  <link rel="stylesheet" href="./assets/css/pages/coa.css?v=20260731-batch-inventory">
   <script src="./assets/html/bundle.js?v=20260708-coa-nav"></script>
 </head>
 <body>
@@ -55,7 +55,7 @@
         <div>
           <span class="section-eyebrow">Batch verification</span>
           <h1>COA &amp; batch checker</h1>
-          <p>Enter a batch code to check published certificate details, lab, method and test date. All listed records relate to current or upcoming UKMAXX research compounds.</p>
+          <p>Enter a batch code to check published certificate details, lab, method, test date and current public batch inventory.</p>
           <div class="coa-hero-actions">
             <a href="#batch-checker" class="btn btn-primary btn-lg">Check a batch</a>
             <a href="#all-coas" class="btn btn-ghost btn-lg">View all records</a>
@@ -64,7 +64,7 @@
         <div class="coa-qr-card" aria-label="Batch verification summary">
           <div class="coa-qr-label">Verified records</div>
           <code>Batch-led transparency</code>
-          <p>Published COA records are shown by product, batch, lab, method and test date, with direct external verification where available.</p>
+          <p>Current tested batches show purity, batch size, sold count and remaining stock alongside direct external verification links.</p>
         </div>
       </div>
     </div>
@@ -95,7 +95,7 @@
           <span class="section-eyebrow">Published records</span>
           <h2 class="section-title">All COA &amp; QC records</h2>
         </div>
-        <p class="section-sub">Third-party COAs are linked externally where available. Search by product, batch code, lab or method.</p>
+        <p class="section-sub">Current third-party verified batches with public batch size, sold count and remaining stock.</p>
       </div>
       <div class="coa-table-wrap">
         <table class="coa-table">
@@ -103,15 +103,46 @@
             <tr>
               <th>Product</th>
               <th>Batch</th>
+              <th>Purity / assay</th>
+              <th>Batch size</th>
+              <th>Sold</th>
+              <th>Left</th>
               <th>Status</th>
               <th>Lab</th>
-              <th>Method</th>
               <th>Test date</th>
               <th>Certificate</th>
             </tr>
           </thead>
           <tbody id="coaTableBody"></tbody>
         </table>
+      </div>
+      <div class="coa-archive" id="coaArchiveSection" hidden>
+        <div class="section-head">
+          <div>
+            <span class="section-eyebrow">Archive</span>
+            <h2 class="section-title">Archived COA records</h2>
+          </div>
+          <p class="section-sub">Sold-through batches remain searchable for traceability after the live batch has moved on.</p>
+        </div>
+        <div class="coa-table-wrap">
+          <table class="coa-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Batch</th>
+                <th>Purity / assay</th>
+                <th>Batch size</th>
+                <th>Sold</th>
+                <th>Left</th>
+                <th>Status</th>
+                <th>Lab</th>
+                <th>Test date</th>
+                <th>Certificate</th>
+              </tr>
+            </thead>
+            <tbody id="coaArchiveTableBody"></tbody>
+          </table>
+        </div>
       </div>
       <div class="coa-note">
         <strong>Can’t find your batch?</strong> Check the code carefully, then contact support with your order number if it still does not appear.
@@ -127,6 +158,6 @@
 <script>document.write(window.__html.checkout)</script>
 <script>document.write(window.__html.toast)</script>
 <script>document.write(window.__html.cookieBanner)</script>
-<script type="module" src="./assets/js/app.js?v=20260708-coa-page"></script>
+<script type="module" src="./assets/js/app.js?v=20260731-batch-inventory"></script>
 </body>
 </html>

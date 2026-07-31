@@ -1,4 +1,5 @@
 import { COA, PRODUCTS, getCoaStatusLabel, getReleaseLabel } from '../data/products.js';
+import { getSupabase } from '../data/supabase.js';
 
 function byId(id) {
   return document.getElementById(id);
@@ -9,6 +10,7 @@ function normalise(value) {
 }
 
 function statusClass(status) {
+  if (status === 'ARCHIVED') return 'archived';
   if (status === 'VERIFIED') return 'verified';
   if (status === 'INTERNAL_QC') return 'internal';
   return 'pending';
@@ -28,13 +30,51 @@ function productUrl(sku) {
   return `./product.html?sku=${encodeURIComponent(sku)}`;
 }
 
-function coaRecords() {
-  const records = Object.values(COA).map((record) => ({
-    ...record,
-    skus: Object.values(PRODUCTS)
+function formatDate(value) {
+  if (!value) return 'Pending';
+  try {
+    return new Date(value).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return String(value);
+  }
+}
+
+function num(value) {
+  return Number.isFinite(Number(value)) ? Number(value) : 0;
+}
+
+function remaining(record) {
+  return Math.max(0, num(record.batchSize) - num(record.soldCount));
+}
+
+function displayPurity(record) {
+  return [record.purity, record.assayResult].filter(Boolean).join(' / ') || 'Pending';
+}
+
+function isArchived(record) {
+  return record.status === 'ARCHIVED' || Boolean(record.archivedAt) || (num(record.batchSize) > 0 && remaining(record) <= 0);
+}
+
+function localRecords() {
+  const records = Object.values(COA).map((record) => {
+    const skus = Object.values(PRODUCTS)
       .filter((product) => product.batch === record.batch)
-      .map((product) => product.id),
-  })).filter((record) => PRODUCTS[record.sku]?.category !== 'support');
+      .map((product) => product.id);
+    const product = PRODUCTS[record.sku];
+    const batchSize = product?.category === 'support' ? 0 : num(product?.stockCount);
+    return {
+      ...record,
+      batchSize,
+      soldCount: 0,
+      statusLabel: batchSize ? 'Active verified batch' : record.statusLabel,
+      archivedAt: '',
+      skus,
+    };
+  }).filter((record) => PRODUCTS[record.sku]?.category !== 'support');
 
   Object.values(PRODUCTS).forEach((product) => {
     if (product.category === 'support') return;
@@ -47,46 +87,123 @@ function coaRecords() {
       status: 'PENDING',
       statusLabel: getCoaStatusLabel(product),
       purity: product.purity || 'Pending',
+      assayResult: '',
       method: product.coa?.method || 'Pending',
       lab: product.coa?.lab || 'Pending',
       report: 'Awaiting COA',
       testDate: 'Pending',
       image: product.image,
       url: '',
+      batchSize: 0,
+      soldCount: 0,
+      archivedAt: '',
       skus: [product.id],
       releaseLabel: getReleaseLabel(product),
     });
   });
 
-  return records.sort((a, b) => {
-    const rank = { VERIFIED: 0, INTERNAL_QC: 1, PENDING: 2 };
-    return (rank[a.status] ?? 9) - (rank[b.status] ?? 9) || a.product.localeCompare(b.product);
+  return sortRecords(records);
+}
+
+function mapSupabaseRecord(row) {
+  const product = PRODUCTS[row.sku] || {};
+  const batchSize = num(row.batch_size);
+  const soldCount = num(row.sold_count);
+  const archived = Boolean(row.archived_at) || (batchSize > 0 && soldCount >= batchSize) || row.is_active === false;
+  return {
+    batch: row.batch_code,
+    sku: row.sku,
+    product: row.product_name || product.name || row.sku,
+    sample: product.name || row.product_name || row.sku,
+    status: archived ? 'ARCHIVED' : 'VERIFIED',
+    statusLabel: archived ? 'Archived batch' : 'Active verified batch',
+    purity: row.purity || '',
+    assayResult: row.assay_result || '',
+    method: row.method || 'Pending',
+    lab: row.lab_name || 'Pending',
+    report: row.batch_code,
+    testDate: formatDate(row.tested_at),
+    image: row.image_url || product.image || '',
+    url: row.coa_url || '',
+    batchSize,
+    soldCount,
+    archivedAt: row.archived_at || '',
+    skus: [row.sku],
+    displayOrder: num(row.display_order) || 100,
+  };
+}
+
+function sortRecords(records) {
+  const rank = { VERIFIED: 0, INTERNAL_QC: 1, PENDING: 2, ARCHIVED: 3 };
+  return [...records].sort((a, b) => {
+    return (rank[a.status] ?? 9) - (rank[b.status] ?? 9)
+      || num(a.displayOrder) - num(b.displayOrder)
+      || a.product.localeCompare(b.product);
   });
 }
 
+async function fetchSupabaseRecords() {
+  try {
+    const supabase = await getSupabase();
+    const { data, error } = await supabase
+      .from('coa_batches')
+      .select('batch_code,sku,product_name,purity,assay_result,method,lab_name,coa_url,image_url,tested_at,published_at,is_active,batch_size,sold_count,archived_at,display_order')
+      .not('published_at', 'is', null)
+      .order('display_order', { ascending: true })
+      .order('tested_at', { ascending: false });
+    if (error) throw error;
+    const rows = (data || [])
+      .filter((row) => PRODUCTS[row.sku]?.category !== 'support' && num(row.batch_size) > 0)
+      .map(mapSupabaseRecord);
+    return rows.length ? sortRecords(rows) : [];
+  } catch (err) {
+    console.warn('coa-live-records-fallback', err?.message || err);
+    return [];
+  }
+}
+
+function tableRow(record) {
+  const skus = record.skus?.length ? record.skus : [record.sku];
+  const left = remaining(record);
+  const action = record.url
+    ? `<a href="${record.url}" target="_blank" rel="noopener noreferrer" class="coa-link">Verify externally</a>`
+    : `<span class="coa-muted">${record.status === 'PENDING' ? 'Pending release' : 'Available on request'}</span>`;
+  return `
+    <tr>
+      <td>
+        <strong>${escapeHtml(record.product)}</strong>
+        <span>${escapeHtml(skus.join(' / '))}</span>
+      </td>
+      <td><code>${escapeHtml(record.batch)}</code></td>
+      <td>${escapeHtml(displayPurity(record))}</td>
+      <td><span class="coa-stock-number">${escapeHtml(record.batchSize || '—')}</span></td>
+      <td><span class="coa-stock-number">${escapeHtml(record.soldCount || 0)}</span></td>
+      <td><span class="coa-stock-left">${escapeHtml(record.batchSize ? left : '—')}</span></td>
+      <td><span class="coa-status coa-status-${statusClass(record.status)}">${escapeHtml(record.statusLabel)}</span></td>
+      <td>${escapeHtml(record.lab)}<span>${escapeHtml(record.method)}</span></td>
+      <td>${escapeHtml(record.testDate)}</td>
+      <td>${action}</td>
+    </tr>
+  `;
+}
+
 function renderRows(records) {
-  const table = byId('coaTableBody');
-  if (!table) return;
-  table.innerHTML = records.map((record) => {
-    const skus = record.skus?.length ? record.skus : [record.sku];
-    const action = record.url
-      ? `<a href="${record.url}" target="_blank" rel="noopener noreferrer" class="coa-link">Verify externally</a>`
-      : `<span class="coa-muted">${record.status === 'PENDING' ? 'Pending release' : 'Available on request'}</span>`;
-    return `
-      <tr>
-        <td>
-          <strong>${escapeHtml(record.product)}</strong>
-          <span>${escapeHtml(skus.join(' / '))}</span>
-        </td>
-        <td><code>${escapeHtml(record.batch)}</code></td>
-        <td><span class="coa-status coa-status-${statusClass(record.status)}">${escapeHtml(record.statusLabel)}</span></td>
-        <td>${escapeHtml(record.lab)}</td>
-        <td>${escapeHtml(record.method)}</td>
-        <td>${escapeHtml(record.testDate)}</td>
-        <td>${action}</td>
-      </tr>
-    `;
-  }).join('');
+  const activeTable = byId('coaTableBody');
+  const archiveTable = byId('coaArchiveTableBody');
+  const archiveSection = byId('coaArchiveSection');
+  if (!activeTable) return;
+
+  const active = records.filter((record) => !isArchived(record));
+  const archived = records.filter(isArchived);
+
+  activeTable.innerHTML = active.length
+    ? active.map(tableRow).join('')
+    : '<tr><td colspan="10" class="coa-muted">No active public COA records found.</td></tr>';
+
+  if (archiveTable && archiveSection) {
+    archiveSection.hidden = archived.length === 0;
+    archiveTable.innerHTML = archived.map(tableRow).join('');
+  }
 }
 
 function findRecord(query, records) {
@@ -119,6 +236,7 @@ function resultHtml(record) {
     `;
   }
 
+  const left = remaining(record);
   const action = record.url
     ? `<a class="btn btn-primary" href="${record.url}" target="_blank" rel="noopener noreferrer">Verify on ${escapeHtml(record.lab)}</a>`
     : `<a class="btn btn-ghost" href="${productUrl(record.sku)}">View product</a>`;
@@ -130,8 +248,12 @@ function resultHtml(record) {
       <div class="coa-result-grid">
         <div><span>Lab</span><strong>${escapeHtml(record.lab)}</strong></div>
         <div><span>Method</span><strong>${escapeHtml(record.method)}</strong></div>
-        <div><span>Purity / QC</span><strong>${escapeHtml(record.purity)}</strong></div>
+        <div><span>Purity / assay</span><strong>${escapeHtml(displayPurity(record))}</strong></div>
         <div><span>Test date</span><strong>${escapeHtml(record.testDate)}</strong></div>
+        <div><span>Batch size</span><strong>${escapeHtml(record.batchSize || '—')}</strong></div>
+        <div><span>Sold</span><strong>${escapeHtml(record.soldCount || 0)}</strong></div>
+        <div><span>Remaining</span><strong>${escapeHtml(record.batchSize ? left : '—')}</strong></div>
+        <div><span>Status</span><strong>${escapeHtml(isArchived(record) ? 'Archived' : 'Current batch')}</strong></div>
       </div>
       <div class="coa-result-actions">
         ${action}
@@ -145,7 +267,7 @@ export function setupCoaPage() {
   const mount = byId('coaPage');
   if (!mount) return;
 
-  const records = coaRecords();
+  let records = localRecords();
   renderRows(records);
 
   const form = byId('coaCheckerForm');
@@ -179,4 +301,11 @@ export function setupCoaPage() {
     if (input) input.value = batch;
     runCheck(batch);
   }
+
+  fetchSupabaseRecords().then((liveRecords) => {
+    if (!liveRecords.length) return;
+    records = liveRecords;
+    renderRows(records);
+    if (batch) runCheck(batch);
+  });
 }

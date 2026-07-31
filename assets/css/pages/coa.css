@@ -33,7 +33,7 @@
 .coa-result-actions{display:flex;flex-wrap:wrap;gap:10px}
 .coa-records-section{padding:52px 0 70px;background:var(--surface-2);border-top:1px solid var(--border)}
 .coa-table-wrap{overflow-x:auto;background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
-.coa-table{width:100%;border-collapse:collapse;min-width:880px}
+.coa-table{width:100%;border-collapse:collapse;min-width:1120px}
 .coa-table th,.coa-table td{padding:15px 16px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
 .coa-table th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);background:#F8FBFC}
 .coa-table td{font-size:13.5px;color:var(--text)}
@@ -45,6 +45,11 @@
 .coa-status-verified{background:var(--success-light);color:var(--success)}
 .coa-status-internal{background:var(--accent-light);color:var(--accent)}
 .coa-status-pending{background:#FFF4D6;color:#946200}
+.coa-status-archived{background:#EEF3F4;color:#5B7B82}
+.coa-stock-number,.coa-stock-left{font-family:'IBM Plex Mono',monospace!important;font-size:13px!important;font-weight:700!important;color:var(--text)!important}
+.coa-stock-left{color:var(--accent)!important}
+.coa-archive{margin-top:34px}
+.coa-archive .section-head{margin-top:0}
 .coa-link{font-weight:700;color:var(--accent);text-decoration:none}
 .coa-link:hover{text-decoration:underline}
 .coa-muted{color:var(--dim)!important;font-size:13px!important}

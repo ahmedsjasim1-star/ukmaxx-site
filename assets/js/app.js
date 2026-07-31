@@ -12,7 +12,7 @@ import { renderProductDetail, renderRelatedProducts } from './modules/productDet
 import { setupAccountPage } from './modules/account.js';
 import { updateHeroBatchChips } from './modules/heroBatch.js';
 import { refreshLiveStock } from './data/products.js';
-import { setupCoaPage } from './modules/coaPage.js';
+import { setupCoaPage } from './modules/coaPage.js?v=20260731-batch-inventory';
 import { setupAnalytics } from './modules/analytics.js?v=20260730-admin-analytics';
 
 document.addEventListener('DOMContentLoaded', async () => {
