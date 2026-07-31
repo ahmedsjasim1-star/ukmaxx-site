@@ -37,7 +37,7 @@ function productCard(p, bundle = false) {
     ? (stockLow ? `<span class="badge badge-low">Only ${p.stockCount} ${stockUnit}</span>` : `<span class="badge badge-stock">In stock</span>`)
     : `<span class="badge badge-coming">${getReleaseLabel(p)}</span>`;
   const coaBadge = !p.coaUrl && !purchasable ? `<span class="badge badge-awaiting">${getCoaStatusLabel(p)}</span>` : '';
-  const bestBadge = p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Top seller'}</span>` : '';
+  const bestBadge = p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Featured'}</span>` : '';
   const saveBadge = p.originalPrice ? `<span class="badge badge-new">Save ${money(p.originalPrice - p.price)}</span>` : '';
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
