@@ -1,8 +1,10 @@
 import { getSupabase } from '../data/supabase.js';
-import { PRODUCTS } from '../data/products.js';
+import { PRODUCTS, getCoaStatusLabel, isPurchasable } from '../data/products.js';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 import { toast } from './toast.js';
+
+let accountOrders = [];
 
 const STATUS_LABELS = {
   paid: 'Paid',
@@ -31,10 +33,53 @@ function coaLink(item) {
   if (product?.coaUrl) {
     return `<a href="${product.coaUrl}" target="_blank" rel="noopener">View COA</a>`;
   }
-  return '<span>COA pending</span>';
+  if (product?.coaLabel) {
+    return `<span class="account-item-note">${escapeHtml(product.coaLabel)}</span>`;
+  }
+  if (product?.coa?.status === 'VERIFIED') {
+    return `<span class="account-item-note">${escapeHtml(getCoaStatusLabel(product))}</span>`;
+  }
+  if (product) {
+    return `<span class="account-item-note">${escapeHtml(getCoaStatusLabel(product))}</span>`;
+  }
+  return '<span class="account-item-note">Batch details unavailable</span>';
 }
 
-function orderCard(order) {
+function canReorder(order) {
+  return (order.items || []).some((item) => isPurchasable(PRODUCTS[item.sku]));
+}
+
+function reorderOrder(index) {
+  const order = accountOrders[index];
+  if (!order?.items?.length || typeof window.addSkuQty !== 'function') {
+    toast('Reorder unavailable', 'Please shop products directly or contact support.', 'error');
+    return;
+  }
+
+  const unavailable = [];
+  let added = 0;
+  order.items.forEach((item) => {
+    const sku = String(item.sku || '').toUpperCase();
+    const product = PRODUCTS[sku];
+    if (!isPurchasable(product)) {
+      unavailable.push(item.product_name || sku);
+      return;
+    }
+    window.addSkuQty(sku, Number(item.qty || 1));
+    added += 1;
+  });
+
+  if (added) {
+    byId('cartToggle')?.click();
+    toast('Reorder added', unavailable.length
+      ? 'Available items were added. Some previous items are not currently available.'
+      : 'Your previous items are back in the basket.');
+  } else {
+    toast('Reorder unavailable', 'None of the items in this order are currently available.', 'error');
+  }
+}
+
+function orderCard(order, index) {
   const status = STATUS_LABELS[order.status] || order.status || 'Unknown';
   const items = (order.items || []).map((item) => `
     <div class="account-item">
@@ -61,6 +106,7 @@ function orderCard(order) {
       </div>
       <div class="account-items">${items || '<p class="account-empty-small">No item details available.</p>'}</div>
       <div class="account-order-actions">
+        ${canReorder(order) ? `<button class="btn btn-primary btn-sm account-reorder-btn" type="button" data-reorder="${index}">Reorder</button>` : ''}
         <a class="btn btn-ghost btn-sm" href="/track.html?order=${encodeURIComponent(order.order_number)}">Track order</a>
         ${order.tracking_url ? `<a class="btn btn-ghost btn-sm" href="${order.tracking_url}" target="_blank" rel="noopener">Courier tracking</a>` : ''}
       </div>
@@ -95,6 +141,7 @@ export async function setupAccountPage() {
 
     if (emailEl) emailEl.textContent = data.email || session.user.email || '';
     const orders = data.orders || [];
+    accountOrders = orders;
     if (summaryEl) {
       const delivered = orders.filter((order) => order.status === 'delivered').length;
       summaryEl.innerHTML = `
@@ -104,7 +151,14 @@ export async function setupAccountPage() {
       `;
     }
 
-    if (ordersEl) ordersEl.innerHTML = orders.map(orderCard).join('');
+    if (ordersEl) {
+      ordersEl.innerHTML = orders.map(orderCard).join('');
+      ordersEl.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-reorder]');
+        if (!button) return;
+        reorderOrder(Number(button.dataset.reorder));
+      });
+    }
     if (empty) empty.style.display = orders.length ? 'none' : '';
     if (content) content.style.display = '';
   } catch (error) {
