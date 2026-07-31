@@ -67,7 +67,7 @@ insert into public.coa_batches (
     'RT10',
     'RETA 10MG',
     '99.223%',
-    null,
+    '10.12mg',
     'UPLC/MS',
     'Janoshik Analytical',
     'https://verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42',
@@ -145,9 +145,12 @@ on conflict (batch_code) do update set
   image_url = excluded.image_url,
   tested_at = excluded.tested_at,
   published_at = coalesce(public.coa_batches.published_at, excluded.published_at),
-  is_active = excluded.is_active,
   batch_size = excluded.batch_size,
-  archived_at = excluded.archived_at,
+  is_active = case
+    when public.coa_batches.archived_at is not null then false
+    else excluded.is_active
+  end,
+  archived_at = public.coa_batches.archived_at,
   display_order = excluded.display_order;
 
 drop policy if exists public_read_active_coa on public.coa_batches;
