@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="./assets/css/reset.css">
   <link rel="stylesheet" href="./assets/css/base.css">
   <link rel="stylesheet" href="./assets/css/components.css">
-  <link rel="stylesheet" href="./assets/css/pages/coa.css?v=20260731-batch-inventory">
+  <link rel="stylesheet" href="./assets/css/pages/coa.css?v=20260801-rejected-batches">
   <script src="./assets/html/bundle.js?v=20260708-coa-nav"></script>
 </head>
 <body>
@@ -144,6 +144,34 @@
           </table>
         </div>
       </div>
+      <div class="coa-rejected" id="coaRejectedSection" hidden>
+        <div class="section-head">
+          <div>
+            <span class="section-eyebrow">Transparency records</span>
+            <h2 class="section-title">QC rejected batches</h2>
+          </div>
+          <p class="section-sub">Batches that were independently tested but not released for sale because they did not meet UKMAXX release standards.</p>
+        </div>
+        <div class="coa-table-wrap coa-table-wrap-rejected">
+          <table class="coa-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Batch</th>
+                <th>Purity / assay</th>
+                <th>Batch size</th>
+                <th>Sold</th>
+                <th>Left</th>
+                <th>Status</th>
+                <th>Lab</th>
+                <th>Test date</th>
+                <th>Certificate</th>
+              </tr>
+            </thead>
+            <tbody id="coaRejectedTableBody"></tbody>
+          </table>
+        </div>
+      </div>
       <div class="coa-note">
         <strong>Can’t find your batch?</strong> Check the code carefully, then contact support with your order number if it still does not appear.
       </div>
@@ -158,6 +186,6 @@
 <script>document.write(window.__html.checkout)</script>
 <script>document.write(window.__html.toast)</script>
 <script>document.write(window.__html.cookieBanner)</script>
-<script type="module" src="./assets/js/app.js?v=20260731-batch-inventory"></script>
+<script type="module" src="./assets/js/app.js?v=20260801-rejected-batches"></script>
 </body>
 </html>

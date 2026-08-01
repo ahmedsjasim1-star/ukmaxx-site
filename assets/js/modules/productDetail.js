@@ -39,7 +39,7 @@ export function renderProductDetail() {
       <div class="pd-attrs">
         <div class="pd-attr"><strong>Quality</strong><span>${getQualityLabel(p)}</span></div>
         <div class="pd-attr"><strong>Batch</strong><span>${p.batch}</span></div>
-        <div class="pd-attr"><strong>Lab</strong><span>${purchasable ? p.coa.lab : 'Awaiting COA'}</span></div>
+        <div class="pd-attr"><strong>Lab</strong><span>${p.coa?.status === 'REJECTED' ? p.coa.lab : purchasable ? p.coa.lab : 'Awaiting COA'}</span></div>
         <div class="pd-attr"><strong>Method</strong><span>${purchasable ? p.coa.method : getReleaseLabel(p)}</span></div>
         <div class="pd-attr"><strong>Status</strong><span class="stock-${p.stock}">${purchasable ? `${p.stockCount} ${p.category === 'bundles' ? 'bundles' : 'vials'}` : getReleaseLabel(p)}</span></div>
       </div>
@@ -316,7 +316,9 @@ function renderPdpProduct(root) {
       ? (p.id === 'WA10'
         ? '<p>' + p.description + '</p><p>Quality: <strong>' + getQualityLabel(p) + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>'
         : '<p>' + p.description + '</p><p>This batch was independently tested by <strong>' + p.coa.lab + '</strong> using <strong>' + p.coa.method + '</strong>. Purity verified at <strong>' + p.purity + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>')
-      : '<p>' + p.description + '</p><p><strong>' + getReleaseLabel(p) + '.</strong> This product is awaiting its COA before release, so ordering is disabled until the batch documentation is ready.</p>';
+      : (p.coa?.status === 'REJECTED'
+        ? '<p>' + p.description + '</p><p><strong>' + getReleaseLabel(p) + '.</strong> The tested batch was QC rejected and not released for sale. A new batch will be listed after it passes UKMAXX release checks.</p>'
+        : '<p>' + p.description + '</p><p><strong>' + getReleaseLabel(p) + '.</strong> This product is awaiting its COA before release, so ordering is disabled until the batch documentation is ready.</p>');
   }
   const featureList = byId('pdpFeatureList');
   if (featureList) {
@@ -352,7 +354,7 @@ function renderPdpProduct(root) {
 
   const coaRows = byId('pdpCoaRows');
   if (coaRows) {
-    if (d.coa && (p.coaUrl || p.coa?.status === 'VERIFIED')) {
+    if (d.coa && (p.coaUrl || p.coa?.status === 'VERIFIED' || p.coa?.status === 'REJECTED')) {
       coaRows.innerHTML = d.coa.split('\n').map(function (line) {
         var parts = line.split(':');
         if (parts.length < 2) return '';

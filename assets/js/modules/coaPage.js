@@ -10,6 +10,7 @@ function normalise(value) {
 }
 
 function statusClass(status) {
+  if (status === 'REJECTED') return 'rejected';
   if (status === 'ARCHIVED') return 'archived';
   if (status === 'VERIFIED') return 'verified';
   if (status === 'INTERNAL_QC') return 'internal';
@@ -56,7 +57,12 @@ function displayPurity(record) {
 }
 
 function isArchived(record) {
+  if (record.status === 'REJECTED') return false;
   return record.status === 'ARCHIVED' || Boolean(record.archivedAt) || (num(record.batchSize) > 0 && remaining(record) <= 0);
+}
+
+function isRejected(record) {
+  return record.status === 'REJECTED';
 }
 
 function localRecords() {
@@ -65,16 +71,18 @@ function localRecords() {
       .filter((product) => product.batch === record.batch)
       .map((product) => product.id);
     const product = PRODUCTS[record.sku];
-    const batchSize = product?.category === 'support' ? 0 : num(product?.stockCount);
+    const batchSize = product?.category === 'support' && record.status !== 'REJECTED'
+      ? 0
+      : num(record.batchSize ?? product?.stockCount);
     return {
       ...record,
       batchSize,
       soldCount: 0,
-      statusLabel: batchSize ? 'Active verified batch' : record.statusLabel,
+      statusLabel: record.status === 'REJECTED' ? record.statusLabel : batchSize ? 'Active verified batch' : record.statusLabel,
       archivedAt: '',
       skus,
     };
-  }).filter((record) => PRODUCTS[record.sku]?.category !== 'support');
+  }).filter((record) => PRODUCTS[record.sku]?.category !== 'support' || record.status === 'REJECTED');
 
   Object.values(PRODUCTS).forEach((product) => {
     if (product.category === 'support') return;
@@ -109,14 +117,16 @@ function mapSupabaseRecord(row) {
   const product = PRODUCTS[row.sku] || {};
   const batchSize = num(row.batch_size);
   const soldCount = num(row.sold_count);
-  const archived = Boolean(row.archived_at) || (batchSize > 0 && soldCount >= batchSize) || row.is_active === false;
+  const releaseStatus = String(row.release_status || '').toLowerCase();
+  const rejected = releaseStatus === 'rejected';
+  const archived = !rejected && (Boolean(row.archived_at) || (batchSize > 0 && soldCount >= batchSize) || row.is_active === false);
   return {
     batch: row.batch_code,
     sku: row.sku,
     product: row.product_name || product.name || row.sku,
     sample: product.name || row.product_name || row.sku,
-    status: archived ? 'ARCHIVED' : 'VERIFIED',
-    statusLabel: archived ? 'Archived batch' : 'Active verified batch',
+    status: rejected ? 'REJECTED' : archived ? 'ARCHIVED' : 'VERIFIED',
+    statusLabel: rejected ? 'QC rejected — not released' : archived ? 'Archived batch' : 'Active verified batch',
     purity: row.purity || '',
     assayResult: row.assay_result || '',
     method: row.method || 'Pending',
@@ -128,13 +138,16 @@ function mapSupabaseRecord(row) {
     batchSize,
     soldCount,
     archivedAt: row.archived_at || '',
+    releaseStatus: releaseStatus || 'approved',
+    rejectionReason: row.rejection_reason || '',
+    labelClaim: row.label_claim || '',
     skus: [row.sku],
     displayOrder: num(row.display_order) || 100,
   };
 }
 
 function sortRecords(records) {
-  const rank = { VERIFIED: 0, INTERNAL_QC: 1, PENDING: 2, ARCHIVED: 3 };
+  const rank = { VERIFIED: 0, INTERNAL_QC: 1, PENDING: 2, ARCHIVED: 3, REJECTED: 4 };
   return [...records].sort((a, b) => {
     return (rank[a.status] ?? 9) - (rank[b.status] ?? 9)
       || num(a.displayOrder) - num(b.displayOrder)
@@ -147,7 +160,7 @@ async function fetchSupabaseRecords() {
     const supabase = await getSupabase();
     const { data, error } = await supabase
       .from('coa_batches')
-      .select('batch_code,sku,product_name,purity,assay_result,method,lab_name,coa_url,image_url,tested_at,published_at,is_active,batch_size,sold_count,archived_at,display_order')
+      .select('batch_code,sku,product_name,purity,assay_result,method,lab_name,coa_url,image_url,tested_at,published_at,is_active,batch_size,sold_count,archived_at,display_order,release_status,rejection_reason,label_claim')
       .not('published_at', 'is', null)
       .order('display_order', { ascending: true })
       .order('tested_at', { ascending: false });
@@ -168,8 +181,11 @@ function tableRow(record) {
   const action = record.url
     ? `<a href="${record.url}" target="_blank" rel="noopener noreferrer" class="coa-link">Verify externally</a>`
     : `<span class="coa-muted">${record.status === 'PENDING' ? 'Pending release' : 'Available on request'}</span>`;
+  const statusDetail = record.status === 'REJECTED' && record.rejectionReason
+    ? `<span>${escapeHtml(record.rejectionReason)}</span>`
+    : '';
   return `
-    <tr>
+    <tr class="${record.status === 'REJECTED' ? 'coa-row-rejected' : ''}">
       <td>
         <strong>${escapeHtml(record.product)}</strong>
         <span>${escapeHtml(skus.join(' / '))}</span>
@@ -179,7 +195,7 @@ function tableRow(record) {
       <td><span class="coa-stock-number">${escapeHtml(record.batchSize || '—')}</span></td>
       <td><span class="coa-stock-number">${escapeHtml(record.soldCount || 0)}</span></td>
       <td><span class="coa-stock-left">${escapeHtml(record.batchSize ? left : '—')}</span></td>
-      <td><span class="coa-status coa-status-${statusClass(record.status)}">${escapeHtml(record.statusLabel)}</span></td>
+      <td><span class="coa-status coa-status-${statusClass(record.status)}">${escapeHtml(record.statusLabel)}</span>${statusDetail}</td>
       <td>${escapeHtml(record.lab)}<span>${escapeHtml(record.method)}</span></td>
       <td>${escapeHtml(record.testDate)}</td>
       <td>${action}</td>
@@ -191,9 +207,12 @@ function renderRows(records) {
   const activeTable = byId('coaTableBody');
   const archiveTable = byId('coaArchiveTableBody');
   const archiveSection = byId('coaArchiveSection');
+  const rejectedTable = byId('coaRejectedTableBody');
+  const rejectedSection = byId('coaRejectedSection');
   if (!activeTable) return;
 
-  const active = records.filter((record) => !isArchived(record));
+  const rejected = records.filter(isRejected);
+  const active = records.filter((record) => !isArchived(record) && !isRejected(record));
   const archived = records.filter(isArchived);
 
   activeTable.innerHTML = active.length
@@ -203,6 +222,11 @@ function renderRows(records) {
   if (archiveTable && archiveSection) {
     archiveSection.hidden = archived.length === 0;
     archiveTable.innerHTML = archived.map(tableRow).join('');
+  }
+
+  if (rejectedTable && rejectedSection) {
+    rejectedSection.hidden = rejected.length === 0;
+    rejectedTable.innerHTML = rejected.map(tableRow).join('');
   }
 }
 
@@ -242,18 +266,20 @@ function resultHtml(record) {
     : `<a class="btn btn-ghost" href="${productUrl(record.sku)}">View product</a>`;
 
   return `
-    <div class="coa-result">
+    <div class="coa-result ${record.status === 'REJECTED' ? 'is-rejected' : ''}">
       <div class="coa-result-kicker">${escapeHtml(record.statusLabel)}</div>
+      ${record.status === 'REJECTED' ? `<p><strong>Release decision:</strong> This batch was not released for sale. ${escapeHtml(record.rejectionReason || 'It did not meet UKMAXX release standards.')}</p>` : ''}
       <h3>${escapeHtml(record.product)} · ${escapeHtml(record.batch)}</h3>
       <div class="coa-result-grid">
         <div><span>Lab</span><strong>${escapeHtml(record.lab)}</strong></div>
         <div><span>Method</span><strong>${escapeHtml(record.method)}</strong></div>
         <div><span>Purity / assay</span><strong>${escapeHtml(displayPurity(record))}</strong></div>
         <div><span>Test date</span><strong>${escapeHtml(record.testDate)}</strong></div>
+        ${record.labelClaim ? `<div><span>Label claim</span><strong>${escapeHtml(record.labelClaim)}</strong></div>` : ''}
         <div><span>Batch size</span><strong>${escapeHtml(record.batchSize || '—')}</strong></div>
         <div><span>Sold</span><strong>${escapeHtml(record.soldCount || 0)}</strong></div>
         <div><span>Remaining</span><strong>${escapeHtml(record.batchSize ? left : '—')}</strong></div>
-        <div><span>Status</span><strong>${escapeHtml(isArchived(record) ? 'Archived' : 'Current batch')}</strong></div>
+        <div><span>Status</span><strong>${escapeHtml(record.status === 'REJECTED' ? 'QC rejected' : isArchived(record) ? 'Archived' : 'Current batch')}</strong></div>
       </div>
       <div class="coa-result-actions">
         ${action}
