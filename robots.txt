@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /account.html
+Disallow: /signin.html
+Disallow: /signup.html
+Disallow: /update-password.html
+Disallow: /access-denied.html
+Disallow: /api/
+
+Sitemap: https://www.ukmaxx.co.uk/sitemap.xml
