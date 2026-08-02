@@ -2,6 +2,16 @@ import { getSupabase } from './data/supabase.js';
 
 const SITE_URL = window.location.origin;
 const ANALYTICS_IGNORE_KEY = 'ukmaxx_analytics_ignore';
+const ADMIN_RANGE_KEY = 'ukmaxx_admin_range';
+const RANGE_LABELS = {
+  '1h': 'Last hour',
+  '24h': 'Last 24 hours',
+  '72h': 'Last 72 hours',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
+  '1y': 'Last year',
+  all: 'All time',
+};
 
 const $ = (id) => document.getElementById(id);
 const money = (value) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(Number(value || 0));
@@ -10,6 +20,7 @@ const date = (value) => value ? new Intl.DateTimeFormat('en-GB', { day: '2-digit
 
 let currentDashboard = null;
 let dashboardLoading = false;
+let selectedRange = getStoredRange();
 
 function showAlert(message) {
   const alert = $('adminAlert');
@@ -45,6 +56,23 @@ function setAnalyticsIgnored(value) {
   updateIgnoreBrowserButton();
 }
 
+function getStoredRange() {
+  try {
+    const stored = localStorage.getItem(ADMIN_RANGE_KEY);
+    return RANGE_LABELS[stored] ? stored : '24h';
+  } catch {
+    return '24h';
+  }
+}
+
+function setStoredRange(value) {
+  selectedRange = RANGE_LABELS[value] ? value : '24h';
+  try {
+    localStorage.setItem(ADMIN_RANGE_KEY, selectedRange);
+  } catch {}
+  updateRangeTabs();
+}
+
 function updateIgnoreBrowserButton() {
   const btn = $('adminIgnoreBrowserBtn');
   if (!btn) return;
@@ -52,6 +80,14 @@ function updateIgnoreBrowserButton() {
   btn.textContent = ignored ? 'Tracking ignored' : 'Ignore this browser';
   btn.classList.toggle('is-active', ignored);
   btn.setAttribute('aria-pressed', ignored ? 'true' : 'false');
+}
+
+function updateRangeTabs() {
+  document.querySelectorAll('.admin-range-tab').forEach((button) => {
+    const active = button.dataset.range === selectedRange;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
 }
 
 function showLock(message = '') {
@@ -227,7 +263,78 @@ function closeOrderDrawer() {
   drawer.setAttribute('aria-hidden', 'true');
 }
 
+function renderDashboardRange(data) {
+  currentDashboard = data;
+  const range = data.ranges?.[selectedRange] || data.ranges?.['24h'] || {};
+  const rangeLabel = range.label || RANGE_LABELS[selectedRange] || 'Last 24 hours';
+  const summary = range.summary || data.summary || {};
+  const analytics = range.analytics || data.analytics || {};
+  const products = range.products || data.products || {};
+  const orders = range.orders || data.orders || {};
+  const payments = range.payments || data.payments || {};
+  const customers = range.customers || data.customers || {};
+  const reviews = range.reviews || data.reviews || {};
+  const stock = data.products?.stock;
+  const orderCount = Number(summary.orders || 0);
+  const visitors = Number(analytics.visitors || 0);
+  const sessions = Number(analytics.sessions || 0);
+  const pageviews = Number(analytics.pageviews || 0);
+
+  setText('adminEmail', data.adminEmail || 'Admin');
+  setText('dashboardUpdated', `Updated ${date(data.generatedAt)}`);
+  setText('adminRangeTitle', rangeLabel);
+  setText('adminRangeSub', `${number(visitors)} unique visitors · ${number(sessions)} sessions · ${number(pageviews)} pageviews`);
+  setText('trafficRangeChip', rangeLabel);
+  updateRangeTabs();
+
+  setText('rangeRevenue', money(summary.revenue));
+  setText('rangeRevenueMeta', `${number(orderCount)} paid order${orderCount === 1 ? '' : 's'} in range`);
+  setText('rangeOrders', number(orderCount));
+  setText('rangeOrdersMeta', `${money(summary.averageOrderValue)} AOV`);
+  setText('rangeAov', money(summary.averageOrderValue));
+  setText('rangeAovMeta', `${money(summary.revenue)} revenue`);
+  setText('rangeConversion', `${Number(analytics.conversionRate || 0).toFixed(1)}%`);
+  setText('rangeConversionMeta', `${number(orderCount)} paid orders from ${number(visitors)} visitors`);
+
+  setText('rangeVisitors', number(visitors));
+  setText('rangeVisitorsMeta', `${number(analytics.internalIgnored || 0)} ignored internal events`);
+  setText('rangeSessions', number(sessions));
+  setText('rangeSessionsMeta', `${number(visitors)} unique visitors`);
+  setText('rangePageviews', number(pageviews));
+  setText('rangePageviewsMeta', `${sessions ? (pageviews / sessions).toFixed(1) : '0.0'} pages/session`);
+  setText('rangePaymentIssues', number(payments.rejectedOrCancelled));
+  setText('rangePaymentIssuesMeta', `${number(payments.totalAttempts)} payment attempts`);
+
+  const top = products.top || [];
+  $('topProducts').innerHTML = renderBars(top);
+  setText('topProductChip', top[0] ? `${top[0].name} · ${number(top[0].quantity)} sold` : 'No sales yet');
+  $('orderStatus').innerHTML = renderStatuses(orders.byStatus);
+  $('topPages').innerHTML = renderCountBars(analytics.topPages || [], 'No page views tracked yet.');
+  $('checkoutFunnel').innerHTML = renderCountBars(analytics.funnel || [], 'No checkout behaviour tracked yet.');
+  $('productViews').innerHTML = renderCountBars(analytics.topProductViews || [], 'No product views tracked yet.');
+  $('trafficSources').innerHTML = renderCountBars(analytics.sources || [], 'No traffic sources tracked yet.');
+  $('visitorLocations').innerHTML = renderCountBars(analytics.locations || [], 'No visitor locations yet.');
+  $('deviceSplit').innerHTML = renderCountBars(analytics.devices || [], 'No device split tracked yet.');
+  $('stockList').innerHTML = renderStock(stock);
+  setText('lowStockChip', `${number(stock?.lowStock?.length)} low stock`);
+
+  setText('uniqueCustomers', number(customers.uniqueCustomers));
+  setText('repeatCustomers', number(customers.repeatCustomers));
+  setText('repeatRate', `${number(customers.repeatRate)}%`);
+  setText('subscribers', number(summary.subscribers));
+
+  setText('paymentAttempts', number(payments.totalAttempts));
+  setText('paymentIssues', number(payments.rejectedOrCancelled));
+  setText('pendingReviews', number(reviews.pending));
+  setText('approvedReviews', `${number(reviews.approved)} · ${Number(reviews.averageRating || 0).toFixed(1)}/5`);
+
+  setText('openFulfilment', `${number(data.orders?.openFulfilment)} open fulfilment`);
+  $('recentOrders').innerHTML = renderRecentOrders(data.orders?.recent || []);
+}
+
 function renderDashboard(data) {
+  renderDashboardRange(data);
+  return;
   currentDashboard = data;
   const summary = data.summary || {};
   const today = summary.today || {};
@@ -339,6 +446,12 @@ $('adminIgnoreBrowserBtn')?.addEventListener('click', () => {
   showAlert(analyticsIgnored()
     ? 'This browser will no longer be counted in public-site analytics.'
     : 'This browser will be counted in public-site analytics again.');
+});
+$('adminRangeTabs')?.addEventListener('click', (event) => {
+  const button = event.target.closest('.admin-range-tab[data-range]');
+  if (!button) return;
+  setStoredRange(button.dataset.range);
+  if (currentDashboard) renderDashboardRange(currentDashboard);
 });
 $('recentOrders')?.addEventListener('click', (event) => {
   const row = event.target.closest('tr[data-order-number]');

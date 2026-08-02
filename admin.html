@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
-<link rel="stylesheet" href="./assets/css/admin.css?v=20260731-analytics-phase-a">
+<link rel="stylesheet" href="./assets/css/admin.css?v=20260802-range-dashboard">
 </head>
 <body class="admin-page">
   <main class="admin-shell">
@@ -54,49 +54,66 @@
 
       <div class="admin-alert" id="adminAlert" hidden></div>
 
+      <section class="admin-range-panel" aria-label="Dashboard time range">
+        <div>
+          <p class="eyebrow">Time range</p>
+          <h2 id="adminRangeTitle">Last 24 hours</h2>
+          <p id="adminRangeSub">Switch the window to inspect launch traffic, orders and checkout behaviour.</p>
+        </div>
+        <div class="admin-range-tabs" id="adminRangeTabs" role="tablist" aria-label="Dashboard time range">
+          <button class="admin-range-tab" type="button" data-range="1h">1H</button>
+          <button class="admin-range-tab is-active" type="button" data-range="24h">24H</button>
+          <button class="admin-range-tab" type="button" data-range="72h">72H</button>
+          <button class="admin-range-tab" type="button" data-range="7d">1W</button>
+          <button class="admin-range-tab" type="button" data-range="30d">1M</button>
+          <button class="admin-range-tab" type="button" data-range="1y">1Y</button>
+          <button class="admin-range-tab" type="button" data-range="all">ALL</button>
+        </div>
+      </section>
+
       <section class="metric-grid" aria-label="Headline sales metrics">
         <article class="metric-card metric-card-primary">
-          <span>Revenue today</span>
-          <strong id="revenueToday">—</strong>
-          <small id="ordersToday">—</small>
+          <span>Revenue</span>
+          <strong id="rangeRevenue">—</strong>
+          <small id="rangeRevenueMeta">—</small>
         </article>
         <article class="metric-card">
-          <span>7-day revenue</span>
-          <strong id="revenueSeven">—</strong>
-          <small id="ordersSeven">—</small>
-        </article>
-        <article class="metric-card">
-          <span>30-day revenue</span>
-          <strong id="revenueThirty">—</strong>
-          <small id="ordersThirty">—</small>
+          <span>Paid orders</span>
+          <strong id="rangeOrders">—</strong>
+          <small id="rangeOrdersMeta">—</small>
         </article>
         <article class="metric-card">
           <span>Average order value</span>
-          <strong id="averageOrderValue">—</strong>
-          <small id="allTimeOrders">—</small>
+          <strong id="rangeAov">—</strong>
+          <small id="rangeAovMeta">—</small>
+        </article>
+        <article class="metric-card">
+          <span>Conversion</span>
+          <strong id="rangeConversion">—</strong>
+          <small id="rangeConversionMeta">—</small>
         </article>
       </section>
 
       <section class="metric-grid" aria-label="Traffic metrics">
         <article class="metric-card">
-          <span>Visitors today</span>
-          <strong id="visitorsToday">—</strong>
-          <small id="pageviewsToday">—</small>
+          <span>Unique visitors</span>
+          <strong id="rangeVisitors">—</strong>
+          <small id="rangeVisitorsMeta">—</small>
         </article>
         <article class="metric-card">
-          <span>7-day visitors</span>
-          <strong id="visitorsSeven">—</strong>
-          <small id="pageviewsSeven">—</small>
+          <span>Sessions</span>
+          <strong id="rangeSessions">—</strong>
+          <small id="rangeSessionsMeta">—</small>
         </article>
         <article class="metric-card">
-          <span>Conversion today</span>
-          <strong id="conversionToday">—</strong>
-          <small id="conversionSeven">—</small>
+          <span>Pageviews</span>
+          <strong id="rangePageviews">—</strong>
+          <small id="rangePageviewsMeta">—</small>
         </article>
         <article class="metric-card">
-          <span>30-day traffic</span>
-          <strong id="visitorsThirty">—</strong>
-          <small id="pageviewsThirty">—</small>
+          <span>Payment issues</span>
+          <strong id="rangePaymentIssues">—</strong>
+          <small id="rangePaymentIssuesMeta">—</small>
         </article>
       </section>
 
@@ -130,7 +147,7 @@
               <p class="eyebrow">Traffic</p>
               <h2>Top pages</h2>
             </div>
-            <span class="panel-chip">Last 7 days</span>
+            <span class="panel-chip" id="trafficRangeChip">Selected range</span>
           </div>
           <div class="count-list" id="topPages"></div>
         </article>
@@ -269,6 +286,6 @@
     </div>
   </aside>
 
-  <script type="module" src="./assets/js/admin.js?v=20260731-analytics-phase-a"></script>
+  <script type="module" src="./assets/js/admin.js?v=20260802-range-dashboard"></script>
 </body>
 </html>

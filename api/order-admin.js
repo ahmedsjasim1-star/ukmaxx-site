@@ -16,6 +16,15 @@ const FINAL_BAD_STATUSES = new Set(['cancelled', 'refunded']);
 const BUNDLE_COMPONENTS = {
   RT10X3: { RT10: 3, WA10: 1 },
 };
+const RANGE_DEFINITIONS = [
+  { key: '1h', label: 'Last hour', ms: 60 * 60 * 1000 },
+  { key: '24h', label: 'Last 24 hours', ms: 24 * 60 * 60 * 1000 },
+  { key: '72h', label: 'Last 72 hours', ms: 72 * 60 * 60 * 1000 },
+  { key: '7d', label: 'Last 7 days', ms: 7 * 24 * 60 * 60 * 1000 },
+  { key: '30d', label: 'Last 30 days', ms: 30 * 24 * 60 * 60 * 1000 },
+  { key: '1y', label: 'Last year', ms: 365 * 24 * 60 * 60 * 1000 },
+  { key: 'all', label: 'All time', ms: null },
+];
 
 function isAuthorized(req) {
   const expected = process.env.ADMIN_API_KEY || '';
@@ -121,6 +130,7 @@ function money(value) {
 }
 
 function isSince(row, from) {
+  if (!from) return true;
   return new Date(row.created_at || 0).getTime() >= from.getTime();
 }
 
@@ -345,60 +355,88 @@ function recentOrders(orders) {
   }));
 }
 
-function analyticsSummary(events, paidOrders, attempts, products, today, sevenDaysAgo, thirtyDaysAgo) {
+function analyticsForRange(events, paidOrders, attempts, products, from) {
   const productNames = new Map(products.map((product) => [String(product.sku || '').toUpperCase(), product.name || product.sku]));
-  const realEvents = events.filter((event) => !event.is_internal);
-  const internalEvents = events.filter((event) => event.is_internal);
+  const scopedEvents = events.filter((event) => isSince(event, from));
+  const realEvents = scopedEvents.filter((event) => !event.is_internal);
+  const internalEvents = scopedEvents.filter((event) => event.is_internal);
   const pageViews = realEvents.filter((event) => event.event_type === 'page_view');
-  const todayViews = pageViews.filter((event) => isSince(event, today));
-  const sevenDayViews = pageViews.filter((event) => isSince(event, sevenDaysAgo));
-  const thirtyDayViews = pageViews.filter((event) => isSince(event, thirtyDaysAgo));
-  const sevenDayEvents = realEvents.filter((event) => isSince(event, sevenDaysAgo));
-  const todayPaidOrders = paidOrders.filter((order) => isSince(order, today));
-  const sevenDayPaidOrders = paidOrders.filter((order) => isSince(order, sevenDaysAgo));
-  const sevenDayAttempts = attempts.filter((attempt) => isSince(attempt, sevenDaysAgo));
-  const todayVisitors = uniqueVisitorCount(todayViews);
-  const sevenDayVisitors = uniqueVisitorCount(sevenDayViews);
+  const scopedPaidOrders = paidOrders.filter((order) => isSince(order, from));
+  const scopedAttempts = attempts.filter((attempt) => isSince(attempt, from));
+  const visitors = uniqueVisitorCount(pageViews);
 
-  const eventCount = (type) => sevenDayEvents.filter((event) => event.event_type === type).length;
-  const paymentAttemptStarted = sevenDayAttempts.filter((attempt) => !['rejected', 'cancelled', 'overdue'].includes(String(attempt.status || '').toLowerCase())).length;
-  const paymentAttemptFailed = sevenDayAttempts.filter((attempt) => ['rejected', 'cancelled', 'overdue'].includes(String(attempt.status || '').toLowerCase())).length;
+  const eventCount = (type) => realEvents.filter((event) => event.event_type === type).length;
+  const paymentAttemptStarted = scopedAttempts.filter((attempt) => !['rejected', 'cancelled', 'overdue'].includes(String(attempt.status || '').toLowerCase())).length;
+  const paymentAttemptFailed = scopedAttempts.filter((attempt) => ['rejected', 'cancelled', 'overdue'].includes(String(attempt.status || '').toLowerCase())).length;
 
   return {
-    today: {
-      visitors: todayVisitors,
-      sessions: uniqueSessionCount(todayViews),
-      pageviews: todayViews.length,
-      conversionRate: pct(todayPaidOrders.length, todayVisitors),
-    },
-    sevenDays: {
-      visitors: sevenDayVisitors,
-      sessions: uniqueSessionCount(sevenDayViews),
-      pageviews: sevenDayViews.length,
-      conversionRate: pct(sevenDayPaidOrders.length, sevenDayVisitors),
-    },
-    thirtyDays: {
-      visitors: uniqueVisitorCount(thirtyDayViews),
-      sessions: uniqueSessionCount(thirtyDayViews),
-      pageviews: thirtyDayViews.length,
-    },
+    visitors,
+    sessions: uniqueSessionCount(pageViews),
+    pageviews: pageViews.length,
+    conversionRate: pct(scopedPaidOrders.length, visitors),
     internalIgnored: internalEvents.length,
-    topPages: topCounts(sevenDayViews, (event) => cleanPath(event.page_path), 8),
-    topProductViews: topCounts(sevenDayEvents.filter((event) => event.event_type === 'product_view'), (event) => {
+    topPages: topCounts(pageViews, (event) => cleanPath(event.page_path), 8),
+    topProductViews: topCounts(realEvents.filter((event) => event.event_type === 'product_view'), (event) => {
       const sku = String(event.product_sku || '').toUpperCase();
       return productNames.get(sku) || sku || cleanPath(event.page_path);
     }, 8),
-    devices: topCounts(sevenDayViews, (event) => event.device_type || 'unknown', 4),
-    sources: topSessionSources(sevenDayViews, 6),
-    locations: topUniqueLabels(sevenDayViews, locationLabel, (event) => event.visitor_id || event.session_id, 8),
+    devices: topCounts(pageViews, (event) => event.device_type || 'unknown', 4),
+    sources: topSessionSources(pageViews, 6),
+    locations: topUniqueLabels(pageViews, locationLabel, (event) => event.visitor_id || event.session_id, 8),
     funnel: [
       { label: 'Product views', value: eventCount('product_view') },
       { label: 'Add to basket', value: eventCount('add_to_cart') },
       { label: 'Checkout opened', value: eventCount('checkout_opened') },
       { label: 'Payment started', value: Math.max(eventCount('payment_started'), paymentAttemptStarted) },
-      { label: 'Payment success', value: Math.max(eventCount('payment_success'), sevenDayPaidOrders.length) },
+      { label: 'Payment success', value: Math.max(eventCount('payment_success'), scopedPaidOrders.length) },
       { label: 'Payment failed', value: Math.max(eventCount('payment_failed'), paymentAttemptFailed) },
     ],
+  };
+}
+
+function rangeStart(now, definition) {
+  if (!definition.ms) return null;
+  return new Date(now.getTime() - definition.ms);
+}
+
+function rangeDashboard(definition, from, { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, promoRedemptions, events }) {
+  const scopedOrders = orders.filter((order) => isSince(order, from));
+  const scopedPaidOrders = scopedOrders.filter((order) => PAID_STATUSES.has(order.status));
+  const scopedAttempts = attempts.filter((attempt) => isSince(attempt, from));
+  const scopedPendingReviews = pendingReviews.filter((review) => isSince(review, from));
+  const scopedPublicReviews = publicReviews.filter((review) => isSince(review, from));
+  const scopedSubscribers = subscribers.filter((sub) => !sub.unsubscribed_at && isSince(sub, from));
+  const scopedPromoRedemptions = promoRedemptions.filter((redemption) => isSince({ created_at: redemption.redeemed_at }, from));
+  const approvedRatings = scopedPublicReviews.map((review) => asNumber(review.rating)).filter(Boolean);
+
+  return {
+    key: definition.key,
+    label: definition.label,
+    summary: {
+      ...periodSummary(orders, from),
+      allTimeRevenue: sumRevenue(scopedPaidOrders),
+      allTimeOrders: scopedPaidOrders.length,
+      averageOrderValue: averageOrderValue(scopedPaidOrders),
+      promoRedemptions: scopedPromoRedemptions.length,
+      subscribers: scopedSubscribers.length,
+    },
+    customers: customerStats(scopedOrders),
+    orders: {
+      byStatus: countBy(scopedOrders, 'status'),
+      openFulfilment: scopedOrders.filter((order) => ['paid', 'processing', 'dispatched'].includes(order.status)).length,
+      problemOrders: scopedOrders.filter((order) => FINAL_BAD_STATUSES.has(order.status)).length,
+    },
+    payments: paymentSummary(scopedAttempts),
+    analytics: analyticsForRange(events, scopedPaidOrders, attempts, products, from),
+    products: {
+      top: topProducts(scopedOrders, items),
+      revenue: revenueByProduct(scopedOrders, items),
+    },
+    reviews: {
+      pending: scopedPendingReviews.filter((review) => review.status === 'pending').length,
+      approved: scopedPublicReviews.length,
+      averageRating: approvedRatings.length ? Number((approvedRatings.reduce((sum, rating) => sum + rating, 0) / approvedRatings.length).toFixed(1)) : 0,
+    },
   };
 }
 
@@ -422,7 +460,7 @@ async function buildDashboard(supabase) {
     safeSelect(supabase, 'reviews_public', 'id,rating,created_at', { limit: 1000 }),
     safeSelect(supabase, 'subscribers', 'id,unsubscribed_at,created_at', { limit: 5000 }),
     safeSelect(supabase, 'promo_redemptions', 'id,promo_code,redeemed_at', { limit: 5000 }),
-    safeSelect(supabase, 'site_events', '*', { order: { column: 'created_at', ascending: false }, limit: 5000 }),
+    safeSelect(supabase, 'site_events', '*', { order: { column: 'created_at', ascending: false }, limit: 20000 }),
   ]);
 
   const now = new Date();
@@ -433,8 +471,14 @@ async function buildDashboard(supabase) {
   const paidOrders = orders.filter((order) => PAID_STATUSES.has(order.status));
   const activeSubscribers = subscribers.filter((sub) => !sub.unsubscribed_at);
   const approvedRatings = publicReviews.map((review) => asNumber(review.rating)).filter(Boolean);
+  const rangeContext = { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, promoRedemptions, events };
+  const ranges = Object.fromEntries(RANGE_DEFINITIONS.map((definition) => [
+    definition.key,
+    rangeDashboard(definition, rangeStart(now, definition), rangeContext),
+  ]));
 
   return {
+    ranges,
     summary: {
       today: periodSummary(orders, today),
       sevenDays: periodSummary(orders, sevenDaysAgo),
@@ -453,7 +497,18 @@ async function buildDashboard(supabase) {
       problemOrders: orders.filter((order) => FINAL_BAD_STATUSES.has(order.status)).length,
     },
     payments: paymentSummary(attempts),
-    analytics: analyticsSummary(events, paidOrders, attempts, products, today, sevenDaysAgo, thirtyDaysAgo),
+    analytics: {
+      today: ranges['24h'].analytics,
+      sevenDays: ranges['7d'].analytics,
+      thirtyDays: ranges['30d'].analytics,
+      internalIgnored: ranges['7d'].analytics.internalIgnored,
+      topPages: ranges['7d'].analytics.topPages,
+      topProductViews: ranges['7d'].analytics.topProductViews,
+      devices: ranges['7d'].analytics.devices,
+      sources: ranges['7d'].analytics.sources,
+      locations: ranges['7d'].analytics.locations,
+      funnel: ranges['7d'].analytics.funnel,
+    },
     products: {
       top: topProducts(orders, items),
       revenue: revenueByProduct(orders, items),
