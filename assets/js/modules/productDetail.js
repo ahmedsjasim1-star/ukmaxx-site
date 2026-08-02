@@ -1,4 +1,4 @@
-import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260802-seo-foundation';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 import { renderProductReviewsSummary } from './reviews.js?v=20260714-review-polish';
@@ -97,8 +97,8 @@ function renderPdpProduct(root) {
   const productUrl = 'https://www.ukmaxx.co.uk/product.html?sku=' + encodeURIComponent(sku);
   const productImage = absoluteUrl(p.image);
   const qualityLabel = getQualityLabel(p);
-  const metaTitle = p.name + ' — UKMAXX';
-  const metaDescription = `${p.name}: ${p.description} ${qualityLabel}. UK stock with Royal Mail Tracked 24 dispatch. Research use only.`;
+  const metaTitle = p.seoTitle || (p.name + ' | UK Research Peptides | UKMAXX');
+  const metaDescription = p.seoDescription || `${p.name}: ${p.description} ${qualityLabel}. UK stocked with Royal Mail Tracked 24 dispatch. Research use only.`;
   setText('pageTitle', metaTitle);
   setAttr('pageDesc', 'content', metaDescription);
   setText('ogTitle', metaTitle);
