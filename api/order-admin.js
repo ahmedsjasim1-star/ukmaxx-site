@@ -394,12 +394,101 @@ function analyticsForRange(events, paidOrders, attempts, products, from) {
   };
 }
 
+function eventTime(event) {
+  return new Date(event.created_at || 0).getTime();
+}
+
+function cartItemsFromEvent(event, productNames = new Map()) {
+  if (Array.isArray(event.cart_items) && event.cart_items.length) {
+    return event.cart_items.slice(0, 8).map((item) => {
+      const sku = String(item?.sku || '').toUpperCase();
+      return {
+        sku,
+        name: String(item?.name || productNames.get(sku) || sku || 'Product'),
+        qty: Math.max(1, asNumber(item?.qty) || 1),
+        lineTotal: money(item?.lineTotal || item?.line_total || 0),
+      };
+    }).filter((item) => item.sku);
+  }
+  const sku = String(event.product_sku || '').toUpperCase();
+  if (!sku) return [];
+  return [{ sku, name: productNames.get(sku) || sku, qty: 1, lineTotal: 0 }];
+}
+
+function cartLabel(items) {
+  if (!items?.length) return 'Basket details unavailable';
+  return items.map((item) => `${item.name} x${item.qty}`).join(', ');
+}
+
+function checkoutDropoffs(events, products, from, now = new Date()) {
+  const productNames = new Map(products.map((product) => [String(product.sku || '').toUpperCase(), product.name || product.sku]));
+  const checkoutTypes = new Set(['add_to_cart', 'checkout_opened', 'payment_started', 'payment_failed', 'payment_success', 'product_view']);
+  const realEvents = events
+    .filter((event) => !event.is_internal && isSince(event, from) && checkoutTypes.has(event.event_type))
+    .sort((a, b) => eventTime(a) - eventTime(b));
+  const bySession = new Map();
+
+  for (const event of realEvents) {
+    const session = event.session_id;
+    if (!session) continue;
+    const row = bySession.get(session) || { sessionId: session, events: [] };
+    row.events.push(event);
+    bySession.set(session, row);
+  }
+
+  const activeCutoff = now.getTime() - (5 * 60 * 1000);
+  return [...bySession.values()].map((session) => {
+    const eventsForSession = session.events;
+    const hasCheckoutOpened = eventsForSession.some((event) => event.event_type === 'checkout_opened');
+    const hasPaymentStarted = eventsForSession.some((event) => event.event_type === 'payment_started');
+    const hasPaymentFailed = eventsForSession.some((event) => event.event_type === 'payment_failed');
+    const hasPaymentSuccess = eventsForSession.some((event) => event.event_type === 'payment_success');
+    if ((!hasCheckoutOpened && !hasPaymentStarted) || hasPaymentSuccess) return null;
+
+    const last = eventsForSession.at(-1);
+    if (eventTime(last) > activeCutoff && !hasPaymentFailed) return null;
+
+    const cartEvent = [...eventsForSession].reverse().find((event) => Array.isArray(event.cart_items) && event.cart_items.length) || [...eventsForSession].reverse().find((event) => event.product_sku) || last;
+    const items = cartItemsFromEvent(cartEvent, productNames);
+    const location = locationLabel(last);
+    const stage = hasPaymentFailed
+      ? 'Payment failed / returned'
+      : hasPaymentStarted
+        ? 'Started Pay by Bank'
+        : 'Opened checkout';
+
+    return {
+      sessionId: session.sessionId,
+      visitorId: last.visitor_id || '',
+      lastSeen: last.created_at,
+      firstSeen: eventsForSession[0]?.created_at,
+      source: sourceLabel(last),
+      location,
+      device: last.device_type || 'unknown',
+      stage,
+      cartValue: money(cartEvent.cart_value || 0),
+      promoCode: cartEvent.promo_code || '',
+      items,
+      itemSummary: cartLabel(items),
+      lastPage: cleanPath(last.page_path),
+      journey: eventsForSession.slice(-10).map((event) => ({
+        time: event.created_at,
+        type: event.event_type,
+        page: cleanPath(event.page_path),
+        product: productNames.get(String(event.product_sku || '').toUpperCase()) || event.product_sku || '',
+      })),
+    };
+  }).filter(Boolean)
+    .sort((a, b) => new Date(b.lastSeen || 0) - new Date(a.lastSeen || 0))
+    .slice(0, 12);
+}
+
 function rangeStart(now, definition) {
   if (!definition.ms) return null;
   return new Date(now.getTime() - definition.ms);
 }
 
-function rangeDashboard(definition, from, { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, promoRedemptions, events }) {
+function rangeDashboard(definition, from, { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, promoRedemptions, events, now }) {
   const scopedOrders = orders.filter((order) => isSince(order, from));
   const scopedPaidOrders = scopedOrders.filter((order) => PAID_STATUSES.has(order.status));
   const scopedAttempts = attempts.filter((attempt) => isSince(attempt, from));
@@ -428,6 +517,7 @@ function rangeDashboard(definition, from, { orders, items, products, attempts, p
     },
     payments: paymentSummary(scopedAttempts),
     analytics: analyticsForRange(events, scopedPaidOrders, attempts, products, from),
+    checkoutDropoffs: checkoutDropoffs(events, products, from, now),
     products: {
       top: topProducts(scopedOrders, items),
       revenue: revenueByProduct(scopedOrders, items),
@@ -471,7 +561,7 @@ async function buildDashboard(supabase) {
   const paidOrders = orders.filter((order) => PAID_STATUSES.has(order.status));
   const activeSubscribers = subscribers.filter((sub) => !sub.unsubscribed_at);
   const approvedRatings = publicReviews.map((review) => asNumber(review.rating)).filter(Boolean);
-  const rangeContext = { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, promoRedemptions, events };
+  const rangeContext = { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, promoRedemptions, events, now };
   const ranges = Object.fromEntries(RANGE_DEFINITIONS.map((definition) => [
     definition.key,
     rangeDashboard(definition, rangeStart(now, definition), rangeContext),

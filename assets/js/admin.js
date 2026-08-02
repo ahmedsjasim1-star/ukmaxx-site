@@ -230,6 +230,24 @@ function renderRecentOrders(rows) {
   </tr>`).join('');
 }
 
+function renderDropoffs(rows) {
+  if (!rows?.length) return '<p class="empty-state">No dropped checkouts in this range.</p>';
+  return rows.map((row, index) => `<button class="dropoff-row" type="button" data-dropoff-index="${index}">
+    <span class="dropoff-main">
+      <strong>${escapeHtml(row.itemSummary || 'Basket details unavailable')}</strong>
+      <span>${escapeHtml(row.source || 'Direct')} · ${escapeHtml(row.location || 'Unknown')} · ${escapeHtml(row.device || 'unknown')}</span>
+    </span>
+    <span class="dropoff-meta">
+      <strong>${money(row.cartValue || 0)}</strong>
+      <span>${row.promoCode ? `Promo ${escapeHtml(row.promoCode)} · ` : ''}${date(row.lastSeen)}</span>
+    </span>
+    <span class="dropoff-stage">
+      <strong>${escapeHtml(row.stage || 'Checkout')}</strong>
+      <span>${escapeHtml(row.lastPage || '/')}</span>
+    </span>
+  </button>`).join('');
+}
+
 function detail(label, value) {
   return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value || '—')}</strong></div>`;
 }
@@ -251,6 +269,31 @@ function openOrderDrawer(orderNumber) {
     detail('Created', date(order.createdAt)),
     detail('Dispatched', date(order.dispatchedAt)),
     detail('Delivered', date(order.deliveredAt)),
+  ].join('');
+  drawer.classList.add('is-open');
+  drawer.setAttribute('aria-hidden', 'false');
+}
+
+function openDropoffDrawer(index) {
+  const row = (currentDashboard?.ranges?.[selectedRange]?.checkoutDropoffs || [])[Number(index)];
+  const drawer = $('orderDrawer');
+  if (!row || !drawer) return;
+  $('orderDrawerTitle').textContent = row.stage || 'Dropped checkout';
+  const journey = (row.journey || []).map((step) => {
+    const product = step.product ? ` · ${step.product}` : '';
+    return `${date(step.time)} · ${String(step.type || '').replace(/_/g, ' ')}${product} · ${step.page || '/'}`;
+  }).join('<br>');
+  $('orderDrawerBody').innerHTML = [
+    detail('Products', row.itemSummary),
+    detail('Basket value', money(row.cartValue || 0)),
+    detail('Source', row.source),
+    detail('Location', row.location),
+    detail('Device', row.device),
+    detail('Promo code', row.promoCode || 'None'),
+    detail('Last page', row.lastPage),
+    detail('First seen', date(row.firstSeen)),
+    detail('Last seen', date(row.lastSeen)),
+    detail('Journey', journey || 'No journey data'),
   ].join('');
   drawer.classList.add('is-open');
   drawer.setAttribute('aria-hidden', 'false');
@@ -311,6 +354,8 @@ function renderDashboardRange(data) {
   $('orderStatus').innerHTML = renderStatuses(orders.byStatus);
   $('topPages').innerHTML = renderCountBars(analytics.topPages || [], 'No page views tracked yet.');
   $('checkoutFunnel').innerHTML = renderCountBars(analytics.funnel || [], 'No checkout behaviour tracked yet.');
+  $('checkoutDropoffs').innerHTML = renderDropoffs(range.checkoutDropoffs || []);
+  setText('dropoffChip', `${number(range.checkoutDropoffs?.length || 0)} sessions`);
   $('productViews').innerHTML = renderCountBars(analytics.topProductViews || [], 'No product views tracked yet.');
   $('trafficSources').innerHTML = renderCountBars(analytics.sources || [], 'No traffic sources tracked yet.');
   $('visitorLocations').innerHTML = renderCountBars(analytics.locations || [], 'No visitor locations yet.');
@@ -456,6 +501,10 @@ $('adminRangeTabs')?.addEventListener('click', (event) => {
 $('recentOrders')?.addEventListener('click', (event) => {
   const row = event.target.closest('tr[data-order-number]');
   if (row) openOrderDrawer(row.getAttribute('data-order-number'));
+});
+$('checkoutDropoffs')?.addEventListener('click', (event) => {
+  const row = event.target.closest('[data-dropoff-index]');
+  if (row) openDropoffDrawer(row.getAttribute('data-dropoff-index'));
 });
 $('orderDrawerClose')?.addEventListener('click', closeOrderDrawer);
 $('orderDrawerBackdrop')?.addEventListener('click', closeOrderDrawer);

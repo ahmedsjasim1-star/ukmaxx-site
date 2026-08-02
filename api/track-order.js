@@ -161,6 +161,24 @@ function sourceGroup({ referrer = '', utmSource = '' }) {
   return host || source || 'Referral';
 }
 
+function cleanCartItems(items) {
+  if (!Array.isArray(items)) return null;
+  const cleaned = items.slice(0, 12).map((item) => {
+    const sku = clean(item?.sku, 40).toUpperCase();
+    const name = clean(item?.name, 120);
+    const qty = Math.max(0, Math.min(99, Number(item?.qty || 0)));
+    const lineTotal = Math.max(0, Math.min(99999, Number(item?.lineTotal || 0)));
+    if (!sku || !qty) return null;
+    return {
+      sku,
+      name: name || sku,
+      qty,
+      lineTotal: Number(lineTotal.toFixed(2)),
+    };
+  }).filter(Boolean);
+  return cleaned.length ? cleaned : null;
+}
+
 async function handleSiteEvent(req, res) {
   try {
     const body = req.body || {};
@@ -197,6 +215,9 @@ async function handleSiteEvent(req, res) {
       city: cleanHeader(req.headers['x-vercel-ip-city'], 120) || null,
       timezone: clean(body.timezone, 80) || null,
       language: clean(body.language, 40) || null,
+      cart_items: cleanCartItems(body.cartItems),
+      cart_value: Number.isFinite(Number(body.cartValue)) ? Number(Number(body.cartValue).toFixed(2)) : null,
+      promo_code: clean(body.promoCode, 40).toUpperCase() || null,
     };
 
     const supabase = getSupabaseAdmin();

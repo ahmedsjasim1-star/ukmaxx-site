@@ -58,6 +58,23 @@ function cartTotals(c) {
   return { sub, discount, discounted, ship, tot, code, promo };
 }
 
+function cartAnalyticsPayload(c = getCart()) {
+  const t = cartTotals(c);
+  return {
+    cartItems: c.map((item) => {
+      const product = PRODUCTS[item.sku] || {};
+      return {
+        sku: item.sku,
+        name: product.name || item.sku,
+        qty: item.qty,
+        lineTotal: Number(((product.price || 0) * item.qty).toFixed(2)),
+      };
+    }),
+    cartValue: Number(t.tot.toFixed(2)),
+    promoCode: t.code || '',
+  };
+}
+
 export function renderCart() {
   const c = getCart();
   const count = c.reduce((a, b) => a + b.qty, 0);
@@ -187,7 +204,7 @@ export function addSku(s) {
   if (f) f.qty++; else c.push({ sku: s, qty: 1 });
   setCart(c);
   renderCart();
-  trackEvent('add_to_cart', { productSku: s });
+  trackEvent('add_to_cart', { productSku: s, ...cartAnalyticsPayload() });
   if (p) toast('Added to basket', `${p.name} added — review your basket or continue shopping.`);
 }
 
@@ -205,7 +222,7 @@ export function addSkuQty(s, qty) {
   if (f) f.qty = nextQty; else c.push({ sku: s, qty: Math.min(maxQty, num) });
   setCart(c);
   renderCart();
-  trackEvent('add_to_cart', { productSku: s });
+  trackEvent('add_to_cart', { productSku: s, ...cartAnalyticsPayload() });
   if (p) toast('Added to basket', `${num}× ${p.name} added.`);
 }
 
@@ -240,7 +257,7 @@ export async function openCheckout() {
   m.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   renderCheckoutSummary();
-  trackEvent('checkout_opened');
+  trackEvent('checkout_opened', cartAnalyticsPayload(c));
 }
 
 export function closeCheckout() {
@@ -300,7 +317,7 @@ async function startCheckout() {
   try {
     const details = collectCheckoutDetails();
     if (payBtn) { payBtn.disabled = true; if (label) label.textContent = 'Processing…'; }
-    trackEvent('payment_started');
+    trackEvent('payment_started', cartAnalyticsPayload(c));
     const controller = new AbortController();
     const to = setTimeout(() => controller.abort(), 15000);
     const supabase = await getSupabase();

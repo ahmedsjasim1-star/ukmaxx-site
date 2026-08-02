@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
-<link rel="stylesheet" href="./assets/css/admin.css?v=20260802-range-dashboard">
+<link rel="stylesheet" href="./assets/css/admin.css?v=20260802-checkout-intelligence">
 </head>
 <body class="admin-page">
   <main class="admin-shell">
@@ -163,6 +163,18 @@
         </article>
       </section>
 
+      <section class="admin-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Checkout intelligence</p>
+            <h2>Dropped checkouts</h2>
+          </div>
+          <span class="panel-chip warning" id="dropoffChip">—</span>
+        </div>
+        <p class="panel-note">Privacy-safe session view: source, location, products and last checkout stage. Click a row for the journey.</p>
+        <div class="dropoff-list" id="checkoutDropoffs"></div>
+      </section>
+
       <section class="admin-grid admin-grid-three">
         <article class="admin-panel">
           <div class="panel-head">
@@ -286,6 +298,6 @@
     </div>
   </aside>
 
-  <script type="module" src="./assets/js/admin.js?v=20260802-range-dashboard"></script>
+  <script type="module" src="./assets/js/admin.js?v=20260802-checkout-intelligence"></script>
 </body>
 </html>
