@@ -172,6 +172,7 @@
   .product-media img{height:100%;object-fit:contain;padding:8px}
   .product-card:hover .product-media img{transform:none}
   .product-badges{top:8px;left:8px;gap:4px}
+  .product-badges .badge:nth-child(n+2){display:none}
   .product-badges .badge{font-size:8.8px;padding:4px 6px;border-radius:999px;max-width:96px;white-space:normal;line-height:1.15}
   .product-body{padding:12px 12px 12px 13px;gap:5px}
   .product-sku{font-size:9.5px}
@@ -182,7 +183,8 @@
   .product-attrs{gap:4px}
   .product-attr{font-size:9.5px;padding:3px 6px}
   .product-foot{padding-top:8px;gap:8px}
-  .product-price{font-size:20px}
+  .product-price{font-size:23px;font-weight:800}
+  .product-price .currency{font-size:15px}
   .add-btn{min-height:36px;padding:8px 11px;border-radius:12px;font-size:12px}
 }
 .filter-tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none}

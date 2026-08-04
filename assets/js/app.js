@@ -1,4 +1,4 @@
-import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260802-seo-foundation';
+import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260804-mobile-card-polish';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260714-review-polish';
 import { renderCart, initCart } from './modules/cart.js?v=20260802-checkout-intelligence';
 import { initAgeGate } from './modules/ageGate.js';

@@ -35,7 +35,7 @@ function productCard(p, bundle = false) {
   const stockUnit = p.category === 'bundles' ? 'bundles' : 'left';
   const stockBadge = purchasable
     ? (stockLow ? `<span class="badge badge-low">Only ${p.stockCount} ${stockUnit}</span>` : `<span class="badge badge-stock">In stock</span>`)
-    : `<span class="badge badge-coming">${getReleaseLabel(p)}</span>`;
+    : `<span class="badge badge-coming">${p.coa?.status === 'REJECTED' ? 'Not available' : getReleaseLabel(p)}</span>`;
   const coaBadge = !p.coaUrl && !purchasable ? `<span class="badge badge-awaiting">${getCoaStatusLabel(p)}</span>` : '';
   const bestBadge = p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Featured'}</span>` : '';
   const saveBadge = p.originalPrice ? `<span class="badge badge-new">Save ${money(p.originalPrice - p.price)}</span>` : '';
