@@ -1,4 +1,4 @@
-import { COA, PRODUCTS, getCoaStatusLabel, getReleaseLabel } from '../data/products.js';
+import { COA, PRODUCTS, getCoaStatusLabel, getReleaseLabel } from '../data/products.js?v=20260804-coa-assay';
 import { getSupabase } from '../data/supabase.js';
 
 function byId(id) {
@@ -54,6 +54,13 @@ function remaining(record) {
 
 function displayPurity(record) {
   return [record.purity, record.assayResult].filter(Boolean).join(' / ') || 'Pending';
+}
+
+function fallbackAssayResult(batchCode) {
+  const assays = {
+    'RT10-2026-06-A': '10.12mg',
+  };
+  return assays[String(batchCode || '').toUpperCase()] || '';
 }
 
 function isArchived(record) {
@@ -128,7 +135,7 @@ function mapSupabaseRecord(row) {
     status: rejected ? 'REJECTED' : archived ? 'ARCHIVED' : 'VERIFIED',
     statusLabel: rejected ? 'QC rejected — not released' : archived ? 'Archived batch' : 'Active verified batch',
     purity: row.purity || '',
-    assayResult: row.assay_result || '',
+    assayResult: row.assay_result || COA[row.batch_code]?.assayResult || fallbackAssayResult(row.batch_code),
     method: row.method || 'Pending',
     lab: row.lab_name || 'Pending',
     report: row.batch_code,
@@ -142,7 +149,7 @@ function mapSupabaseRecord(row) {
     rejectionReason: row.rejection_reason || '',
     labelClaim: row.label_claim || '',
     skus: [row.sku],
-    displayOrder: num(row.display_order) || 100,
+    displayOrder: num(product.sortOrder) || num(row.display_order) || 100,
   };
 }
 
@@ -150,6 +157,7 @@ function sortRecords(records) {
   const rank = { VERIFIED: 0, INTERNAL_QC: 1, PENDING: 2, ARCHIVED: 3, REJECTED: 4 };
   return [...records].sort((a, b) => {
     return (rank[a.status] ?? 9) - (rank[b.status] ?? 9)
+      || num(PRODUCTS[a.sku]?.sortOrder) - num(PRODUCTS[b.sku]?.sortOrder)
       || num(a.displayOrder) - num(b.displayOrder)
       || a.product.localeCompare(b.product);
   });
