@@ -19,7 +19,6 @@
 .hero-ctas{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
 @media (min-width:480px){.hero-ctas{flex-direction:row}}
 @media (min-width:769px){.hero-ctas{margin-bottom:22px;gap:10px}}
-.hero-proof-row{display:none}
 .hero-meta{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:11.5px;color:var(--dim)}
 @media (min-width:769px){.hero-meta{gap:18px 28px;font-size:13px}}
 .hero-meta-item{display:flex;align-items:center;gap:8px}
@@ -127,10 +126,6 @@
   .hero-ctas{display:grid;grid-template-columns:1.05fr .95fr;gap:8px;margin-bottom:0}
   .hero-ctas .btn{min-height:46px;padding:0 12px;font-size:13px;justify-content:center}
   .hero-ctas .btn svg{display:none}
-  .hero-proof-row{display:flex;align-items:center;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-  .hero-proof-row::-webkit-scrollbar{display:none}
-  .hero-proof-row span{flex:1 1 0;justify-content:center;display:inline-flex;align-items:center;gap:5px;padding:6px 7px;border:1px solid rgba(10,126,140,.15);background:rgba(255,255,255,.78);border-radius:999px;color:var(--text-2);font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;box-shadow:0 8px 20px rgba(8,31,35,.05);white-space:nowrap}
-  .hero-proof-row span::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(10,126,140,.12)}
   .section{padding:38px 0}
   .section-head{margin-bottom:18px}
   .section-eyebrow{font-size:10px;margin-bottom:6px}
