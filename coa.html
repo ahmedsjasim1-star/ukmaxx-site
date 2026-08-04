@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="./assets/css/reset.css">
   <link rel="stylesheet" href="./assets/css/base.css">
   <link rel="stylesheet" href="./assets/css/components.css">
-  <link rel="stylesheet" href="./assets/css/pages/coa.css?v=20260801-rejected-batches">
+  <link rel="stylesheet" href="./assets/css/pages/coa.css?v=20260804-mobile-cards">
   <script src="./assets/html/bundle.js?v=20260708-coa-nav"></script>
 </head>
 <body>
@@ -85,6 +85,7 @@
         </form>
         <div id="coaCheckerResult" hidden></div>
       </div>
+      <div class="coa-quick-stats" id="coaQuickStats" aria-label="COA quick stats"></div>
     </div>
   </section>
 
@@ -116,6 +117,7 @@
           <tbody id="coaTableBody"></tbody>
         </table>
       </div>
+      <div class="coa-mobile-records" id="coaMobileCards" aria-label="Active verified batch cards"></div>
       <div class="coa-archive" id="coaArchiveSection" hidden>
         <div class="section-head">
           <div>
@@ -143,6 +145,7 @@
             <tbody id="coaArchiveTableBody"></tbody>
           </table>
         </div>
+        <div class="coa-mobile-records" id="coaArchiveMobileCards" aria-label="Archived batch cards"></div>
       </div>
       <div class="coa-rejected" id="coaRejectedSection" hidden>
         <div class="section-head">
@@ -171,6 +174,7 @@
             <tbody id="coaRejectedTableBody"></tbody>
           </table>
         </div>
+        <div class="coa-mobile-records" id="coaRejectedMobileCards" aria-label="QC rejected batch cards"></div>
       </div>
       <div class="coa-note">
         <strong>Can’t find your batch?</strong> Check the code carefully, then contact support with your order number if it still does not appear.

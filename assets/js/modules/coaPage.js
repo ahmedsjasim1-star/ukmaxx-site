@@ -203,30 +203,129 @@ function tableRow(record) {
   `;
 }
 
+function mobileRecordCard(record) {
+  const skus = record.skus?.length ? record.skus : [record.sku];
+  const left = remaining(record);
+  const rejected = record.status === 'REJECTED';
+  const archived = isArchived(record);
+  const product = PRODUCTS[record.sku] || {};
+  const image = product.image || record.image || './images/og-ukmaxx.jpg';
+  const action = record.url
+    ? `<a href="${record.url}" target="_blank" rel="noopener noreferrer" class="coa-card-action">View certificate <span aria-hidden="true">↗</span></a>`
+    : `<a href="${productUrl(record.sku)}" class="coa-card-action">View product</a>`;
+  const secondaryAction = record.url
+    ? `<a href="${productUrl(record.sku)}" class="coa-card-secondary">Product page</a>`
+    : '';
+  const statusText = rejected ? 'QC rejected' : archived ? 'Archived batch' : 'Verified batch';
+  const leftText = record.batchSize ? `${left} left` : '—';
+
+  return `
+    <article class="coa-record-card ${rejected ? 'is-rejected' : ''}">
+      <div class="coa-record-top">
+        <div class="coa-record-media">
+          <img src="${escapeHtml(image)}" alt="${escapeHtml(record.product)}" loading="lazy" width="88" height="110">
+        </div>
+        <div class="coa-record-main">
+          <div class="coa-record-title-row">
+            <div>
+              <h3>${escapeHtml(record.product)}</h3>
+              <p>${escapeHtml(skus.join(' / '))}</p>
+            </div>
+            <span class="coa-status coa-status-${statusClass(record.status)}">${escapeHtml(statusText)}</span>
+          </div>
+          <div class="coa-record-batch">
+            <span>Batch</span>
+            <code>${escapeHtml(record.batch)}</code>
+          </div>
+        </div>
+      </div>
+      ${rejected && record.rejectionReason ? `<div class="coa-reject-reason">${escapeHtml(record.rejectionReason)}</div>` : ''}
+      <div class="coa-card-stats">
+        <div><span>Purity / assay</span><strong>${escapeHtml(displayPurity(record))}</strong></div>
+        <div><span>Batch size</span><strong>${escapeHtml(record.batchSize || '—')}</strong></div>
+        <div><span>Test date</span><strong>${escapeHtml(record.testDate)}</strong></div>
+        <div><span>${archived ? 'Remaining' : 'Available'}</span><strong class="${rejected ? '' : 'is-left'}">${escapeHtml(rejected ? 'Not released' : leftText)}</strong></div>
+      </div>
+      <div class="coa-card-meta">
+        <div><span>Lab</span><strong>${escapeHtml(record.lab)}</strong></div>
+        <div><span>Method</span><strong>${escapeHtml(record.method)}</strong></div>
+        <div><span>Release</span><strong>${escapeHtml(rejected ? 'Not released' : archived ? 'Archived' : 'Current batch')}</strong></div>
+      </div>
+      <div class="coa-card-actions">
+        ${action}
+        ${secondaryAction}
+      </div>
+    </article>
+  `;
+}
+
+function renderQuickStats(records) {
+  const stats = byId('coaQuickStats');
+  if (!stats) return;
+  const tested = records.filter((record) => record.status === 'VERIFIED' || record.status === 'REJECTED' || record.status === 'ARCHIVED');
+  const active = records.filter((record) => !isArchived(record) && record.status === 'VERIFIED');
+  const rejected = records.filter(isRejected);
+  const certificates = tested.filter((record) => Boolean(record.url));
+  const items = [
+    { value: active.length, label: 'Active batches', tone: 'blue', icon: 'shield' },
+    { value: tested.length, label: 'Products tested', tone: 'green', icon: 'check' },
+    { value: rejected.length, label: 'QC rejected', tone: 'red', icon: 'flask' },
+    { value: certificates.length, label: 'Certificates', tone: 'purple', icon: 'file' },
+  ];
+  stats.innerHTML = items.map((item) => `
+    <div class="coa-stat-chip coa-stat-${item.tone}">
+      <span class="coa-stat-icon" aria-hidden="true">${statIcon(item.icon)}</span>
+      <strong>${escapeHtml(item.value)}</strong>
+      <em>${escapeHtml(item.label)}</em>
+    </div>
+  `).join('');
+}
+
+function statIcon(icon) {
+  const icons = {
+    shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 19 6v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-5"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg>',
+    flask: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6"/><path d="M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6A2 2 0 0 0 19 18l-5-9V3"/><path d="M8 15h8"/></svg>',
+    file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>',
+  };
+  return icons[icon] || icons.check;
+}
+
 function renderRows(records) {
   const activeTable = byId('coaTableBody');
   const archiveTable = byId('coaArchiveTableBody');
   const archiveSection = byId('coaArchiveSection');
   const rejectedTable = byId('coaRejectedTableBody');
   const rejectedSection = byId('coaRejectedSection');
+  const activeCards = byId('coaMobileCards');
+  const archiveCards = byId('coaArchiveMobileCards');
+  const rejectedCards = byId('coaRejectedMobileCards');
   if (!activeTable) return;
 
   const rejected = records.filter(isRejected);
   const active = records.filter((record) => !isArchived(record) && !isRejected(record));
   const archived = records.filter(isArchived);
+  renderQuickStats(records);
 
   activeTable.innerHTML = active.length
     ? active.map(tableRow).join('')
     : '<tr><td colspan="10" class="coa-muted">No active public COA records found.</td></tr>';
+  if (activeCards) {
+    activeCards.innerHTML = active.length
+      ? active.map(mobileRecordCard).join('')
+      : '<p class="coa-muted">No active public COA records found.</p>';
+  }
 
   if (archiveTable && archiveSection) {
     archiveSection.hidden = archived.length === 0;
     archiveTable.innerHTML = archived.map(tableRow).join('');
+    if (archiveCards) archiveCards.innerHTML = archived.map(mobileRecordCard).join('');
   }
 
   if (rejectedTable && rejectedSection) {
     rejectedSection.hidden = rejected.length === 0;
     rejectedTable.innerHTML = rejected.map(tableRow).join('');
+    if (rejectedCards) rejectedCards.innerHTML = rejected.map(mobileRecordCard).join('');
   }
 }
 

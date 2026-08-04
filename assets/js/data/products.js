@@ -67,6 +67,7 @@ export const COA = {
     status: 'VERIFIED',
     statusLabel: 'Third-party verified',
     purity: '99.223%',
+    assayResult: '10.12mg',
     method: 'UPLC/MS',
     lab: 'Janoshik Analytical',
     report: '#193587',
