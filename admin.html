@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
-<link rel="stylesheet" href="./assets/css/admin.css?v=20260802-checkout-intelligence">
+<link rel="stylesheet" href="./assets/css/admin.css?v=20260805-batch-subscribers">
 </head>
 <body class="admin-page">
   <main class="admin-shell">
@@ -240,7 +240,7 @@
             <div><strong id="uniqueCustomers">—</strong><span>Unique customers</span></div>
             <div><strong id="repeatCustomers">—</strong><span>Repeat customers</span></div>
             <div><strong id="repeatRate">—</strong><span>Repeat rate</span></div>
-            <div><strong id="subscribers">—</strong><span>Subscribers</span></div>
+            <div><strong id="subscribers">—</strong><span>Batch alerts</span></div>
           </div>
         </article>
 
@@ -258,6 +258,31 @@
             <div><strong id="approvedReviews">—</strong><span>Approved reviews</span></div>
           </div>
         </article>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Email list</p>
+            <h2>Batch alert subscribers</h2>
+          </div>
+          <span class="panel-chip" id="emailSubscriberChip">—</span>
+        </div>
+        <p class="panel-note">People who joined restock, COA and batch-release updates from the site popup. Filtered by the selected time range.</p>
+        <div class="orders-table-wrap">
+          <table class="orders-table subscribers-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Topics</th>
+                <th>Status</th>
+                <th>Signed up</th>
+                <th>Updated</th>
+              </tr>
+            </thead>
+            <tbody id="emailSubscribersList"></tbody>
+          </table>
+        </div>
       </section>
 
       <section class="admin-panel">
@@ -298,6 +323,6 @@
     </div>
   </aside>
 
-  <script type="module" src="./assets/js/admin.js?v=20260802-checkout-intelligence"></script>
+  <script type="module" src="./assets/js/admin.js?v=20260805-batch-subscribers"></script>
 </body>
 </html>

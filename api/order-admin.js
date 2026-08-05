@@ -298,6 +298,30 @@ function customerStats(orders) {
   };
 }
 
+function subscriberStats(rows, from) {
+  const active = rows.filter((subscriber) => String(subscriber.status || '').toLowerCase() === 'active');
+  const unsubscribed = rows.filter((subscriber) => String(subscriber.status || '').toLowerCase() === 'unsubscribed');
+  const scoped = rows.filter((subscriber) => isSince(subscriber, from));
+  const scopedActive = scoped.filter((subscriber) => String(subscriber.status || '').toLowerCase() === 'active');
+
+  return {
+    active: active.length,
+    unsubscribed: unsubscribed.length,
+    newInRange: scopedActive.length,
+    recent: scoped
+      .slice()
+      .sort((a, b) => new Date(b.created_at || b.updated_at || 0) - new Date(a.created_at || a.updated_at || 0))
+      .slice(0, 100)
+      .map((subscriber) => ({
+        email: subscriber.email,
+        topics: Array.isArray(subscriber.topics) ? subscriber.topics : [],
+        status: subscriber.status || 'active',
+        createdAt: subscriber.created_at,
+        updatedAt: subscriber.updated_at,
+      })),
+  };
+}
+
 function stockSummary(products) {
   const bySku = new Map(products.map((product) => [product.sku, product]));
   const rows = products.map((product) => ({
@@ -488,7 +512,7 @@ function rangeStart(now, definition) {
   return new Date(now.getTime() - definition.ms);
 }
 
-function rangeDashboard(definition, from, { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, promoRedemptions, events, now }) {
+function rangeDashboard(definition, from, { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, notifySubscribers, promoRedemptions, events, now }) {
   const scopedOrders = orders.filter((order) => isSince(order, from));
   const scopedPaidOrders = scopedOrders.filter((order) => PAID_STATUSES.has(order.status));
   const scopedAttempts = attempts.filter((attempt) => isSince(attempt, from));
@@ -527,6 +551,7 @@ function rangeDashboard(definition, from, { orders, items, products, attempts, p
       approved: scopedPublicReviews.length,
       averageRating: approvedRatings.length ? Number((approvedRatings.reduce((sum, rating) => sum + rating, 0) / approvedRatings.length).toFixed(1)) : 0,
     },
+    emailSubscribers: subscriberStats(notifySubscribers, from),
   };
 }
 
@@ -539,6 +564,7 @@ async function buildDashboard(supabase) {
     pendingReviews,
     publicReviews,
     subscribers,
+    notifySubscribers,
     promoRedemptions,
     events,
   ] = await Promise.all([
@@ -549,6 +575,7 @@ async function buildDashboard(supabase) {
     safeSelect(supabase, 'reviews_pending', 'id,status,created_at', { limit: 1000 }),
     safeSelect(supabase, 'reviews_public', 'id,rating,created_at', { limit: 1000 }),
     safeSelect(supabase, 'subscribers', 'id,unsubscribed_at,created_at', { limit: 5000 }),
+    safeSelect(supabase, 'notify_subscribers', 'email,topics,status,created_at,updated_at', { order: { column: 'created_at', ascending: false }, limit: 5000 }),
     safeSelect(supabase, 'promo_redemptions', 'id,promo_code,redeemed_at', { limit: 5000 }),
     safeSelect(supabase, 'site_events', '*', { order: { column: 'created_at', ascending: false }, limit: 20000 }),
   ]);
@@ -561,7 +588,7 @@ async function buildDashboard(supabase) {
   const paidOrders = orders.filter((order) => PAID_STATUSES.has(order.status));
   const activeSubscribers = subscribers.filter((sub) => !sub.unsubscribed_at);
   const approvedRatings = publicReviews.map((review) => asNumber(review.rating)).filter(Boolean);
-  const rangeContext = { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, promoRedemptions, events, now };
+  const rangeContext = { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, notifySubscribers, promoRedemptions, events, now };
   const ranges = Object.fromEntries(RANGE_DEFINITIONS.map((definition) => [
     definition.key,
     rangeDashboard(definition, rangeStart(now, definition), rangeContext),
@@ -609,6 +636,7 @@ async function buildDashboard(supabase) {
       approved: publicReviews.length,
       averageRating: approvedRatings.length ? Number((approvedRatings.reduce((sum, rating) => sum + rating, 0) / approvedRatings.length).toFixed(1)) : 0,
     },
+    emailSubscribers: subscriberStats(notifySubscribers, null),
   };
 }
 

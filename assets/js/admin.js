@@ -230,6 +230,27 @@ function renderRecentOrders(rows) {
   </tr>`).join('');
 }
 
+function formatTopics(topics) {
+  const labels = {
+    restock: 'Restock',
+    batch_updates: 'Batch updates',
+  };
+  const values = Array.isArray(topics) ? topics : [];
+  if (!values.length) return 'Batch updates';
+  return values.map((topic) => labels[topic] || String(topic).replace(/_/g, ' ')).join(', ');
+}
+
+function renderEmailSubscribers(rows) {
+  if (!rows?.length) return '<tr><td colspan="5" class="empty-state">No batch alert signups in this range.</td></tr>';
+  return rows.map((subscriber) => `<tr>
+    <td><strong>${escapeHtml(subscriber.email)}</strong></td>
+    <td>${escapeHtml(formatTopics(subscriber.topics))}</td>
+    <td><span class="status-pill ${subscriber.status === 'unsubscribed' ? 'muted' : ''}">${escapeHtml(subscriber.status)}</span></td>
+    <td>${date(subscriber.createdAt)}</td>
+    <td>${date(subscriber.updatedAt)}</td>
+  </tr>`).join('');
+}
+
 function renderDropoffs(rows) {
   if (!rows?.length) return '<p class="empty-state">No dropped checkouts in this range.</p>';
   return rows.map((row, index) => `<button class="dropoff-row" type="button" data-dropoff-index="${index}">
@@ -317,6 +338,7 @@ function renderDashboardRange(data) {
   const payments = range.payments || data.payments || {};
   const customers = range.customers || data.customers || {};
   const reviews = range.reviews || data.reviews || {};
+  const emailSubscribers = range.emailSubscribers || data.emailSubscribers || {};
   const stock = data.products?.stock;
   const orderCount = Number(summary.orders || 0);
   const visitors = Number(analytics.visitors || 0);
@@ -366,12 +388,15 @@ function renderDashboardRange(data) {
   setText('uniqueCustomers', number(customers.uniqueCustomers));
   setText('repeatCustomers', number(customers.repeatCustomers));
   setText('repeatRate', `${number(customers.repeatRate)}%`);
-  setText('subscribers', number(summary.subscribers));
+  setText('subscribers', number(emailSubscribers.active || 0));
 
   setText('paymentAttempts', number(payments.totalAttempts));
   setText('paymentIssues', number(payments.rejectedOrCancelled));
   setText('pendingReviews', number(reviews.pending));
   setText('approvedReviews', `${number(reviews.approved)} · ${Number(reviews.averageRating || 0).toFixed(1)}/5`);
+
+  setText('emailSubscriberChip', `${number(emailSubscribers.newInRange || 0)} new · ${number(emailSubscribers.active || 0)} active`);
+  $('emailSubscribersList').innerHTML = renderEmailSubscribers(emailSubscribers.recent || []);
 
   setText('openFulfilment', `${number(data.orders?.openFulfilment)} open fulfilment`);
   $('recentOrders').innerHTML = renderRecentOrders(data.orders?.recent || []);

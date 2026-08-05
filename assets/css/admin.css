@@ -85,6 +85,7 @@
 .orders-table tr[data-order-number]{cursor:pointer;transition:background .15s ease}
 .orders-table tr[data-order-number]:hover{background:rgba(15,163,177,.1)}
 .status-pill{display:inline-flex;border-radius:999px;padding:5px 9px;font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;background:rgba(15,163,177,.13);color:#bff6fb}
+.status-pill.muted{background:rgba(255,255,255,.07);color:#9fc4ca}
 .empty-state{color:#8fb6bc;font-size:13px}
 .order-drawer{position:fixed;inset:0;z-index:80;display:none}
 .order-drawer.is-open{display:block}
