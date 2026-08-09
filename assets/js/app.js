@@ -8,10 +8,10 @@ import { setupExitIntent } from './modules/exitIntent.js?v=20260625-alerts';
 import { setupNewsletter } from './modules/newsletter.js';
 import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js';
 import { setupTracking } from './modules/tracking.js';
-import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js?v=20260809-seo-schema';
+import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js?v=20260809-keyword-aliases';
 import { setupAccountPage } from './modules/account.js?v=20260731-account-reorder';
 import { updateHeroBatchChips } from './modules/heroBatch.js';
-import { refreshLiveStock } from './data/products.js?v=20260802-seo-foundation';
+import { refreshLiveStock } from './data/products.js?v=20260809-keyword-aliases';
 import { setupCoaPage } from './modules/coaPage.js?v=20260804-desktop-cards-products-cache';
 import { setupAnalytics } from './modules/analytics.js?v=20260731-analytics-phase-a';
 

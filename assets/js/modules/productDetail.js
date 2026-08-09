@@ -1,4 +1,4 @@
-import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260802-seo-foundation';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260809-keyword-aliases';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 import { renderProductReviewsSummary } from './reviews.js?v=20260714-review-polish';
@@ -99,8 +99,10 @@ function renderPdpProduct(root) {
   const qualityLabel = getQualityLabel(p);
   const metaTitle = p.seoTitle || (p.name + ' | UK Research Peptides | UKMAXX');
   const metaDescription = p.seoDescription || `${p.name}: ${p.description} ${qualityLabel}. UK stocked with Royal Mail Tracked 24 dispatch. Research use only.`;
+  const metaKeywords = buildProductKeywords(p);
   setText('pageTitle', metaTitle);
   setAttr('pageDesc', 'content', metaDescription);
+  setAttr('pageKeywords', 'content', metaKeywords);
   setText('ogTitle', metaTitle);
   setAttr('ogDesc', 'content', metaDescription);
   setAttr('ogUrl', 'content', productUrl);
@@ -116,6 +118,7 @@ function renderPdpProduct(root) {
       '@context': 'https://schema.org/',
       '@type': 'Product',
       name: p.name,
+      ...(Array.isArray(p.aliases) && p.aliases.length ? { alternateName: p.aliases } : {}),
       url: productUrl,
       mainEntityOfPage: productUrl,
       image: productImage,
@@ -437,6 +440,20 @@ function renderPdpProduct(root) {
 
   setupPdpTabs();
   renderProductReviewsSummary(p.id);
+}
+
+function buildProductKeywords(product) {
+  const base = [
+    'UK peptides',
+    'ukpeptides',
+    'research peptides UK',
+    'UK research compounds',
+    'COA verified peptides',
+    'biohacking UK',
+    'biohack UK',
+    'Royal Mail Tracked 24 dispatch'
+  ];
+  return [...new Set([...(product?.aliases || []), product?.name, product?.shortName, product?.id, product?.batch, ...base].filter(Boolean))].join(', ');
 }
 
 function getUkTimeParts() {
