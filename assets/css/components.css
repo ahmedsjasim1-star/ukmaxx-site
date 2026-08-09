@@ -112,6 +112,8 @@
 .section-sub{font-size:15px;color:var(--dim);max-width:620px;line-height:1.65;margin-bottom:32px}
 .section-head{display:flex;flex-direction:column;gap:6px;margin-bottom:32px}
 @media (min-width:1024px){.section-head{flex-direction:row;justify-content:space-between;align-items:flex-end;margin-bottom:40px}.section-head .section-sub{margin-bottom:0}}
+.launch-code-pill{display:inline-flex;align-items:center;gap:6px;width:max-content;margin-top:4px;padding:6px 11px;border:1px solid rgba(10,126,140,.18);background:rgba(10,126,140,.07);color:var(--accent);border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:.07em;text-transform:uppercase}
+.launch-code-pill strong{font-weight:700;color:var(--text)}
 
 /* ===== PAGE HERO ===== */
 .page-hero{background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);padding:48px 0 32px;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
@@ -246,6 +248,8 @@
 .cart-totals-row.is-discount{color:var(--success)}
 .cart-totals-row.is-total{padding-top:8px;margin-top:2px;border-top:1px solid var(--border);font-size:15px;font-weight:600;color:var(--text)}
 .cart-promo{display:flex;gap:6px;margin-bottom:12px}
+.cart-launch-code{margin:0 0 8px;padding:8px 10px;border:1px solid rgba(10,126,140,.16);background:rgba(10,126,140,.06);border-radius:var(--radius-sm);font-size:11.5px;line-height:1.4;color:var(--text-2);font-family:'IBM Plex Mono',monospace;letter-spacing:.035em}
+.cart-launch-code strong{color:var(--text);font-weight:700}
 .cart-promo-input{flex:1;height:38px;padding:0 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-3);font-size:13px;letter-spacing:.05em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace}
 .cart-promo-input:focus{outline:none;border-color:var(--accent);background:#fff}
 .cart-promo-btn{height:38px;padding:0 14px;background:var(--text);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;letter-spacing:.04em;border-radius:var(--radius-sm)}

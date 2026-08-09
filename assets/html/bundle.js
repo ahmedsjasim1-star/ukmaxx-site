@@ -191,6 +191,7 @@ window.__html.cartDrawer = '<div class="cart-backdrop" id="cartBackdrop" aria-hi
   + '<div class="cart-items" id="cartItems"></div>'
   + '<div class="cart-foot" id="cartFoot" style="display:none">'
   + '<div class="cart-totals" id="cartTotals"></div>'
+  + '<div class="cart-launch-code">Launch code <strong>MAXX10</strong> gives 10% off eligible orders.</div>'
   + '<div class="cart-promo">'
   + '<input type="text" class="cart-promo-input" id="promoCode" placeholder="PROMO CODE" maxlength="20" aria-label="Promo code">'
   + '<button class="cart-promo-btn" id="applyPromoBtn" type="button">Apply</button>'
