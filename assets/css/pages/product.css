@@ -178,6 +178,17 @@ body{padding-bottom:70px}
 .pdp-related-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;letter-spacing:-.005em;margin-bottom:6px;line-height:1.25}
 .pdp-related-price{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--text)}
 .pdp-related-price .currency{font-size:13px;color:var(--dim);margin-right:1px}
+.pdp-resource-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pdp-resource-card{display:flex;flex-direction:column;gap:7px;padding:18px;border:1px solid var(--border);border-radius:var(--radius-lg);background:linear-gradient(180deg,#fff 0%,#F7FBFC 100%);color:var(--text);transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+.pdp-resource-card:hover{border-color:var(--accent-light);box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.pdp-resource-card span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.pdp-resource-card strong{font-family:'Space Grotesk',sans-serif;font-size:16px;line-height:1.2;color:var(--text)}
+.pdp-resource-card p{font-size:12.8px;line-height:1.5;color:var(--text-2);margin:0}
+@media (max-width:768px){
+  .pdp-resource-grid{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -20px;padding:0 20px 6px;scrollbar-width:none}
+  .pdp-resource-grid::-webkit-scrollbar{display:none}
+  .pdp-resource-card{flex:0 0 min(270px,80vw);scroll-snap-align:start}
+}
 .pdp-faq{display:flex;flex-direction:column;gap:8px}
 .pdp-faq details{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;transition:border-color .15s ease}
 .pdp-faq details[open]{border-color:var(--accent-light);background:var(--surface-3)}

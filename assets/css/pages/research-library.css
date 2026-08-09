@@ -16,6 +16,10 @@
 @media (min-width:840px){.library-cta-inner{flex-direction:row;align-items:center;padding:32px}}
 .library-cta h2{font-family:'Space Grotesk',sans-serif;font-size:32px;line-height:1.05;font-weight:700;margin:0 0 8px;color:var(--text)}
 .library-cta p{color:var(--text-2);line-height:1.6}
+.library-cta-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.guide-bottom-links{max-width:1120px;margin:0 auto 48px;padding:18px;border:1px solid var(--border);border-radius:24px;background:#fff;display:flex;gap:10px;flex-wrap:wrap;box-shadow:0 14px 34px rgba(8,31,35,.06)}
+.guide-bottom-links a{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border:1px solid var(--border);border-radius:999px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;background:var(--surface-2);transition:border-color .15s ease,color .15s ease,background .15s ease}
+.guide-bottom-links a:hover{border-color:var(--accent-light);color:var(--accent);background:#fff}
 
 .guide-hero-grid{display:grid;gap:28px;align-items:center}
 @media (min-width:940px){.guide-hero-grid{grid-template-columns:1fr 420px;gap:44px}}
@@ -50,4 +54,4 @@
 .guide-body summary::after{content:'+';position:absolute;right:18px;top:50%;transform:translateY(-50%);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:20px}
 .guide-body details[open] summary::after{content:'–'}
 .guide-body details p{padding:0 18px 16px;margin:0}
-@media (max-width:560px){.library-hero h1,.guide-hero h1{font-size:38px}.library-actions .btn,.guide-actions .btn{flex:1;min-width:0}.guide-content{padding-top:34px}.guide-fact-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.library-hero h1,.guide-hero h1{font-size:38px}.library-actions .btn,.guide-actions .btn{flex:1;min-width:0}.library-cta-actions{justify-content:flex-start}.guide-content{padding-top:34px}.guide-fact-grid{grid-template-columns:1fr 1fr}.guide-bottom-links{margin:0 20px 38px;padding:14px;border-radius:20px}.guide-bottom-links a{width:100%;justify-content:flex-start}}
