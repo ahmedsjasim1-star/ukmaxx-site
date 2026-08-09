@@ -116,9 +116,12 @@ function renderPdpProduct(root) {
       '@context': 'https://schema.org/',
       '@type': 'Product',
       name: p.name,
+      url: productUrl,
+      mainEntityOfPage: productUrl,
       image: productImage,
       description: metaDescription,
       sku: p.id,
+      mpn: p.id,
       category: p.category,
       brand: { '@type': 'Brand', name: 'UKMAXX' },
       additionalProperty: [
