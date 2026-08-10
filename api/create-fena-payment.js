@@ -3,6 +3,7 @@ const { createAndProcessPayment } = require('./_lib/fena');
 
 const SITE_URL = process.env.SITE_URL || 'https://www.ukmaxx.co.uk';
 const COA_PENDING_SKUS = new Set(['IP5']);
+const PROMO_EXCLUDED_SKUS = new Set(['RT10', 'RT10X3', 'NJ500']);
 const BUNDLE_COMPONENTS = {
   RT10X3: { RT10: 3, WA10: 1 },
 };
@@ -100,12 +101,14 @@ module.exports = async (req, res) => {
     const bySku = new Map((products || []).map((product) => [product.sku, product]));
     const orderItems = [];
     let subtotal = 0;
+    let promoEligibleSubtotal = 0;
     for (const item of normalized) {
       const product = bySku.get(item.sku);
       if (!product || !product.is_active) return res.status(400).json({ error: `Unavailable SKU: ${item.sku}` });
       if (COA_PENDING_SKUS.has(item.sku)) return res.status(400).json({ error: `${item.sku} is coming soon and awaiting COA` });
       const unit = Number(product.price);
       subtotal += unit * item.qty;
+      if (!PROMO_EXCLUDED_SKUS.has(item.sku)) promoEligibleSubtotal += unit * item.qty;
       orderItems.push({
         sku: item.sku,
         product_name: product.name,
@@ -124,7 +127,8 @@ module.exports = async (req, res) => {
 
     const requestedPromo = String(req.body?.promoCode || '').trim().toUpperCase();
     const validPromo = requestedPromo === 'MAXX10';
-    if (validPromo) {
+    const promoApplies = validPromo && promoEligibleSubtotal > 0;
+    if (promoApplies) {
       const { data: prior, error: priorError } = await supabase
         .from('promo_redemptions')
         .select('id')
@@ -135,7 +139,7 @@ module.exports = async (req, res) => {
       if (prior?.length) return res.status(409).json({ error: 'MAXX10 has already been used for this email.' });
     }
 
-    const discount = validPromo ? Number((subtotal * 0.10).toFixed(2)) : 0;
+    const discount = promoApplies ? Number((promoEligibleSubtotal * 0.10).toFixed(2)) : 0;
     const discounted = subtotal - discount;
     const shipping = discounted >= 100 ? 0 : 4.99;
     const total = Number((discounted + shipping).toFixed(2));
@@ -157,7 +161,7 @@ module.exports = async (req, res) => {
       total,
       currency: 'gbp',
       promo_opt_in: !!req.body?.promoOptIn,
-      promo_code: validPromo ? 'MAXX10' : '',
+      promo_code: promoApplies ? 'MAXX10' : '',
       items: orderItems,
     };
 

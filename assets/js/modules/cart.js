@@ -49,13 +49,18 @@ function getPromoCode() {
 
 function cartTotals(c) {
   const sub = c.reduce((a, b) => a + PRODUCTS[b.sku].price * b.qty, 0);
+  const promoEligibleSub = c.reduce((a, b) => {
+    const product = PRODUCTS[b.sku];
+    if (!product || product.promoExcluded || product.launchPrice) return a;
+    return a + product.price * b.qty;
+  }, 0);
   const code = getPromoCode();
   const promo = PROMOS[code];
-  const discount = promo ? (promo.type === 'percent' ? sub * promo.value : promo.value) : 0;
+  const discount = promo ? (promo.type === 'percent' ? promoEligibleSub * promo.value : Math.min(promo.value, promoEligibleSub)) : 0;
   const discounted = sub - discount;
   const ship = !c.length ? 0 : (discounted >= SHIP_THRESHOLD ? 0 : SHIP_FLAT);
   const tot = discounted + ship;
-  return { sub, discount, discounted, ship, tot, code, promo };
+  return { sub, promoEligibleSub, discount, discounted, ship, tot, code, promo };
 }
 
 function cartAnalyticsPayload(c = getCart()) {
@@ -154,9 +159,10 @@ export function renderCart() {
   if (totalsEl) {
     totalsEl.innerHTML = `
       <div class="cart-totals-row"><span>Subtotal</span><span>${money(t.sub)}</span></div>
-      ${t.promo ? `<div class="cart-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
+      ${t.promo && t.discount > 0 ? `<div class="cart-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
       <div class="cart-totals-row"><span>Shipping</span><span>${t.ship === 0 ? '<strong style="color:var(--success)">FREE</strong>' : money(t.ship)}</span></div>
-      <div class="cart-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>`;
+      <div class="cart-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>
+      ${t.promo && t.promoEligibleSub < t.sub ? '<div class="cart-promo-note">MAXX10 applies to eligible full-price items only. Launch-priced items are already discounted.</div>' : ''}`;
   }
   renderCheckoutSummary();
 }
@@ -182,9 +188,10 @@ function renderCheckoutSummary() {
   if (sumsEl) {
     sumsEl.innerHTML = `
       <div class="checkout-totals-row"><span>Subtotal</span><span>${money(t.sub)}</span></div>
-      ${t.promo ? `<div class="checkout-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
+      ${t.promo && t.discount > 0 ? `<div class="checkout-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
       <div class="checkout-totals-row"><span>Shipping</span><span>${t.ship === 0 ? '<strong style="color:var(--success)">FREE</strong>' : money(t.ship)}</span></div>
-      <div class="checkout-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>`;
+      <div class="checkout-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>
+      ${t.promo && t.promoEligibleSub < t.sub ? '<div class="checkout-promo-note">Launch-priced items are excluded from MAXX10.</div>' : ''}`;
   }
 }
 

@@ -1,4 +1,4 @@
-import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260809-keyword-aliases';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260810-launch-pricing';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 import { renderProductReviewsSummary } from './reviews.js?v=20260714-review-polish';
@@ -64,6 +64,18 @@ export function renderProductDetail() {
       container.querySelector(`.pd-tab-content[data-tab="${btn.dataset.tab}"]`)?.classList.add('is-active');
     });
   });
+}
+
+function launchChecklist(product, purchasable) {
+  if (!product || product.id === 'WA10' || !purchasable) return [];
+  const lab = product.coa?.lab === 'Janoshik Analytical' ? 'Janoshik tested' : 'Third-party tested';
+  return [
+    lab,
+    'Batch-specific COA',
+    'UK stock',
+    'Royal Mail Tracked 24',
+    'Failed batches published'
+  ];
 }
 
 function renderPdpProduct(root) {
@@ -186,6 +198,15 @@ function renderPdpProduct(root) {
     if (origEl) origEl.style.display = 'none';
     const saveEl = byId('pdpSaveBadge');
     if (saveEl) saveEl.style.display = 'none';
+  }
+
+  const checklistEl = byId('pdpChecklist');
+  if (checklistEl) {
+    const checklist = launchChecklist(p, purchasable);
+    checklistEl.style.display = checklist.length ? '' : 'none';
+    checklistEl.innerHTML = checklist.map(function (item) {
+      return '<span><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' + item + '</span>';
+    }).join('');
   }
 
   const starsWrap = byId('pdpStarsWrap');

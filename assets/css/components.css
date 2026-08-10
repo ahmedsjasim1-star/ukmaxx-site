@@ -256,6 +256,7 @@
 .cart-promo-btn:hover{background:var(--accent)}
 .cart-promo-msg{font-size:11.5px;color:var(--dim);margin:-6px 0 8px;font-family:'IBM Plex Mono',monospace;letter-spacing:.03em}
 .cart-promo-msg.is-success{color:var(--success)}
+.cart-promo-note,.checkout-promo-note{margin-top:2px;font-size:11.5px;line-height:1.45;color:var(--dim);font-family:'IBM Plex Mono',monospace;letter-spacing:.025em}
 .cart-checkout-btn{width:100%;height:50px;background:var(--text);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;letter-spacing:.06em;border-radius:var(--radius-sm);transition:background .15s ease,transform .12s ease;display:flex;align-items:center;justify-content:center;gap:8px}
 .cart-checkout-btn:hover{background:var(--accent)}
 .cart-checkout-btn:active{transform:scale(.99)}
