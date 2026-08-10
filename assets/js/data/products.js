@@ -217,16 +217,22 @@ export const RESEARCH_FOCUS = {
 
 export const FURTHER_READING = {
   RT10: [
+    { label: 'UKMAXX Retatrutide 10mg UK guide', url: '/retatrutide-10mg-uk.html' },
+    { label: 'View the RT10 3-pack research bundle', url: '/product.html?sku=RT10X3' },
     { label: 'Retatrutide research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=retatrutide' },
     { label: 'Retatrutide clinical trial records', url: 'https://clinicaltrials.gov/search?term=retatrutide' },
     { label: 'GLP-1, GIP and glucagon receptor research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=GLP-1+GIP+glucagon+receptor+agonist' },
   ],
   RT10X3: [
+    { label: 'Retatrutide 10mg UK guide', url: '/retatrutide-10mg-uk.html' },
+    { label: 'Shop single RETA 10MG vials', url: '/product.html?sku=RT10' },
     { label: 'Retatrutide research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=retatrutide' },
     { label: 'Retatrutide clinical trial records', url: 'https://clinicaltrials.gov/search?term=retatrutide' },
     { label: 'Peptide UPLC/MS analysis research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=peptide+UPLC+MS+analysis' },
   ],
   BC5: [
+    { label: 'UKMAXX BPC-157 5mg UK guide', url: '/bpc-157-5mg-uk.html' },
+    { label: 'Verify BPC-157 batch BPC-2026-05-A', url: '/coa.html?batch=BPC-2026-05-A' },
     { label: 'BPC-157 research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=BPC-157' },
     { label: 'Peptide tissue-repair model research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=peptide+tissue+repair+model' },
   ],
@@ -239,10 +245,14 @@ export const FURTHER_READING = {
     { label: 'Copper peptide research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=copper+peptide+GHK' },
   ],
   NJ500: [
+    { label: 'UKMAXX NAD+ 500mg UK guide', url: '/nad-500mg-uk.html' },
+    { label: 'Verify NAD+ batch NAD-2026-05-A', url: '/coa.html?batch=NAD-2026-05-A' },
     { label: 'NAD+ research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=NAD%2B' },
     { label: 'NAD+ and mitochondrial research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=NAD%2B+mitochondrial+function' },
   ],
   WA10: [
+    { label: 'UKMAXX Bacteriostatic Water 10ml UK guide', url: '/bacteriostatic-water-10ml-uk.html' },
+    { label: 'Shop BAC Water 10ml support item', url: '/product.html?sku=WA10' },
     { label: 'Bacteriostatic water and benzyl alcohol references', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=bacteriostatic+water+benzyl+alcohol' },
     { label: 'Benzyl alcohol preservative research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=benzyl+alcohol+preservative' },
   ],

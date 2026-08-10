@@ -524,7 +524,8 @@ function renderFurtherReading(links) {
     + '<p>Independent research links for context. These are educational references, not usage guidance.</p>'
     + '<div class="pdp-reading-links">'
     + links.map(function (link) {
-      return '<a href="' + link.url + '" target="_blank" rel="noopener noreferrer">'
+      var external = /^https?:\/\//i.test(link.url);
+      return '<a href="' + link.url + '"' + (external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>'
         + '<span>' + link.label + '</span>'
         + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>'
         + '</a>';
