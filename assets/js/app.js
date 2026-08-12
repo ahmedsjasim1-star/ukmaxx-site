@@ -12,7 +12,7 @@ import { renderProductDetail, renderRelatedProducts } from './modules/productDet
 import { setupAccountPage } from './modules/account.js?v=20260731-account-reorder';
 import { updateHeroBatchChips } from './modules/heroBatch.js';
 import { refreshLiveStock } from './data/products.js?v=20260810-launch-pricing';
-import { setupCoaPage } from './modules/coaPage.js?v=20260804-desktop-cards-products-cache';
+import { setupCoaPage } from './modules/coaPage.js?v=20260812-result-polish';
 import { setupAnalytics } from './modules/analytics.js?v=20260731-analytics-phase-a';
 
 document.addEventListener('DOMContentLoaded', async () => {
