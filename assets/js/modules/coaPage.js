@@ -368,26 +368,37 @@ function resultHtml(record) {
   }
 
   const left = remaining(record);
+  const isRejectedRecord = record.status === 'REJECTED';
+  const availabilityPercent = record.batchSize
+    ? Math.max(0, Math.min(100, Math.round((left / record.batchSize) * 100)))
+    : 0;
   const action = record.url
     ? `<a class="btn btn-primary" href="${record.url}" target="_blank" rel="noopener noreferrer">Verify on ${escapeHtml(record.lab)}</a>`
     : `<a class="btn btn-ghost" href="${productUrl(record.sku)}">View product</a>`;
 
   return `
-    <div class="coa-result ${record.status === 'REJECTED' ? 'is-rejected' : ''}">
+    <div class="coa-result ${isRejectedRecord ? 'is-rejected' : ''}">
       <div class="coa-result-kicker">${escapeHtml(record.statusLabel)}</div>
-      ${record.status === 'REJECTED' ? `<p><strong>Release decision:</strong> This batch was not released for sale. ${escapeHtml(record.rejectionReason || 'It did not meet UKMAXX release standards.')}</p>` : ''}
-      <h3>${escapeHtml(record.product)} · ${escapeHtml(record.batch)}</h3>
+      <h3>${escapeHtml(record.product)}</h3>
+      <code class="coa-result-batch">${escapeHtml(record.batch)}</code>
+      ${isRejectedRecord ? `<p><strong>Release decision:</strong> This batch was not released for sale. ${escapeHtml(record.rejectionReason || 'It did not meet UKMAXX release standards.')}</p>` : ''}
       <div class="coa-result-grid">
-        <div><span>Lab</span><strong>${escapeHtml(record.lab)}</strong></div>
-        <div><span>Method</span><strong>${escapeHtml(record.method)}</strong></div>
-        <div><span>Purity / assay</span><strong>${escapeHtml(displayPurity(record))}</strong></div>
-        <div><span>Test date</span><strong>${escapeHtml(record.testDate)}</strong></div>
-        ${record.labelClaim ? `<div><span>Label claim</span><strong>${escapeHtml(record.labelClaim)}</strong></div>` : ''}
-        <div><span>Batch size</span><strong>${escapeHtml(record.batchSize || '—')}</strong></div>
-        <div><span>Sold</span><strong>${escapeHtml(record.soldCount || 0)}</strong></div>
-        <div><span>Remaining</span><strong>${escapeHtml(record.batchSize ? left : '—')}</strong></div>
-        <div><span>Status</span><strong>${escapeHtml(record.status === 'REJECTED' ? 'QC rejected' : isArchived(record) ? 'Archived' : 'Current batch')}</strong></div>
+        <div class="coa-result-tile is-lab"><span>Lab</span><strong>${escapeHtml(record.lab)}</strong></div>
+        <div class="coa-result-tile is-method"><span>Method</span><strong>${escapeHtml(record.method)}</strong></div>
+        <div class="coa-result-tile is-assay"><span>Purity / assay</span><strong>${escapeHtml(displayPurity(record))}</strong></div>
+        <div class="coa-result-tile is-date"><span>Test date</span><strong>${escapeHtml(record.testDate)}</strong></div>
+        ${record.labelClaim ? `<div class="coa-result-tile is-claim"><span>Label claim</span><strong>${escapeHtml(record.labelClaim)}</strong></div>` : ''}
+        <div class="coa-result-tile is-size"><span>Batch size</span><strong>${escapeHtml(record.batchSize || '—')}</strong></div>
+        <div class="coa-result-tile ${isRejectedRecord ? 'is-release-rejected' : 'is-certificate'}"><span>${isRejectedRecord ? 'Release' : 'Certificate'}</span><strong>${isRejectedRecord ? 'Not released' : 'Published'}</strong></div>
+        <div class="coa-result-tile is-remaining"><span>Remaining</span><strong>${escapeHtml(isRejectedRecord ? 'Not released' : record.batchSize ? left : '—')}</strong></div>
+        <div class="coa-result-tile is-status"><span>Status</span><strong>${escapeHtml(isRejectedRecord ? 'QC rejected' : isArchived(record) ? 'Archived' : 'Current batch')}</strong></div>
       </div>
+      ${!isRejectedRecord && record.batchSize ? `
+        <div class="coa-availability" style="--coa-availability:${availabilityPercent}%">
+          <div class="coa-availability-copy"><span>Current availability</span><strong>${escapeHtml(left)} of ${escapeHtml(record.batchSize)} available</strong></div>
+          <div class="coa-availability-track" aria-hidden="true"><span></span></div>
+        </div>
+      ` : ''}
       <div class="coa-result-actions">
         ${action}
         <a class="btn btn-ghost" href="${productUrl(record.sku)}">View product page</a>
