@@ -6,8 +6,8 @@ export function setupLightbox() {
   const title = byId('lbTitle');
   const body = byId('lbBody');
   const data = [
-    { title: 'Janoshik report #193587', body: 'Retatrutide 10mg — Batch RT10-2026-06-A — 99.223% purity confirmed via UPLC/MS GLP-1 blind test on 22 Jun 2026. Verify at verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42' },
-    { title: 'Batch code traceability', body: 'Every UKMAXX order includes a batch verification card with a QR link to the third-party COA results for that specific batch — confirming compound identity, purity percentage, test method, lab name, and report date.' }
+    { title: 'Janoshik report #208700', body: 'GHK-Cu 50mg — Batch GHK-2026-05-A — 99.799% purity with 46.68mg GHK-Cu reported by Janoshik Analytical on 28 Jul 2026. Verify at verify.janoshik.com/tests/208700-GHKCu_50mg_ENTH4P5LPBYX' },
+    { title: 'Tested GHK-Cu sample', body: 'The Janoshik report documents the submitted UKMAXX GHK-Cu 50mg vial and connects it to batch GHK-2026-05-A, the published analytical result, and the original laboratory verification record.' }
   ];
   const open = (i) => {
     img.src = document.querySelectorAll('.coa-tile-img img')[i]?.src || '';
