@@ -1,6 +1,6 @@
 import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260813-catalogue2';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260714-review-polish';
-import { renderCart, initCart } from './modules/cart.js?v=20260813-catalogue';
+import { renderCart, initCart } from './modules/cart.js?v=20260813-ghk-bac-upsell';
 import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js?v=20260813-catalogue';
 import { setupLightbox } from './modules/lightbox.js';

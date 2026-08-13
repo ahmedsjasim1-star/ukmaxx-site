@@ -144,7 +144,7 @@ export function renderCart() {
       </div>
     </div>`;
   }).join('');
-  const peptideSkus = ['RT10', 'BC5', 'IP5', 'NJ500'];
+  const peptideSkus = ['RT10', 'BC5', 'IP5', 'GHKCU', 'NJ500'];
   const hasPeptide = c.some(i => peptideSkus.includes(i.sku));
   const hasBac = c.some(i => i.sku === 'WA10');
   if (hasPeptide && !hasBac) {
