@@ -3,6 +3,23 @@ import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 import { renderProductReviewsSummary } from './reviews.js?v=20260714-review-polish';
 
+const PRODUCT_POSITIONING = {
+  GHKCU: { label: 'Copper peptide', className: 'positioning-badge--ghk' },
+  BC5: { label: 'Body protection compound', className: 'positioning-badge--bpc' },
+  NJ500: { label: 'Coenzyme', className: 'positioning-badge--nad' },
+  RT10: { label: 'Triple receptor agonist', className: 'positioning-badge--reta' },
+  RT10X3: { label: 'Research bundle', className: 'positioning-badge--bundle' },
+};
+
+function productPositioningBadge(product) {
+  if (!product) return '';
+  if (product.id === 'WA10') return '<span class="badge badge-stock">In stock</span>';
+  const positioning = PRODUCT_POSITIONING[product.id];
+  return positioning
+    ? '<span class="badge positioning-badge ' + positioning.className + '">' + positioning.label + '</span>'
+    : '';
+}
+
 export function renderProductDetail() {
   const root = byId('pdpRoot');
   if (root) { renderPdpProduct(root); setupDispatchCountdown(); return; }
@@ -236,7 +253,9 @@ function renderPdpProduct(root) {
   if (galleryImg) { galleryImg.src = p.image; galleryImg.alt = p.name; }
   const galleryBadges = byId('pdpGalleryBadges');
   if (galleryBadges) {
-    galleryBadges.innerHTML = (purchasable ? '<span class="badge badge-stock">In stock</span>' : '<span class="badge badge-coming">' + getReleaseLabel(p) + '</span><span class="badge badge-awaiting">' + getCoaStatusLabel(p) + '</span>') + (p.featured ? '<span class="badge badge-featured">Bestseller</span>' : '');
+    galleryBadges.innerHTML = purchasable
+      ? productPositioningBadge(p)
+      : '<span class="badge badge-coming">' + getReleaseLabel(p) + '</span><span class="badge badge-awaiting">' + getCoaStatusLabel(p) + '</span>';
   }
   const galleryThumbs = byId('pdpGalleryThumbs');
   if (galleryThumbs) {
@@ -455,7 +474,7 @@ function renderPdpProduct(root) {
   if (relatedGrid) {
     var related = Object.values(PRODUCTS).filter(function (x) { return x.id !== p.id && isPurchasable(x) && (x.category === p.category || x.category === 'support'); }).slice(0, 4);
     relatedGrid.innerHTML = related.map(function (r) {
-      return '<article class="product-card" data-sku="' + r.id + '"><div class="product-media"><img loading="lazy" src="' + r.image + '" alt="' + r.name + '" width="400" height="400"><div class="product-badges"><span class="badge badge-stock">In stock</span></div></div><div class="product-body"><h3 class="product-name"><a href="./product.html?sku=' + r.id + '">' + r.name + '</a></h3><div class="product-rating"><span class="count">New batch · awaiting reviews</span></div><div class="product-foot"><div class="product-price"><span class="currency">\u00A3</span>' + r.price.toFixed(2) + '</div><button class="add-btn" data-add="' + r.id + '" aria-label="Add ' + r.name + ' to basket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div></article>';
+      return '<article class="product-card" data-sku="' + r.id + '"><div class="product-media"><img loading="lazy" src="' + r.image + '" alt="' + r.name + '" width="400" height="400"><div class="product-badges">' + productPositioningBadge(r) + '</div></div><div class="product-body"><h3 class="product-name"><a href="./product.html?sku=' + r.id + '">' + r.name + '</a></h3><div class="product-rating"><span class="count">New batch · awaiting reviews</span></div><div class="product-foot"><div class="product-price"><span class="currency">\u00A3</span>' + r.price.toFixed(2) + '</div><button class="add-btn" data-add="' + r.id + '" aria-label="Add ' + r.name + ' to basket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div></article>';
     }).join('');
   }
 
@@ -600,6 +619,6 @@ export function renderRelatedProducts() {
   if (!p) return;
   var related = Object.values(PRODUCTS).filter(function (x) { return x.id !== p.id && isPurchasable(x) && (x.category === p.category || x.category === 'support'); }).slice(0, 4);
   grid.innerHTML = related.map(function (r) {
-    return '<article class="product-card" data-sku="' + r.id + '"><div class="product-media"><img loading="lazy" src="' + r.image + '" alt="' + r.name + '" width="400" height="400"><div class="product-badges"><span class="badge badge-stock">In stock</span></div></div><div class="product-body"><h3 class="product-name"><a href="./product.html?sku=' + r.id + '">' + r.name + '</a></h3><div class="product-rating"><span class="count">New batch · awaiting reviews</span></div><div class="product-foot"><div class="product-price"><span class="currency">\u00A3</span>' + r.price.toFixed(2) + '</div><button class="add-btn" data-add="' + r.id + '" aria-label="Add ' + r.name + ' to basket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div></article>';
+    return '<article class="product-card" data-sku="' + r.id + '"><div class="product-media"><img loading="lazy" src="' + r.image + '" alt="' + r.name + '" width="400" height="400"><div class="product-badges">' + productPositioningBadge(r) + '</div></div><div class="product-body"><h3 class="product-name"><a href="./product.html?sku=' + r.id + '">' + r.name + '</a></h3><div class="product-rating"><span class="count">New batch · awaiting reviews</span></div><div class="product-foot"><div class="product-price"><span class="currency">\u00A3</span>' + r.price.toFixed(2) + '</div><button class="add-btn" data-add="' + r.id + '" aria-label="Add ' + r.name + ' to basket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div></article>';
   }).join('');
 }

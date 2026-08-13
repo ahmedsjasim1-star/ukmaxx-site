@@ -8,7 +8,7 @@ import { setupExitIntent } from './modules/exitIntent.js?v=20260625-alerts';
 import { setupNewsletter } from './modules/newsletter.js';
 import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js';
 import { setupTracking } from './modules/tracking.js';
-import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js?v=20260810-launch-pricing';
+import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js?v=20260813-positioning';
 import { setupAccountPage } from './modules/account.js?v=20260731-account-reorder';
 import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260813-catalogue';
 import { refreshLiveStock } from './data/products.js?v=20260813-catalogue';
