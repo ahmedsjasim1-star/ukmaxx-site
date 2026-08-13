@@ -480,7 +480,9 @@ export function initCart() {
 
   byId('continueShoppingBtn')?.addEventListener('click', () => {
     byId('cartClose')?.click();
-    byId('products')?.scrollIntoView({ behavior: 'smooth' });
+    const products = byId('products');
+    if (products) products.scrollIntoView({ behavior: 'smooth' });
+    else window.location.href = '/catalogue.html';
   });
 }
 

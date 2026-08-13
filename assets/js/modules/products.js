@@ -61,7 +61,7 @@ function productCard(p, bundle = false) {
       <div class="product-sku">${p.id} · ${p.shortName}</div>
       <h3 class="product-name"><a href="./product.html?sku=${p.id}">${p.name}</a></h3>
       <div class="product-rating">
-        ${hasReviews ? `<span class="stars" aria-hidden="true">${starsStr}</span><span><strong>${rating.toFixed(1)}</strong></span><a class="count" href="#reviews">(${p.reviewCount} reviews)</a>` : '<span class="count">New batch · awaiting reviews</span>'}
+        ${hasReviews ? `<span class="stars" aria-hidden="true">${starsStr}</span><span><strong>${rating.toFixed(1)}</strong></span><a class="count" href="/#reviews">(${p.reviewCount} reviews)</a>` : '<span class="count">New batch · awaiting reviews</span>'}
       </div>
       <p class="product-desc">${p.description}</p>
       <div class="product-attrs">
@@ -78,16 +78,24 @@ function productCard(p, bundle = false) {
   </article>`;
 }
 
+const CATALOGUE_ORDER = {
+  WA10: 10,
+  GHKCU: 20,
+  BC5: 30,
+  NJ500: 40,
+  RT10: 50,
+  RT10X3: 60,
+  IP5: 90,
+};
+
 function productDisplayRank(p) {
-  if (p.category === 'support') return 2;
-  if (isPurchasable(p)) return 0;
-  return 1;
+  return isPurchasable(p) ? 0 : 1;
 }
 
 function sortForProductGrid(items) {
   return [...items].sort((a, b) =>
     productDisplayRank(a) - productDisplayRank(b) ||
-    Number(a.sortOrder ?? 999) - Number(b.sortOrder ?? 999) ||
+    Number(CATALOGUE_ORDER[a.id] ?? a.sortOrder ?? 999) - Number(CATALOGUE_ORDER[b.id] ?? b.sortOrder ?? 999) ||
     a.name.localeCompare(b.name)
   );
 }

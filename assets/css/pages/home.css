@@ -109,11 +109,9 @@
   main{display:flex;flex-direction:column}
   .hero{order:1;padding:10px 0 18px;background:linear-gradient(180deg,#fff 0%,#F4FAFB 100%)}
   .trust-strip{display:none}
-  #products{order:3;padding-top:18px!important}
-  #bundles{order:4;padding-top:18px}
-  #why{order:5}
-  #coa{order:6}
-  #reviews{order:7}
+  #why{order:3}
+  #coa{order:4}
+  #reviews{order:5}
   .site-footer{order:99}
   .hero-grid{gap:12px}
   .hero-content{order:2}

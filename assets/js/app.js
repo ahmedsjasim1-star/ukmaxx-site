@@ -1,8 +1,8 @@
-import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260810-launch-pricing';
+import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260813-catalogue';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260714-review-polish';
-import { renderCart, initCart } from './modules/cart.js?v=20260810-launch-pricing';
+import { renderCart, initCart } from './modules/cart.js?v=20260813-catalogue';
 import { initAgeGate } from './modules/ageGate.js';
-import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js';
+import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js?v=20260813-catalogue';
 import { setupLightbox } from './modules/lightbox.js';
 import { setupExitIntent } from './modules/exitIntent.js?v=20260625-alerts';
 import { setupNewsletter } from './modules/newsletter.js';
@@ -10,8 +10,8 @@ import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, s
 import { setupTracking } from './modules/tracking.js';
 import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js?v=20260810-launch-pricing';
 import { setupAccountPage } from './modules/account.js?v=20260731-account-reorder';
-import { updateHeroBatchChips } from './modules/heroBatch.js';
-import { refreshLiveStock } from './data/products.js?v=20260810-launch-pricing';
+import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260813-catalogue';
+import { refreshLiveStock } from './data/products.js?v=20260813-catalogue';
 import { setupCoaPage } from './modules/coaPage.js?v=20260812-result-polish';
 import { setupAnalytics } from './modules/analytics.js?v=20260731-analytics-phase-a';
 

@@ -13,6 +13,21 @@ export function setupHeaderScroll() {
 
 export function setupActiveNav() {
   const links = $$('.primary-nav .nav-link');
+  const currentPath = location.pathname.replace(/\/$/, '') || '/';
+  links.forEach((link) => {
+    const href = link.getAttribute('href');
+    if (!href) return;
+    const target = new URL(href, location.origin);
+    const targetPath = target.pathname.replace(/\/$/, '') || '/';
+    if (!target.hash && targetPath === currentPath) link.classList.add('is-active');
+  });
+
+  $$('.mobile-bottom-nav a[data-nav]').forEach((link) => {
+    const target = new URL(link.getAttribute('href'), location.origin);
+    const targetPath = target.pathname.replace(/\/$/, '') || '/';
+    link.classList.toggle('is-active', !target.hash && targetPath === currentPath);
+  });
+
   const sections = links.map(l => {
     const h = l.getAttribute('href');
     if (!h || !h.startsWith('#')) return null;
