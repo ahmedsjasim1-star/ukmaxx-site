@@ -1,17 +1,10 @@
-.peptides-hero{padding:52px 0 34px;background:linear-gradient(180deg,#fff 0%,#eef8f9 100%);border-bottom:1px solid var(--border);overflow:hidden}
-.peptides-hero-grid{display:grid;gap:28px;align-items:center}
-@media (min-width:900px){.peptides-hero-grid{grid-template-columns:1.02fr .98fr;gap:42px}.peptides-hero{padding:72px 0 54px}}
+.peptides-hero{padding:52px 0 46px;background:linear-gradient(180deg,#fff 0%,#eef8f9 100%);border-bottom:1px solid var(--border);overflow:hidden}
+.peptides-hero-grid{max-width:880px}
+@media (min-width:900px){.peptides-hero{padding:66px 0 58px}}
 .peptides-hero-copy h1{font-family:'Space Grotesk',sans-serif;font-size:42px;line-height:1.02;font-weight:700;letter-spacing:-.035em;color:var(--text);margin-bottom:16px}
 @media (min-width:900px){.peptides-hero-copy h1{font-size:64px}}
-.peptides-hero-copy p{font-size:16px;line-height:1.72;color:var(--text-2);max-width:660px;margin-bottom:22px}
+.peptides-hero-copy p{font-size:16px;line-height:1.72;color:var(--text-2);max-width:760px;margin-bottom:22px}
 .peptides-hero-actions{display:flex;gap:10px;flex-wrap:wrap}
-.peptides-proof-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
-.peptides-proof-row span{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid rgba(10,126,140,.16);background:rgba(255,255,255,.78);border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
-.peptides-hero-card{position:relative;border:1px solid var(--border);background:#fff;border-radius:30px;box-shadow:0 24px 70px rgba(8,31,35,.12);overflow:hidden}
-.peptides-hero-card img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
-.peptides-card-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;background:linear-gradient(90deg,#061e22,#0A7E8C);color:#fff}
-.peptides-card-strip strong{font-family:'Space Grotesk',sans-serif;font-size:20px;letter-spacing:.04em}
-.peptides-card-strip span{font-size:12px;color:rgba(255,255,255,.84);text-align:right}
 
 .peptides-products{background:#fff}
 .seo-product-grid{display:grid;gap:14px}
@@ -30,6 +23,7 @@
 .seo-chip.rejected{background:rgba(185,28,28,.08);border-color:rgba(185,28,28,.18);color:#b91c1c}
 
 .peptides-verify{background:linear-gradient(180deg,#f7fbfc,#fff)}
+.peptides-support{background:#f7fbfc;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .verify-panel{display:grid;gap:24px;align-items:center;background:#061e22;color:#fff;border-radius:32px;padding:28px;overflow:hidden;position:relative}
 .verify-panel::after{content:'';position:absolute;right:-90px;top:-90px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(15,163,177,.34),transparent 68%);pointer-events:none}
 @media (min-width:980px){.verify-panel{grid-template-columns:1fr auto auto;padding:38px}}
@@ -57,14 +51,11 @@
 .peptides-cta p{color:var(--text-2);line-height:1.6}
 
 @media (max-width:560px){
-  .peptides-hero{padding:34px 0 26px}
+  .peptides-hero{padding:34px 0 30px}
   .peptides-hero-copy h1{font-size:39px}
   .peptides-hero-copy p{font-size:15px}
-  .peptides-hero-actions .btn{flex:1;min-width:0}
-  .peptides-proof-row{display:grid;grid-template-columns:repeat(2,1fr)}
-  .peptides-proof-row span{justify-content:center;text-align:center;font-size:9.5px}
-  .peptides-card-strip{align-items:flex-start;flex-direction:column}
-  .peptides-card-strip span{text-align:left}
+  .peptides-hero-actions{display:grid;grid-template-columns:1fr;width:100%}
+  .peptides-hero-actions .btn{width:100%;min-width:0}
   .seo-product-card{grid-template-columns:96px 1fr;border-radius:22px}
   .seo-product-card img{width:96px;height:96px}
   .seo-product-card h3{font-size:18px}

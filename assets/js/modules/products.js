@@ -4,6 +4,14 @@ import { byId } from '../utils/dom.js';
 
 const CATS = CATEGORIES;
 const REVIEWS_ENDPOINT = '/api/track-order?type=reviews';
+const CATALOGUE_CARD_CONTENT = {
+  GHKCU: { chip: 'Copper peptide', className: 'catalogue-chip--ghk', description: 'Studied in copper signalling and extracellular-matrix research.' },
+  BC5: { chip: 'Body protection compound', className: 'catalogue-chip--bpc', description: 'Studied in preclinical tissue-protection and repair models.' },
+  NJ500: { chip: 'Coenzyme', className: 'catalogue-chip--nad', description: 'Studied in cellular energy, redox and mitochondrial research.' },
+  RT10: { chip: 'Triple receptor agonist', className: 'catalogue-chip--reta', description: 'Targets GIP, GLP-1 and glucagon receptors in metabolic research.' },
+  RT10X3: { chip: 'Research bundle', className: 'catalogue-chip--bundle', description: 'Three RT10 vials from one verified batch, plus one BAC Water.' },
+  WA10: { chip: 'In stock', className: 'badge-stock', description: 'Support water for compatible laboratory reconstitution workflows.' },
+};
 
 export async function refreshProductReviewStats() {
   try {
@@ -30,15 +38,20 @@ export async function refreshProductReviewStats() {
 }
 
 function productCard(p, bundle = false) {
+  const catalogueMode = document.body?.dataset.catalogueCards === 'true';
+  const catalogueContent = catalogueMode ? CATALOGUE_CARD_CONTENT[p.id] : null;
   const purchasable = isPurchasable(p);
   const stockLow = p.stockCount && p.stockCount <= 10;
   const stockUnit = p.category === 'bundles' ? 'bundles' : 'left';
-  const stockBadge = purchasable
+  const stockBadge = catalogueMode
+    ? ''
+    : purchasable
     ? (stockLow ? `<span class="badge badge-low">Only ${p.stockCount} ${stockUnit}</span>` : `<span class="badge badge-stock">In stock</span>`)
     : `<span class="badge badge-coming">${p.coa?.status === 'REJECTED' ? 'Not available' : getReleaseLabel(p)}</span>`;
   const coaBadge = !p.coaUrl && !purchasable ? `<span class="badge badge-awaiting">${getCoaStatusLabel(p)}</span>` : '';
-  const bestBadge = p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Featured'}</span>` : '';
-  const saveBadge = p.originalPrice ? `<span class="badge badge-new">Save ${money(p.originalPrice - p.price)}</span>` : '';
+  const bestBadge = !catalogueMode && p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Featured'}</span>` : '';
+  const saveBadge = !catalogueMode && p.originalPrice ? `<span class="badge badge-new">Save ${money(p.originalPrice - p.price)}</span>` : '';
+  const catalogueBadge = catalogueContent?.chip ? `<span class="badge catalogue-chip ${catalogueContent.className}">${catalogueContent.chip}</span>` : '';
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
   const starsStr = hasReviews ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '';
@@ -55,7 +68,7 @@ function productCard(p, bundle = false) {
   return `<article class="product-card${p.featured ? ' is-featured' : ''}" data-sku="${p.id}">
     <div class="product-media">
       <img loading="lazy" src="${p.image}" alt="${p.name}" width="400" height="400">
-      <div class="product-badges">${bestBadge}${saveBadge}${stockBadge}${coaBadge}</div>
+      <div class="product-badges">${catalogueBadge}${bestBadge}${saveBadge}${stockBadge}${coaBadge}</div>
     </div>
     <div class="product-body">
       <div class="product-sku">${p.id} · ${p.shortName}</div>
@@ -63,7 +76,7 @@ function productCard(p, bundle = false) {
       <div class="product-rating">
         ${hasReviews ? `<span class="stars" aria-hidden="true">${starsStr}</span><span><strong>${rating.toFixed(1)}</strong></span><a class="count" href="/#reviews">(${p.reviewCount} reviews)</a>` : '<span class="count">New batch · awaiting reviews</span>'}
       </div>
-      <p class="product-desc">${p.description}</p>
+      <p class="product-desc">${catalogueContent?.description || p.description}</p>
       <div class="product-attrs">
         ${attrs.map((attr, index) => `<span class="product-attr">${index === 0 ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> ' : ''}${attr}</span>`).join('')}
       </div>
@@ -104,7 +117,8 @@ export function renderProducts() {
   const grid = byId('productsGrid');
   const bgrid = byId('bundlesGrid');
   if (!grid) return;
-  const all = Object.values(PRODUCTS);
+  const excludedSkus = new Set(String(document.body?.dataset.excludedSkus || '').split(',').map(s => s.trim()).filter(Boolean));
+  const all = Object.values(PRODUCTS).filter(p => !excludedSkus.has(p.id));
   const bundles = sortForProductGrid(all.filter(p => p.category === 'bundles'));
   const products = sortForProductGrid(all.filter(p => p.category !== 'bundles'));
   if (bgrid) {

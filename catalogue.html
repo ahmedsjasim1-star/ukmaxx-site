@@ -60,10 +60,10 @@
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
 <link rel="stylesheet" href="./assets/css/components.css?v=20260813-catalogue">
-<link rel="stylesheet" href="./assets/css/pages/catalogue.css?v=20260813-catalogue">
+<link rel="stylesheet" href="./assets/css/pages/catalogue.css?v=20260813-catalogue2">
 <script src="./assets/html/bundle.js?v=20260813-catalogue"></script>
 </head>
-<body>
+<body data-excluded-skus="IP5" data-catalogue-cards="true">
 
 <div id="ageGate" class="age-gate" aria-modal="true" role="dialog" aria-labelledby="ageGateTitle" aria-describedby="ageGateDesc">
   <div class="age-gate-card">
@@ -82,27 +82,14 @@
 <script>document.write(window.__html.header)</script>
 
 <main id="main">
-  <section class="catalogue-hero" aria-labelledby="catalogueTitle">
-    <div class="container catalogue-hero-inner">
-      <div>
-        <div class="section-eyebrow">Current UK stock</div>
-        <h1 id="catalogueTitle">Research catalogue</h1>
-        <p>Browse current compounds, support products and bundles. Released batches link to their published verification records, with live stock refreshed from the UKMAXX inventory system.</p>
-      </div>
-      <div class="catalogue-hero-actions">
-        <a class="btn btn-ghost" href="/coa.html">Verify a batch</a>
-        <div class="launch-code-pill" aria-label="Catalogue discount code">Code <strong>MAXX10</strong> &middot; 10% off eligible full-price items</div>
-      </div>
-    </div>
-  </section>
-
   <section class="section catalogue-products" id="products" aria-label="Research catalogue">
     <div class="container">
       <div class="section-head">
         <div>
-          <div class="section-eyebrow">Available and documented</div>
-          <h2 class="section-title">Current catalogue</h2>
-          <p class="section-sub">In-stock products appear first. Use the filters to narrow the catalogue.</p>
+          <div class="catalogue-title-line">
+            <h1 id="catalogueTitle" class="section-title catalogue-title">Research catalogue</h1>
+            <div class="launch-code-pill" aria-label="Catalogue discount code">Code <strong>MAXX10</strong> &middot; 10% off eligible full-price items</div>
+          </div>
         </div>
         <div class="filter-tabs" id="filterTabs" role="tablist" aria-label="Filter by category"></div>
       </div>
@@ -141,6 +128,6 @@
 <script>document.write(window.__html.cookieBanner)</script>
 <script>document.write(window.__html.toast)</script>
 
-<script type="module" src="./assets/js/app.js?v=20260813-catalogue"></script>
+<script type="module" src="./assets/js/app.js?v=20260813-catalogue2"></script>
 </body>
 </html>
