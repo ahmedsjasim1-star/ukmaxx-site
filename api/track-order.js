@@ -21,6 +21,7 @@ const ALLOWED_SITE_EVENTS = new Set([
   'payment_success',
   'payment_failed',
   'review_opened',
+  'whatsapp_support_click',
 ]);
 
 module.exports = async (req, res) => {

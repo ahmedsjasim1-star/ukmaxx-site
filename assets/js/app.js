@@ -14,9 +14,11 @@ import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260813-catalogu
 import { refreshLiveStock } from './data/products.js?v=20260813-ghk-seo';
 import { setupCoaPage } from './modules/coaPage.js?v=20260812-result-polish';
 import { setupAnalytics } from './modules/analytics.js?v=20260731-analytics-phase-a';
+import { setupWhatsAppSupport } from './modules/whatsappSupport.js?v=20260814-whatsapp-support';
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupAnalytics();
+  setupWhatsAppSupport();
   initAuth();
   initAgeGate();
   await refreshLiveStock();
