@@ -1,6 +1,6 @@
-import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260813-catalogue2';
+import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260815-fast-products';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260714-review-polish';
-import { renderCart, initCart } from './modules/cart.js?v=20260813-ghk-bac-upsell';
+import { renderCart, initCart } from './modules/cart.js?v=20260815-fast-products';
 import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js?v=20260813-catalogue';
 import { setupLightbox } from './modules/lightbox.js';
@@ -8,21 +8,23 @@ import { setupExitIntent } from './modules/exitIntent.js?v=20260625-alerts';
 import { setupNewsletter } from './modules/newsletter.js';
 import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js';
 import { setupTracking } from './modules/tracking.js';
-import { renderProductDetail, renderRelatedProducts } from './modules/productDetail.js?v=20260813-ghk-seo';
+import { renderProductDetail, refreshProductDetailData, renderRelatedProducts } from './modules/productDetail.js?v=20260815-fast-products';
 import { setupAccountPage } from './modules/account.js?v=20260731-account-reorder';
 import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260813-catalogue';
-import { refreshLiveStock } from './data/products.js?v=20260813-ghk-seo';
-import { setupCoaPage } from './modules/coaPage.js?v=20260812-result-polish';
+import { refreshLiveStock } from './data/products.js?v=20260815-fast-products';
+import { setupCoaPage } from './modules/coaPage.js?v=20260815-fast-products';
 import { setupAnalytics } from './modules/analytics.js?v=20260731-analytics-phase-a';
 import { setupWhatsAppSupport } from './modules/whatsappSupport.js?v=20260814-whatsapp-support';
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   setupAnalytics();
   setupWhatsAppSupport();
   initAuth();
   initAgeGate();
-  await refreshLiveStock();
-  await refreshProductReviewStats();
+
+  // Paint bundled product data immediately. Live stock and verified review
+  // totals are refreshed in parallel below, so the catalogue never waits on
+  // two network requests before becoming useful.
   updateHeroBatchChips();
   renderProducts();
   renderReviews();
@@ -47,4 +49,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupTracking();
   setupAccountPage();
   setupCoaPage();
+
+  Promise.all([refreshLiveStock(), refreshProductReviewStats()]).then(([stockUpdated, reviewsUpdated]) => {
+    if (!stockUpdated && !reviewsUpdated) return;
+    updateHeroBatchChips();
+    renderProducts();
+    renderCart();
+    refreshProductDetailData();
+    renderRelatedProducts();
+  }).catch(() => {});
 });

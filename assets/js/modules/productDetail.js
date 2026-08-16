@@ -1,4 +1,4 @@
-import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260813-ghk-seo';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260815-fast-products';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 import { renderProductReviewsSummary } from './reviews.js?v=20260714-review-polish';
@@ -81,6 +81,15 @@ export function renderProductDetail() {
       container.querySelector(`.pd-tab-content[data-tab="${btn.dataset.tab}"]`)?.classList.add('is-active');
     });
   });
+}
+
+export function refreshProductDetailData() {
+  const root = byId('pdpRoot');
+  if (root) {
+    renderPdpProduct(root);
+    return;
+  }
+  if (byId('productDetail')) renderProductDetail();
 }
 
 function launchChecklist(product, purchasable) {
@@ -268,14 +277,14 @@ function renderPdpProduct(root) {
       return '<button class="pdp-thumb' + (index === 0 ? ' is-active' : '') + '" type="button" aria-label="' + thumb.label + '" data-img="' + thumb.src + '" data-alt="' + thumb.alt + '"><img src="' + thumb.src + '" alt="' + thumb.alt + '" width="80" height="64" loading="lazy"></button>';
     }).join('');
     galleryThumbs.querySelectorAll('.pdp-thumb').forEach(function (thumb) {
-      thumb.addEventListener('click', function () {
+      thumb.onclick = function () {
         if (galleryImg) {
           galleryImg.src = thumb.dataset.img || p.image;
           galleryImg.alt = thumb.dataset.alt || p.name;
         }
         galleryThumbs.querySelectorAll('.pdp-thumb').forEach(function (btn) { btn.classList.remove('is-active'); });
         thumb.classList.add('is-active');
-      });
+      };
     });
   }
 
@@ -316,42 +325,43 @@ function renderPdpProduct(root) {
   const inp = byId('pdpQtyInput');
   const clamp = (v) => Math.max(1, Math.min(99, Number(v) || 1));
   const sync = () => { if (inp) inp.value = clamp(inp.value); };
-  if (dec) dec.addEventListener('click', () => { if (inp) inp.value = clamp(Number(inp.value) - 1); sync(); });
-  if (inc) inc.addEventListener('click', () => { if (inp) inp.value = clamp(Number(inp.value) + 1); sync(); });
-  if (inp) inp.addEventListener('change', sync);
+  if (dec) dec.onclick = () => { if (inp) inp.value = clamp(Number(inp.value) - 1); sync(); };
+  if (inc) inc.onclick = () => { if (inp) inp.value = clamp(Number(inp.value) + 1); sync(); };
+  if (inp) inp.onchange = sync;
 
   const mDec = byId('pdpMobileQtyDec');
   const mInc = byId('pdpMobileQtyInc');
   const mInp = byId('pdpMobileQtyInput');
   const mSync = () => { if (mInp) mInp.value = clamp(mInp.value); };
-  if (mDec) mDec.addEventListener('click', () => { if (mInp) mInp.value = clamp(Number(mInp.value) - 1); mSync(); });
-  if (mInc) mInc.addEventListener('click', () => { if (mInp) mInp.value = clamp(Number(mInp.value) + 1); mSync(); });
-  if (mInp) mInp.addEventListener('change', mSync);
+  if (mDec) mDec.onclick = () => { if (mInp) mInp.value = clamp(Number(mInp.value) - 1); mSync(); };
+  if (mInc) mInc.onclick = () => { if (mInp) mInp.value = clamp(Number(mInp.value) + 1); mSync(); };
+  if (mInp) mInp.onchange = mSync;
 
   const buyNowBtn = byId('pdpBuyNow');
-  if (buyNowBtn && !purchasable) {
-    buyNowBtn.disabled = true;
-    buyNowBtn.innerHTML = getReleaseLabel(p) + ' — ' + getCoaStatusLabel(p);
+  if (buyNowBtn) {
+    buyNowBtn.disabled = !purchasable;
+    buyNowBtn.innerHTML = purchasable
+      ? '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Buy now — secure checkout'
+      : getReleaseLabel(p) + ' — ' + getCoaStatusLabel(p);
+    buyNowBtn.onclick = purchasable ? function () {
+      const qty = Number(byId('pdpQtyInput')?.value || 1);
+      window.addSkuQty(p.id, qty);
+      setTimeout(function () {
+        if (typeof window.openCheckout === 'function') {
+          window.openCheckout();
+        } else {
+          byId('cartBtn')?.click();
+        }
+      }, 300);
+    } : null;
   }
-
-  byId('pdpBuyNow')?.addEventListener('click', async () => {
-    if (!purchasable) return;
-    const qty = Number(byId('pdpQtyInput')?.value || 1);
-    window.addSkuQty(p.id, qty);
-    setTimeout(function () {
-      if (typeof window.openCheckout === 'function') {
-        window.openCheckout();
-      } else {
-        byId('cartBtn')?.click();
-      }
-    }, 300);
-  });
 
   const upsellSkus = ['RT10', 'BC5', 'IP5', 'GHKCU', 'NJ500'];
   const upsell = byId('pdpUpsell');
   if (upsellSkus.includes(sku)) {
     if (upsell) upsell.style.display = '';
-    byId('pdpUpsellBtn')?.addEventListener('click', function () { window.addSku('WA10'); });
+    const upsellBtn = byId('pdpUpsellBtn');
+    if (upsellBtn) upsellBtn.onclick = function () { window.addSku('WA10'); };
   } else {
     if (upsell) upsell.style.display = 'none';
   }
@@ -425,12 +435,12 @@ function renderPdpProduct(root) {
       ? '<div class="left"><strong>' + getQualityLabel(p) + '</strong> Batch quality details are listed above.</div>'
       : '<div class="left"><strong>Awaiting COA</strong> Certificate of analysis pending for this product.</div>';
   } else if (coaViewBtn) {
-    coaViewBtn.addEventListener('click', function () {
+    coaViewBtn.onclick = function () {
       if (p.coaUrl) { window.open(p.coaUrl, '_blank', 'noopener'); return; }
       var lb = byId('lightboxOverlay') || byId('lbBackdrop');
       var img = byId('lightboxImg') || byId('lbImg');
       if (lb && img) { img.src = p.coaImage || ''; img.alt = p.name + ' COA'; lb.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-    });
+    };
   }
 
   setText('pdpScoreNum', hasReviews ? rating.toFixed(1) : '—');
@@ -557,6 +567,8 @@ function setupPdpTabs() {
   var tabContainer = byId('pdpTabs');
   var sections = byId('pdpSections');
   if (!tabContainer || !sections) return;
+  if (tabContainer.dataset.initialized === 'true') return;
+  tabContainer.dataset.initialized = 'true';
   var tabBtns = tabContainer.querySelectorAll('.pdp-tab');
   var targetMap = {};
   tabBtns.forEach(function (btn) {
