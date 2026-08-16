@@ -15,10 +15,12 @@ import { refreshLiveStock } from './data/products.js?v=20260815-fast-products';
 import { setupCoaPage } from './modules/coaPage.js?v=20260815-fast-products';
 import { setupAnalytics } from './modules/analytics.js?v=20260731-analytics-phase-a';
 import { setupWhatsAppSupport } from './modules/whatsappSupport.js?v=20260814-whatsapp-support';
+import { setupHomeProof } from './modules/homeProof.js?v=20260816-home-depth';
 
 document.addEventListener('DOMContentLoaded', () => {
   setupAnalytics();
   setupWhatsAppSupport();
+  setupHomeProof();
   initAuth();
   initAgeGate();
 
