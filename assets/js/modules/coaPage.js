@@ -337,6 +337,20 @@ function renderRows(records) {
   }
 }
 
+function scrollToLinkedRecordSection() {
+  const targets = {
+    'all-coas': 'all-coas',
+    'rejected-batches': 'coaRejectedSection',
+  };
+  const hash = decodeURIComponent(window.location.hash.slice(1));
+  const targetId = targets[hash];
+  if (!targetId) return;
+
+  requestAnimationFrame(() => {
+    document.getElementById(targetId)?.scrollIntoView({ block: 'start' });
+  });
+}
+
 function findRecord(query, records) {
   const needle = normalise(query);
   if (!needle) return null;
@@ -413,6 +427,7 @@ export function setupCoaPage() {
 
   let records = localRecords();
   renderRows(records);
+  scrollToLinkedRecordSection();
 
   const form = byId('coaCheckerForm');
   const input = byId('coaCheckerInput');

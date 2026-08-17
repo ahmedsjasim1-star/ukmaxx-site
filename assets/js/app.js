@@ -12,7 +12,7 @@ import { renderProductDetail, refreshProductDetailData, renderRelatedProducts } 
 import { setupAccountPage } from './modules/account.js?v=20260731-account-reorder';
 import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260813-catalogue';
 import { refreshLiveStock } from './data/products.js?v=20260815-fast-products';
-import { setupCoaPage } from './modules/coaPage.js?v=20260815-fast-products';
+import { setupCoaPage } from './modules/coaPage.js?v=20260816-stat-links';
 import { setupAnalytics } from './modules/analytics.js?v=20260731-analytics-phase-a';
 import { setupWhatsAppSupport } from './modules/whatsappSupport.js?v=20260814-whatsapp-support';
 import { setupHomeProof } from './modules/homeProof.js?v=20260816-home-depth';
