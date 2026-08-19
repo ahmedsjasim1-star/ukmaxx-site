@@ -5,7 +5,7 @@ import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw, setRaw, removeStorage } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
 import { getSupabase } from '../data/supabase.js';
-import { getAnalyticsContext, trackEvent } from './analytics.js?v=20260819-customer-journeys';
+import { getAnalyticsContext, trackEvent } from './analytics.js?v=20260819-restore-traffic';
 
 const SHIP_THRESHOLD = FREE_SHIPPING_THRESHOLD || 100;
 const SHIP_FLAT = FLAT_SHIPPING || 4.99;

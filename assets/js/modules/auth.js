@@ -4,7 +4,7 @@ import { toast } from './toast.js';
 import { $, byId } from '../utils/dom.js';
 import { getRaw, setRaw } from '../utils/storage.js';
 import { AGE_KEY } from '../data/products.js';
-import { linkAccountAnalytics } from './analytics.js?v=20260819-customer-journeys';
+import { linkAccountAnalytics } from './analytics.js?v=20260819-restore-traffic';
 
 let currentUser = null;
 let authInited = false;
@@ -50,11 +50,6 @@ export function initAuth() {
         window.location.href = '/update-password.html';
       }
     });
-    window.addEventListener('ukmaxx:cookie-consent', async (event) => {
-      if (event.detail !== 'accepted') return;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) linkAccountAnalytics(session.access_token, session.user?.id);
-    }, { once: true });
     setupUpdatePassword();
   }).catch(err => console.error('Auth init failed', err));
 }

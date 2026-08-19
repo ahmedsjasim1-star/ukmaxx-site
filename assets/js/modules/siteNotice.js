@@ -1,17 +1,5 @@
-import { COOKIE_KEY } from '../data/products.js';
-import { byId } from '../utils/dom.js';
-import { getRaw, setRaw } from '../utils/storage.js';
-
 export function setupCookieBanner() {
-  if (getRaw(COOKIE_KEY)) return;
-  const b = byId('cookieBanner');
-  if (!b) return;
-  setTimeout(() => b.classList.add('is-shown'), 1500);
-  const close = val => {
-    setRaw(COOKIE_KEY, val);
-    b.classList.remove('is-shown');
-    window.dispatchEvent(new CustomEvent('ukmaxx:cookie-consent', { detail: val }));
-  };
-  byId('cookieAccept')?.addEventListener('click', () => close('accepted'));
-  byId('cookieReject')?.addEventListener('click', () => close('rejected'));
+  // UKMAXX uses its own pseudonymous first-party traffic measurement.
+  // The former analytics consent prompt is intentionally no longer shown.
+  return;
 }

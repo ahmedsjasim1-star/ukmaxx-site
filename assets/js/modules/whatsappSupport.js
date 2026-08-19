@@ -1,4 +1,4 @@
-import { trackEvent } from './analytics.js?v=20260730-admin-analytics';
+import { trackEvent } from './analytics.js?v=20260819-restore-traffic';
 
 const WHATSAPP_NUMBER = '447438637604';
 const SUPPORT_MESSAGE = 'Hi UKMAXX, I need help with an order, tracking or batch verification.';

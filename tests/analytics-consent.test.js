@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-test('journey analytics waits for consent and then records first-touch context', async () => {
+test('journey analytics records first-touch context without waiting for a banner', async () => {
   const storage = new Map();
   global.localStorage = {
     getItem: (key) => storage.has(key) ? storage.get(key) : null,
@@ -32,15 +32,7 @@ test('journey analytics waits for consent and then records first-touch context',
   const source = fs.readFileSync(filename, 'utf8');
   const analytics = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
-  assert.deepEqual(analytics.getAnalyticsContext(), {});
   analytics.setupAnalytics();
-  assert.equal(beacons, 0);
-
-  storage.set('ukmaxx_cookies_v1', 'accepted');
-  const consent = new Event('ukmaxx:cookie-consent');
-  consent.detail = 'accepted';
-  browserWindow.dispatchEvent(consent);
-
   assert.equal(beacons, 1);
   const context = analytics.getAnalyticsContext();
   assert.equal(context.firstSource, 'Google');
@@ -50,4 +42,3 @@ test('journey analytics waits for consent and then records first-touch context',
   assert.ok(context.visitorId);
   assert.ok(context.sessionId);
 });
-

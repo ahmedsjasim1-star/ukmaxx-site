@@ -2,7 +2,6 @@ const VISITOR_KEY = 'ukmaxx_analytics_visitor';
 const SESSION_KEY = 'ukmaxx_analytics_session';
 const FIRST_TOUCH_KEY = 'ukmaxx_analytics_first_touch';
 const ACCOUNT_LINK_KEY = 'ukmaxx_analytics_account_link';
-const COOKIE_KEY = 'ukmaxx_cookies_v1';
 const IGNORE_KEY = 'ukmaxx_analytics_ignore';
 const ENDPOINT = '/api/track-order';
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
@@ -114,7 +113,6 @@ function utm(name) {
 }
 
 export function getAnalyticsContext() {
-  if (storageGet(COOKIE_KEY) !== 'accepted') return {};
   const session = sessionState();
   const first = firstTouch();
   return {
@@ -138,7 +136,7 @@ export function getAnalyticsContext() {
 }
 
 export async function linkAccountAnalytics(accessToken, userId = '') {
-  if (!accessToken || storageGet(IGNORE_KEY) === 'true' || storageGet(COOKIE_KEY) !== 'accepted') return;
+  if (!accessToken || storageGet(IGNORE_KEY) === 'true') return;
   try {
     const context = getAnalyticsContext();
     const linkKey = `${userId || 'account'}:${context.sessionId}`;
@@ -160,7 +158,7 @@ export function trackEvent(eventType, extra = {}) {
   try {
     const path = window.location.pathname || '/';
     const ignored = storageGet(IGNORE_KEY) === 'true';
-    if (ignored || path.endsWith('/admin.html') || storageGet(COOKIE_KEY) !== 'accepted') return;
+    if (ignored || path.endsWith('/admin.html')) return;
 
     const analytics = getAnalyticsContext();
     const payload = {
@@ -201,29 +199,19 @@ window.ukmaxxAnalytics.trackThisBrowser = () => storageSet(IGNORE_KEY, 'false');
 window.ukmaxxAnalytics.isIgnored = () => storageGet(IGNORE_KEY) === 'true';
 
 export function setupAnalytics() {
-  let started = false;
-  const start = () => {
-    if (started || storageGet(COOKIE_KEY) !== 'accepted') return;
-    started = true;
-    trackEvent('page_view');
+  trackEvent('page_view');
 
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get('sku');
-    if (window.location.pathname.endsWith('/product.html') && sku) {
-      trackEvent('product_view', { productSku: sku });
-    }
+  const params = new URLSearchParams(window.location.search);
+  const sku = params.get('sku');
+  if (window.location.pathname.endsWith('/product.html') && sku) {
+    trackEvent('product_view', { productSku: sku });
+  }
 
-    const paymentReturn = params.get('payment');
-    const status = String(params.get('status') || '').toLowerCase();
-    if (paymentReturn === 'success' || (paymentReturn === 'fena-return' && status === 'paid')) {
-      trackEvent('payment_success');
-    } else if (paymentReturn === 'cancelled' || (paymentReturn === 'fena-return' && ['rejected', 'cancelled', 'overdue', 'refund rejected'].includes(status))) {
-      trackEvent('payment_failed');
-    }
-  };
-
-  start();
-  window.addEventListener('ukmaxx:cookie-consent', (event) => {
-    if (event.detail === 'accepted') start();
-  }, { once: true });
+  const paymentReturn = params.get('payment');
+  const status = String(params.get('status') || '').toLowerCase();
+  if (paymentReturn === 'success' || (paymentReturn === 'fena-return' && status === 'paid')) {
+    trackEvent('payment_success');
+  } else if (paymentReturn === 'cancelled' || (paymentReturn === 'fena-return' && ['rejected', 'cancelled', 'overdue', 'refund rejected'].includes(status))) {
+    trackEvent('payment_failed');
+  }
 }

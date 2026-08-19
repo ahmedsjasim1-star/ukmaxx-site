@@ -1,6 +1,6 @@
 import { tpStars } from '../utils/money.js';
 import { $, byId } from '../utils/dom.js';
-import { trackEvent } from './analytics.js?v=20260730-admin-analytics';
+import { trackEvent } from './analytics.js?v=20260819-restore-traffic';
 
 const REVIEW_ENDPOINT = '/api/track-order';
 const PRODUCT_LABELS = {
