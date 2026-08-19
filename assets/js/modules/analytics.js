@@ -143,7 +143,7 @@ export async function linkAccountAnalytics(accessToken, userId = '') {
     const context = getAnalyticsContext();
     const linkKey = `${userId || 'account'}:${context.sessionId}`;
     if (storageGet(ACCOUNT_LINK_KEY) === linkKey) return;
-    const response = await fetch('/api/link-account-analytics', {
+    const response = await fetch('/api/order-admin?type=link-account', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

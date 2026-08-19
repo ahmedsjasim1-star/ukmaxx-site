@@ -37,6 +37,7 @@ function isAuthorized(req) {
 
 module.exports = async (req, res) => {
   if (req.method === 'GET' && req.query?.type === 'dashboard') return handleDashboard(req, res);
+  if (req.method === 'POST' && req.query?.type === 'link-account') return handleAccountAnalyticsLink(req, res);
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!isAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -64,6 +65,64 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: `Failed to ${action} order` });
   }
 };
+
+function cleanAnalyticsValue(value, max = 500) {
+  return String(value || '').trim().slice(0, max);
+}
+
+function cleanAnalyticsId(value) {
+  return cleanAnalyticsValue(value, 80).replace(/[^a-z0-9_-]/gi, '').slice(0, 80);
+}
+
+function cleanAnalyticsPath(value) {
+  const path = cleanAnalyticsValue(value, 500);
+  if (!path || !path.startsWith('/')) return '/';
+  return path.replace(/[^\w\-./?=&%#:+]/g, '').slice(0, 500);
+}
+
+async function handleAccountAnalyticsLink(req, res) {
+  try {
+    const authorization = String(req.headers.authorization || '');
+    const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+    if (!token) return res.status(401).json({ error: 'Sign in required' });
+
+    const supabase = getSupabaseAdmin();
+    const authResult = await supabase.auth.getUser(token);
+    const user = authResult.data?.user;
+    if (authResult.error || !user?.id) return res.status(401).json({ error: 'Invalid session' });
+
+    const context = req.body?.analyticsContext || {};
+    const visitorId = cleanAnalyticsId(context.visitorId);
+    const sessionId = cleanAnalyticsId(context.sessionId);
+    if (!visitorId || !sessionId) return res.status(204).end();
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const update = {
+      analytics_visitor_id: visitorId,
+      analytics_session_id: sessionId,
+      first_source: profile?.first_source || cleanAnalyticsValue(context.firstSource, 120) || 'Direct',
+      first_referrer: profile?.first_referrer || cleanAnalyticsValue(context.firstReferrer, 500) || null,
+      first_landing_page: profile?.first_landing_page || cleanAnalyticsPath(context.firstLandingPage),
+      first_seen_at: profile?.first_seen_at || cleanAnalyticsValue(context.firstSeenAt, 40) || new Date().toISOString(),
+      first_utm_source: profile?.first_utm_source || cleanAnalyticsValue(context.firstUtmSource, 80) || null,
+      first_utm_medium: profile?.first_utm_medium || cleanAnalyticsValue(context.firstUtmMedium, 80) || null,
+      first_utm_campaign: profile?.first_utm_campaign || cleanAnalyticsValue(context.firstUtmCampaign, 120) || null,
+      last_linked_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase.from('profiles').update(update).eq('id', user.id);
+    if (error && !/column .* does not exist|schema cache/i.test(String(error.message || ''))) throw error;
+    return res.status(204).end();
+  } catch (error) {
+    console.error('link-account-analytics-error', { message: error?.message });
+    return res.status(202).json({ ok: false });
+  }
+}
 
 function allowedAdminEmails() {
   return String(process.env.ADMIN_EMAILS || 'support@ukmaxx.co.uk')

@@ -93,8 +93,13 @@ test('Fena webhook is unavailable until terminal credentials are configured', as
 });
 
 test('account analytics linkage requires an authenticated account', async () => {
-  const handler = require('../api/link-account-analytics');
+  const handler = require('../api/order-admin');
   const res = response();
-  await handler({ method: 'POST', headers: {}, body: { analyticsContext: {} } }, res);
+  await handler({
+    method: 'POST',
+    query: { type: 'link-account' },
+    headers: {},
+    body: { analyticsContext: {} },
+  }, res);
   assert.equal(res.statusCode, 401);
 });
