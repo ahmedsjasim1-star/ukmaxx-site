@@ -1,4 +1,4 @@
-import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260815-fast-products';
+import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260819-seo-clusters';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260714-review-polish';
 import { renderCart, initCart } from './modules/cart.js?v=20260819-customer-journeys';
 import { initAgeGate } from './modules/ageGate.js';
@@ -8,10 +8,10 @@ import { setupExitIntent } from './modules/exitIntent.js?v=20260625-alerts';
 import { setupNewsletter } from './modules/newsletter.js';
 import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js?v=20260819-customer-journeys';
 import { setupTracking } from './modules/tracking.js';
-import { renderProductDetail, refreshProductDetailData, renderRelatedProducts } from './modules/productDetail.js?v=20260815-fast-products';
+import { renderProductDetail, refreshProductDetailData, renderRelatedProducts } from './modules/productDetail.js?v=20260819-seo-clusters';
 import { setupAccountPage } from './modules/account.js?v=20260731-account-reorder';
 import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260813-catalogue';
-import { refreshLiveStock } from './data/products.js?v=20260815-fast-products';
+import { refreshLiveStock } from './data/products.js?v=20260819-seo-clusters';
 import { setupCoaPage } from './modules/coaPage.js?v=20260816-stat-links';
 import { setupAnalytics } from './modules/analytics.js?v=20260819-customer-journeys';
 import { setupWhatsAppSupport } from './modules/whatsappSupport.js?v=20260814-whatsapp-support';

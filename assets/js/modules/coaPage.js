@@ -1,4 +1,4 @@
-import { COA, PRODUCTS, getCoaStatusLabel, getReleaseLabel } from '../data/products.js?v=20260815-fast-products';
+import { COA, PRODUCTS, getCoaStatusLabel, getReleaseLabel } from '../data/products.js?v=20260819-seo-clusters';
 import { getSupabase } from '../data/supabase.js';
 
 function byId(id) {
