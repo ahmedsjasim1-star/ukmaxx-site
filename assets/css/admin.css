@@ -90,12 +90,21 @@
 .order-drawer{position:fixed;inset:0;z-index:80;display:none}
 .order-drawer.is-open{display:block}
 .order-drawer-backdrop{position:absolute;inset:0;border:0;background:rgba(0,0,0,.55);backdrop-filter:blur(8px);cursor:pointer}
-.order-drawer-card{position:absolute;top:18px;right:18px;bottom:18px;width:min(430px,calc(100% - 36px));overflow:auto;border-radius:28px;border:1px solid rgba(99,211,220,.2);background:linear-gradient(160deg,rgba(7,27,31,.98),rgba(3,16,19,.98));box-shadow:0 30px 90px rgba(0,0,0,.45);padding:24px;color:#e9fbfd}
+.order-drawer-card{position:absolute;top:18px;right:18px;bottom:18px;width:min(540px,calc(100% - 36px));overflow:auto;border-radius:28px;border:1px solid rgba(99,211,220,.2);background:linear-gradient(160deg,rgba(7,27,31,.98),rgba(3,16,19,.98));box-shadow:0 30px 90px rgba(0,0,0,.45);padding:24px;color:#e9fbfd}
 .order-drawer-close{position:absolute;top:16px;right:16px;width:38px;height:38px;border:1px solid rgba(184,216,220,.16);border-radius:999px;background:rgba(255,255,255,.07);color:#fff;font-size:24px;line-height:1;cursor:pointer}
 .order-drawer-card h2{font-family:"Space Grotesk",sans-serif;font-size:30px;letter-spacing:-.04em;margin:0 0 18px;color:#fff}
 .order-detail-grid{display:grid;gap:10px}
 .order-detail-grid div{border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(184,216,220,.1);padding:12px}
 .order-detail-grid span{display:block;font-family:"IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.08em;font-size:10px;color:#86b4ba;margin-bottom:5px}
 .order-detail-grid strong{display:block;color:#fff;overflow-wrap:anywhere}
+.order-detail-grid .order-detail-wide{padding:16px}
+.journey-timeline{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:0}
+.journey-timeline li{position:relative;display:grid;grid-template-columns:18px 1fr;gap:10px;padding:0 0 16px}
+.journey-timeline li:not(:last-child)::before{content:"";position:absolute;left:6px;top:12px;bottom:-2px;width:1px;background:linear-gradient(#28c0ce,rgba(40,192,206,.12))}
+.journey-dot{position:relative;z-index:1;width:13px;height:13px;margin-top:3px;border-radius:50%;background:#28c0ce;box-shadow:0 0 0 4px rgba(40,192,206,.12)}
+.journey-timeline strong{font-size:13px;line-height:1.35}
+.journey-timeline span:not(.journey-dot){margin:3px 0 0;text-transform:none;letter-spacing:0;font-family:Inter,sans-serif;font-size:12px;color:#b7d9de}
+.journey-timeline small{display:block;margin-top:4px;color:#719da4;font-family:"IBM Plex Mono",monospace;font-size:10px}
+.visitor-row .dropoff-main strong{color:#c8fbff}
 @media (max-width:980px){.admin-header,.admin-range-panel{grid-template-columns:1fr}.admin-header-actions,.admin-range-tabs{justify-content:flex-start}.metric-grid,.admin-grid-main,.admin-grid-three{grid-template-columns:1fr 1fr}}
 @media (max-width:640px){.admin-shell{width:min(100% - 20px,1240px);padding:14px 0 34px}.admin-lock-card,.admin-header,.admin-panel,.admin-range-panel{border-radius:22px;padding:18px}.metric-grid,.admin-grid-main,.admin-grid-three,.mini-metrics{grid-template-columns:1fr}.admin-header h1{font-size:34px}.admin-range-panel h2{font-size:24px}.admin-range-tab{flex:1 1 calc(25% - 8px);padding:0 10px}.metric-card{min-height:124px}.bar-row{grid-template-columns:1fr auto}.bar-track{grid-column:1 / -1}.dropoff-row{grid-template-columns:1fr}.dropoff-stage{justify-self:start;text-align:left}}

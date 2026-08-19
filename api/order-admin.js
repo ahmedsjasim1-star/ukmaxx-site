@@ -110,15 +110,23 @@ async function handleDashboard(req, res) {
 }
 
 async function safeSelect(supabase, table, select, options = {}) {
-  let query = supabase.from(table).select(select);
-  if (options.order) query = query.order(options.order.column, { ascending: options.order.ascending });
-  if (options.limit) query = query.limit(options.limit);
-  const { data, error } = await query;
-  if (error) {
-    console.error('admin-dashboard-query-error', { table, message: error.message });
-    return [];
+  const requestedLimit = Math.max(1, Math.min(Number(options.limit || 1000), 20000));
+  const pageSize = Math.min(1000, requestedLimit);
+  const rows = [];
+
+  for (let offset = 0; offset < requestedLimit; offset += pageSize) {
+    let query = supabase.from(table).select(select);
+    if (options.order) query = query.order(options.order.column, { ascending: options.order.ascending });
+    query = query.range(offset, Math.min(offset + pageSize - 1, requestedLimit - 1));
+    const { data, error } = await query;
+    if (error) {
+      console.error('admin-dashboard-query-error', { table, message: error.message });
+      return rows;
+    }
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
   }
-  return data || [];
+  return rows;
 }
 
 function asNumber(value) {
@@ -362,21 +370,280 @@ function paymentSummary(attempts) {
   };
 }
 
-function recentOrders(orders) {
-  return orders.slice(0, 10).map((order) => ({
-    orderNumber: order.order_number,
-    email: order.email,
-    subtotal: asNumber(order.subtotal),
-    discount: asNumber(order.discount),
-    shipping: asNumber(order.shipping),
-    total: asNumber(order.total),
-    status: order.status,
-    paymentProvider: order.payment_provider || 'fena',
-    promoOptIn: Boolean(order.promo_opt_in),
-    dispatchedAt: order.dispatched_at,
-    deliveredAt: order.delivered_at,
-    createdAt: order.created_at,
-  }));
+function attemptContext(attempt = {}) {
+  const analytics = attempt.payload?.analytics || {};
+  return {
+    visitorId: attempt.visitor_id || analytics.visitorId || '',
+    sessionId: attempt.session_id || analytics.sessionId || '',
+    accountUserId: attempt.account_user_id || attempt.payload?.user_id || '',
+    checkoutType: attempt.checkout_type || attempt.payload?.checkout_type || 'guest',
+    firstSource: attempt.first_source || analytics.firstSource || '',
+    firstReferrer: attempt.first_referrer || analytics.firstReferrer || '',
+    firstLandingPage: attempt.first_landing_page || analytics.firstLandingPage || '',
+    firstSeenAt: attempt.first_seen_at || analytics.firstSeenAt || '',
+    firstUtmSource: attempt.first_utm_source || analytics.firstUtmSource || '',
+    firstUtmMedium: attempt.first_utm_medium || analytics.firstUtmMedium || '',
+    firstUtmCampaign: attempt.first_utm_campaign || analytics.firstUtmCampaign || '',
+    conversionSource: attempt.conversion_source || analytics.conversionSource || '',
+    conversionReferrer: attempt.conversion_referrer || analytics.conversionReferrer || '',
+    conversionLandingPage: attempt.conversion_landing_page || analytics.conversionLandingPage || '',
+    conversionUtmSource: attempt.conversion_utm_source || analytics.conversionUtmSource || '',
+    conversionUtmMedium: attempt.conversion_utm_medium || analytics.conversionUtmMedium || '',
+    conversionUtmCampaign: attempt.conversion_utm_campaign || analytics.conversionUtmCampaign || '',
+    device: attempt.device_type || analytics.deviceType || '',
+    country: attempt.visitor_country || analytics.country || '',
+    region: attempt.visitor_region || analytics.region || '',
+    city: attempt.visitor_city || analytics.city || '',
+  };
+}
+
+function eventLabel(event = {}) {
+  const labels = {
+    page_view: 'Page viewed',
+    product_view: 'Product viewed',
+    add_to_cart: 'Added to basket',
+    checkout_opened: 'Checkout opened',
+    payment_started: 'Pay by Bank started',
+    payment_success: 'Payment return confirmed',
+    payment_failed: 'Payment failed / returned',
+    review_opened: 'Review form opened',
+    whatsapp_support_click: 'WhatsApp support opened',
+  };
+  return labels[event.event_type] || String(event.event_type || 'Activity').replace(/_/g, ' ');
+}
+
+function eventJourney(events, productNames, orderCreatedAt = null) {
+  const cutoff = orderCreatedAt ? new Date(orderCreatedAt).getTime() + (30 * 60 * 1000) : Number.POSITIVE_INFINITY;
+  const eligible = events
+    .filter((event) => eventTime(event) <= cutoff)
+    .sort((a, b) => eventTime(a) - eventTime(b));
+  const selected = eligible.length > 20
+    ? [eligible[0], ...eligible.slice(-19)]
+    : eligible;
+  return selected.map((event) => {
+    const sku = String(event.product_sku || '').toUpperCase();
+    return {
+      time: event.created_at,
+      label: eventLabel(event),
+      detail: productNames.get(sku) || sku || cleanPath(event.page_path),
+      page: cleanPath(event.page_path),
+    };
+  });
+}
+
+function recentOrders(orders, items, attempts, events, profiles, audits, products) {
+  const productNames = new Map(products.map((product) => [String(product.sku || '').toUpperCase(), product.name || product.sku]));
+  const itemsByOrder = new Map();
+  items.forEach((item) => {
+    if (!itemsByOrder.has(item.order_id)) itemsByOrder.set(item.order_id, []);
+    itemsByOrder.get(item.order_id).push({
+      sku: item.sku,
+      name: item.product_name || productNames.get(String(item.sku || '').toUpperCase()) || item.sku,
+      qty: asNumber(item.qty),
+      lineTotal: money(item.line_total),
+    });
+  });
+  const attemptsByOrder = new Map();
+  attempts.forEach((attempt) => {
+    if (attempt.order_id) attemptsByOrder.set(attempt.order_id, attempt);
+    if (attempt.payment_reference) attemptsByOrder.set(String(attempt.payment_reference).toUpperCase(), attempt);
+  });
+  const profilesByEmail = new Map(profiles.map((profile) => [String(profile.email || '').toLowerCase(), profile]));
+  const auditsByOrder = new Map();
+  audits.forEach((entry) => {
+    if (!entry.order_id) return;
+    if (!auditsByOrder.has(entry.order_id)) auditsByOrder.set(entry.order_id, []);
+    auditsByOrder.get(entry.order_id).push(entry);
+  });
+  const ordersByEmail = new Map();
+  orders.filter((order) => PAID_STATUSES.has(order.status)).forEach((order) => {
+    const email = String(order.email || '').toLowerCase();
+    if (!ordersByEmail.has(email)) ordersByEmail.set(email, []);
+    ordersByEmail.get(email).push(order);
+  });
+
+  return orders.slice(0, 25).map((order) => {
+    const attempt = attemptsByOrder.get(order.id) || attemptsByOrder.get(String(order.order_number || '').toUpperCase()) || {};
+    const context = attemptContext(attempt);
+    const visitorEvents = context.visitorId
+      ? events.filter((event) => event.visitor_id === context.visitorId)
+      : context.sessionId
+        ? events.filter((event) => event.session_id === context.sessionId)
+        : [];
+    const preOrderEvents = visitorEvents
+      .filter((event) => eventTime(event) <= new Date(order.created_at || 0).getTime())
+      .sort((a, b) => eventTime(a) - eventTime(b));
+    const visitsBeforeOrder = new Set(preOrderEvents.map((event) => event.session_id).filter(Boolean)).size;
+    const earliestPageView = preOrderEvents.find((event) => event.event_type === 'page_view') || preOrderEvents[0];
+    const conversionSessionEvent = preOrderEvents.find((event) => event.session_id === context.sessionId && event.event_type === 'page_view');
+    const profile = profilesByEmail.get(String(order.email || '').toLowerCase());
+    const customerOrders = ordersByEmail.get(String(order.email || '').toLowerCase()) || [];
+    const timeline = eventJourney(visitorEvents, productNames, order.created_at);
+
+    if (attempt.created_at) timeline.push({ time: attempt.created_at, label: 'Payment attempt created', detail: attempt.payment_provider || 'Pay by Bank' });
+    timeline.push({ time: order.created_at, label: 'Payment confirmed', detail: order.order_number });
+    const orderAudits = auditsByOrder.get(order.id) || [];
+    const auditActions = new Set(orderAudits.map((entry) => entry.action));
+    orderAudits.forEach((entry) => timeline.push({
+      time: entry.created_at,
+      label: String(entry.action || 'Order update').replace(/_/g, ' '),
+      detail: entry.payload?.tracking_number || entry.payload?.source || '',
+    }));
+    if (order.dispatched_at && !auditActions.has('order_dispatched')) timeline.push({ time: order.dispatched_at, label: 'Order dispatched', detail: order.tracking_number || order.royalmail_tracking_number || '' });
+    if (order.delivered_at && !auditActions.has('order_delivered')) timeline.push({ time: order.delivered_at, label: 'Order delivered', detail: '' });
+    if (order.review_request_sent_at && !auditActions.has('review_request_sent')) timeline.push({ time: order.review_request_sent_at, label: 'Review request sent', detail: '' });
+    timeline.sort((a, b) => new Date(a.time || 0) - new Date(b.time || 0));
+
+    const location = [context.city, context.region, context.country].filter(Boolean).join(', ')
+      || (earliestPageView ? locationLabel(earliestPageView) : 'Unknown');
+    return {
+      orderNumber: order.order_number,
+      email: order.email,
+      fullName: order.full_name,
+      phone: order.phone,
+      address: [order.shipping_address_line1, order.shipping_address_line2, order.shipping_city, order.shipping_postcode, order.shipping_country].filter(Boolean).join(', '),
+      subtotal: asNumber(order.subtotal),
+      discount: asNumber(order.discount),
+      shipping: asNumber(order.shipping),
+      total: asNumber(order.total),
+      status: order.status,
+      paymentProvider: order.payment_provider || 'fena',
+      promoOptIn: Boolean(order.promo_opt_in),
+      promoCode: attempt.payload?.promo_code || '',
+      dispatchedAt: order.dispatched_at,
+      deliveredAt: order.delivered_at,
+      reviewRequestSentAt: order.review_request_sent_at,
+      createdAt: order.created_at,
+      trackingNumber: order.tracking_number || order.royalmail_tracking_number || '',
+      trackingUrl: order.tracking_url || '',
+      items: itemsByOrder.get(order.id) || [],
+      visitorId: context.visitorId,
+      sessionId: context.sessionId,
+      checkoutType: context.checkoutType,
+      accountCreatedAt: profile?.created_at || '',
+      signupProvider: profile?.signup_provider || '',
+      firstSource: context.firstSource || (earliestPageView ? sourceLabel(earliestPageView) : 'Unknown'),
+      conversionSource: context.conversionSource || (conversionSessionEvent ? sourceLabel(conversionSessionEvent) : 'Unknown'),
+      firstLandingPage: context.firstLandingPage || cleanPath(earliestPageView?.page_path),
+      conversionLandingPage: context.conversionLandingPage || cleanPath(conversionSessionEvent?.page_path),
+      firstCampaign: [context.firstUtmSource, context.firstUtmMedium, context.firstUtmCampaign].filter(Boolean).join(' / '),
+      conversionCampaign: [context.conversionUtmSource, context.conversionUtmMedium, context.conversionUtmCampaign].filter(Boolean).join(' / '),
+      firstSeenAt: context.firstSeenAt || earliestPageView?.created_at || '',
+      location,
+      device: context.device || conversionSessionEvent?.device_type || earliestPageView?.device_type || 'unknown',
+      visitsBeforeOrder,
+      returningVisitor: visitsBeforeOrder > 1,
+      customerOrderCount: customerOrders.length,
+      customerLifetimeValue: money(customerOrders.reduce((sum, customerOrder) => sum + asNumber(customerOrder.total), 0)),
+      timeline,
+    };
+  });
+}
+
+function visitorRetention(events, from) {
+  const pageViews = events
+    .filter((event) => !event.is_internal && event.event_type === 'page_view' && (event.visitor_id || event.session_id))
+    .sort((a, b) => eventTime(a) - eventTime(b));
+  const byVisitor = new Map();
+  pageViews.forEach((event) => {
+    const id = event.visitor_id || event.session_id;
+    const row = byVisitor.get(id) || { events: [], sessions: new Set() };
+    row.events.push(event);
+    if (event.session_id) row.sessions.add(event.session_id);
+    byVisitor.set(id, row);
+  });
+
+  let newVisitors = 0;
+  let returningVisitors = 0;
+  for (const row of byVisitor.values()) {
+    const scoped = from ? row.events.filter((event) => isSince(event, from)) : row.events;
+    if (!scoped.length) continue;
+    const existedBeforeRange = from && eventTime(row.events[0]) < from.getTime();
+    const isReturning = existedBeforeRange || row.sessions.size > 1;
+    if (isReturning) returningVisitors += 1;
+    else newVisitors += 1;
+  }
+  return { newVisitors, returningVisitors };
+}
+
+function accountStats(profiles, from) {
+  const scoped = profiles.filter((profile) => isSince(profile, from));
+  return {
+    total: profiles.length,
+    newInRange: scoped.length,
+    recent: scoped.slice(0, 100).map((profile) => ({
+      id: profile.id,
+      email: profile.email,
+      name: [profile.first_name, profile.last_name].filter(Boolean).join(' ') || '—',
+      provider: profile.signup_provider || 'account',
+      createdAt: profile.created_at,
+      firstSource: profile.first_source || 'Unknown',
+      firstLandingPage: profile.first_landing_page || '',
+      firstSeenAt: profile.first_seen_at || '',
+      lastLinkedAt: profile.last_linked_at || '',
+      visitorId: profile.analytics_visitor_id || '',
+    })),
+  };
+}
+
+function visitorJourneys(events, profiles, attempts, orders, products, from) {
+  const productNames = new Map(products.map((product) => [String(product.sku || '').toUpperCase(), product.name || product.sku]));
+  const profileByVisitor = new Map(profiles.filter((profile) => profile.analytics_visitor_id).map((profile) => [profile.analytics_visitor_id, profile]));
+  const attemptsByVisitor = new Map();
+  attempts.forEach((attempt) => {
+    const context = attemptContext(attempt);
+    if (!context.visitorId) return;
+    if (!attemptsByVisitor.has(context.visitorId)) attemptsByVisitor.set(context.visitorId, []);
+    attemptsByVisitor.get(context.visitorId).push(attempt);
+  });
+  const orderById = new Map(orders.map((order) => [order.id, order]));
+  const grouped = new Map();
+  events.filter((event) => !event.is_internal && (event.visitor_id || event.session_id)).forEach((event) => {
+    const id = event.visitor_id || event.session_id;
+    const row = grouped.get(id) || { visitorId: id, events: [] };
+    row.events.push(event);
+    grouped.set(id, row);
+  });
+
+  return [...grouped.values()].map((row) => {
+    row.events.sort((a, b) => eventTime(a) - eventTime(b));
+    const first = row.events[0];
+    const last = row.events.at(-1);
+    if (from && !row.events.some((event) => isSince(event, from))) return null;
+    const sessions = new Set(row.events.map((event) => event.session_id).filter(Boolean));
+    const pageViews = row.events.filter((event) => event.event_type === 'page_view');
+    const latestSessionFirstPage = pageViews.find((event) => event.session_id === last.session_id) || [...pageViews].reverse()[0] || last;
+    const productsViewed = [...new Set(row.events
+      .filter((event) => event.event_type === 'product_view' && event.product_sku)
+      .map((event) => productNames.get(String(event.product_sku).toUpperCase()) || event.product_sku))];
+    const visitorAttempts = attemptsByVisitor.get(row.visitorId) || [];
+    const visitorOrders = visitorAttempts.map((attempt) => orderById.get(attempt.order_id)).filter(Boolean);
+    const profile = profileByVisitor.get(row.visitorId);
+    const latestCheckout = [...row.events].reverse().find((event) => ['payment_success', 'payment_failed', 'payment_started', 'checkout_opened', 'add_to_cart'].includes(event.event_type));
+    return {
+      visitorId: row.visitorId,
+      firstSeen: first.created_at,
+      lastSeen: last.created_at,
+      sessions: sessions.size,
+      pageviews: pageViews.length,
+      returning: sessions.size > 1,
+      firstSource: profile?.first_source || sourceLabel(pageViews[0] || first),
+      latestSource: sourceLabel(latestSessionFirstPage),
+      firstLandingPage: profile?.first_landing_page || cleanPath((pageViews[0] || first).page_path),
+      lastPage: cleanPath(last.page_path),
+      location: locationLabel(last),
+      device: last.device_type || 'unknown',
+      productsViewed,
+      checkoutStage: latestCheckout ? eventLabel(latestCheckout) : 'Browsing',
+      accountEmail: profile?.email || '',
+      accountCreatedAt: profile?.created_at || '',
+      orderNumbers: visitorOrders.map((order) => order.order_number),
+      revenue: money(visitorOrders.reduce((sum, order) => sum + asNumber(order.total), 0)),
+      journey: eventJourney(row.events, productNames),
+    };
+  }).filter(Boolean)
+    .sort((a, b) => new Date(b.lastSeen || 0) - new Date(a.lastSeen || 0))
+    .slice(0, 50);
 }
 
 function analyticsForRange(events, paidOrders, attempts, products, from) {
@@ -399,6 +666,7 @@ function analyticsForRange(events, paidOrders, attempts, products, from) {
     pageviews: pageViews.length,
     conversionRate: pct(scopedPaidOrders.length, visitors),
     internalIgnored: internalEvents.length,
+    ...visitorRetention(events, from),
     topPages: topCounts(pageViews, (event) => cleanPath(event.page_path), 8),
     topProductViews: topCounts(realEvents.filter((event) => event.event_type === 'product_view'), (event) => {
       const sku = String(event.product_sku || '').toUpperCase();
@@ -512,7 +780,7 @@ function rangeStart(now, definition) {
   return new Date(now.getTime() - definition.ms);
 }
 
-function rangeDashboard(definition, from, { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, notifySubscribers, promoRedemptions, events, now }) {
+function rangeDashboard(definition, from, { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, notifySubscribers, promoRedemptions, events, profiles, now }) {
   const scopedOrders = orders.filter((order) => isSince(order, from));
   const scopedPaidOrders = scopedOrders.filter((order) => PAID_STATUSES.has(order.status));
   const scopedAttempts = attempts.filter((attempt) => isSince(attempt, from));
@@ -534,6 +802,7 @@ function rangeDashboard(definition, from, { orders, items, products, attempts, p
       subscribers: scopedSubscribers.length,
     },
     customers: customerStats(scopedOrders),
+    accounts: accountStats(profiles, from),
     orders: {
       byStatus: countBy(scopedOrders, 'status'),
       openFulfilment: scopedOrders.filter((order) => ['paid', 'processing', 'dispatched'].includes(order.status)).length,
@@ -542,6 +811,7 @@ function rangeDashboard(definition, from, { orders, items, products, attempts, p
     payments: paymentSummary(scopedAttempts),
     analytics: analyticsForRange(events, scopedPaidOrders, attempts, products, from),
     checkoutDropoffs: checkoutDropoffs(events, products, from, now),
+    visitorJourneys: visitorJourneys(events, profiles, attempts, orders, products, from),
     products: {
       top: topProducts(scopedOrders, items),
       revenue: revenueByProduct(scopedOrders, items),
@@ -567,17 +837,21 @@ async function buildDashboard(supabase) {
     notifySubscribers,
     promoRedemptions,
     events,
+    profiles,
+    audits,
   ] = await Promise.all([
-    safeSelect(supabase, 'orders', 'id,order_number,email,total,subtotal,discount,shipping,status,created_at,delivered_at,dispatched_at,payment_provider,promo_opt_in', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
+    safeSelect(supabase, 'orders', 'id,order_number,email,full_name,phone,total,subtotal,discount,shipping,status,created_at,delivered_at,dispatched_at,review_request_sent_at,payment_provider,promo_opt_in,shipping_address_line1,shipping_address_line2,shipping_city,shipping_postcode,shipping_country,tracking_number,tracking_url,royalmail_order_identifier,royalmail_tracking_number', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
     safeSelect(supabase, 'order_items', 'order_id,sku,product_name,qty,line_total', { limit: 5000 }),
     safeSelect(supabase, 'products', 'sku,name,price,stock_quantity,is_active', { limit: 200 }),
-    safeSelect(supabase, 'payment_attempts', 'status,amount,email,created_at,payment_provider', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
+    safeSelect(supabase, 'payment_attempts', '*', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
     safeSelect(supabase, 'reviews_pending', 'id,status,created_at', { limit: 1000 }),
     safeSelect(supabase, 'reviews_public', 'id,rating,created_at', { limit: 1000 }),
     safeSelect(supabase, 'subscribers', 'id,unsubscribed_at,created_at', { limit: 5000 }),
     safeSelect(supabase, 'notify_subscribers', 'email,topics,status,created_at,updated_at', { order: { column: 'created_at', ascending: false }, limit: 5000 }),
     safeSelect(supabase, 'promo_redemptions', 'id,promo_code,redeemed_at', { limit: 5000 }),
     safeSelect(supabase, 'site_events', '*', { order: { column: 'created_at', ascending: false }, limit: 20000 }),
+    safeSelect(supabase, 'profiles', '*', { order: { column: 'created_at', ascending: false }, limit: 5000 }),
+    safeSelect(supabase, 'admin_audit_log', 'order_id,action,payload,created_at', { order: { column: 'created_at', ascending: true }, limit: 10000 }),
   ]);
 
   const now = new Date();
@@ -588,7 +862,7 @@ async function buildDashboard(supabase) {
   const paidOrders = orders.filter((order) => PAID_STATUSES.has(order.status));
   const activeSubscribers = subscribers.filter((sub) => !sub.unsubscribed_at);
   const approvedRatings = publicReviews.map((review) => asNumber(review.rating)).filter(Boolean);
-  const rangeContext = { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, notifySubscribers, promoRedemptions, events, now };
+  const rangeContext = { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, notifySubscribers, promoRedemptions, events, profiles, now };
   const ranges = Object.fromEntries(RANGE_DEFINITIONS.map((definition) => [
     definition.key,
     rangeDashboard(definition, rangeStart(now, definition), rangeContext),
@@ -607,9 +881,10 @@ async function buildDashboard(supabase) {
       subscribers: activeSubscribers.length,
     },
     customers: customerStats(orders),
+    accounts: accountStats(profiles, null),
     orders: {
       byStatus: countBy(orders, 'status'),
-      recent: recentOrders(orders),
+      recent: recentOrders(orders, items, attempts, events, profiles, audits, products),
       openFulfilment: orders.filter((order) => ['paid', 'processing', 'dispatched'].includes(order.status)).length,
       problemOrders: orders.filter((order) => FINAL_BAD_STATUSES.has(order.status)).length,
     },

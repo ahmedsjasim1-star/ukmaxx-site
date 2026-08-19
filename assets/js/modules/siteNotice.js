@@ -7,7 +7,11 @@ export function setupCookieBanner() {
   const b = byId('cookieBanner');
   if (!b) return;
   setTimeout(() => b.classList.add('is-shown'), 1500);
-  const close = val => { setRaw(COOKIE_KEY, val); b.classList.remove('is-shown'); };
+  const close = val => {
+    setRaw(COOKIE_KEY, val);
+    b.classList.remove('is-shown');
+    window.dispatchEvent(new CustomEvent('ukmaxx:cookie-consent', { detail: val }));
+  };
   byId('cookieAccept')?.addEventListener('click', () => close('accepted'));
   byId('cookieReject')?.addEventListener('click', () => close('rejected'));
 }

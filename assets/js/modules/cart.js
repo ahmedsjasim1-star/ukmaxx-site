@@ -1,11 +1,11 @@
 import { toast } from './toast.js';
-import { getCurrentUser } from './auth.js';
+import { getCurrentUser } from './auth.js?v=20260819-customer-journeys';
 import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260815-fast-products';
 import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw, setRaw, removeStorage } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
 import { getSupabase } from '../data/supabase.js';
-import { trackEvent } from './analytics.js?v=20260730-admin-analytics';
+import { getAnalyticsContext, trackEvent } from './analytics.js?v=20260819-customer-journeys';
 
 const SHIP_THRESHOLD = FREE_SHIPPING_THRESHOLD || 100;
 const SHIP_FLAT = FLAT_SHIPPING || 4.99;
@@ -340,7 +340,14 @@ async function startCheckout() {
     const res = await fetch('/api/create-fena-payment', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ cartItems: c, promoOptIn: false, promoCode, guestCheckoutId, ...details }),
+      body: JSON.stringify({
+        cartItems: c,
+        promoOptIn: false,
+        promoCode,
+        guestCheckoutId,
+        analyticsContext: getAnalyticsContext(),
+        ...details,
+      }),
       signal: controller.signal
     });
     clearTimeout(to);

@@ -17,6 +17,56 @@ function clean(value, max = 200) {
   return String(value || '').trim().replace(/\s+/g, ' ').slice(0, max);
 }
 
+function cleanId(value) {
+  return clean(value, 80).replace(/[^a-z0-9_-]/gi, '').slice(0, 80);
+}
+
+function cleanPath(value) {
+  const path = clean(value, 500);
+  if (!path || !path.startsWith('/')) return '/';
+  return path.replace(/[^\w\-./?=&%#:+]/g, '').slice(0, 500);
+}
+
+function cleanHeader(value, max = 120) {
+  try {
+    return decodeURIComponent(clean(value, max));
+  } catch {
+    return clean(value, max);
+  }
+}
+
+function detectDevice(userAgent = '') {
+  const ua = String(userAgent || '').toLowerCase();
+  if (/ipad|tablet/.test(ua)) return 'tablet';
+  if (/mobile|iphone|android/.test(ua)) return 'mobile';
+  return 'desktop';
+}
+
+function normalizeAnalyticsContext(raw = {}, req = {}) {
+  const firstSeen = clean(raw.firstSeenAt, 40);
+  return {
+    visitorId: cleanId(raw.visitorId),
+    sessionId: cleanId(raw.sessionId),
+    firstSource: clean(raw.firstSource, 120) || 'Direct',
+    firstReferrer: clean(raw.firstReferrer, 500),
+    firstLandingPage: cleanPath(raw.firstLandingPage),
+    firstSeenAt: /^\d{4}-\d{2}-\d{2}T/.test(firstSeen) ? firstSeen : null,
+    firstUtmSource: clean(raw.firstUtmSource, 80),
+    firstUtmMedium: clean(raw.firstUtmMedium, 80),
+    firstUtmCampaign: clean(raw.firstUtmCampaign, 120),
+    conversionSource: clean(raw.conversionSource, 120) || 'Direct',
+    conversionReferrer: clean(raw.conversionReferrer, 500),
+    conversionLandingPage: cleanPath(raw.conversionLandingPage),
+    conversionUtmSource: clean(raw.conversionUtmSource, 80),
+    conversionUtmMedium: clean(raw.conversionUtmMedium, 80),
+    conversionUtmCampaign: clean(raw.conversionUtmCampaign, 120),
+    deviceType: clean(raw.deviceType, 30) || detectDevice(req.headers?.['user-agent']),
+    country: cleanHeader(req.headers?.['x-vercel-ip-country'], 2).toUpperCase(),
+    region: cleanHeader(req.headers?.['x-vercel-ip-country-region'], 80),
+    city: cleanHeader(req.headers?.['x-vercel-ip-city'], 120),
+  };
+}
+
 function normalizeCart(cartItems) {
   const quantities = new Map();
   for (const raw of Array.isArray(cartItems) ? cartItems : []) {
@@ -86,6 +136,7 @@ module.exports = async (req, res) => {
     }
 
     const checkout = normalizeCheckoutDetails(req.body || {}, authData?.user?.email || '');
+    const analytics = normalizeAnalyticsContext(req.body?.analyticsContext, req);
     const normalized = normalizeCart(req.body?.cartItems);
     if (!normalized.length) return res.status(400).json({ error: 'Cart is empty or invalid' });
 
@@ -163,9 +214,10 @@ module.exports = async (req, res) => {
       promo_opt_in: !!req.body?.promoOptIn,
       promo_code: promoApplies ? 'MAXX10' : '',
       items: orderItems,
+      analytics,
     };
 
-    const { error: attemptError } = await supabase.from('payment_attempts').insert({
+    const baseAttempt = {
       payment_provider: 'fena',
       payment_reference: reference,
       status: 'created',
@@ -173,7 +225,37 @@ module.exports = async (req, res) => {
       currency: 'gbp',
       email: checkout.email,
       payload: attemptPayload,
-    });
+    };
+    const enrichedAttempt = {
+      ...baseAttempt,
+      visitor_id: analytics.visitorId || null,
+      session_id: analytics.sessionId || null,
+      account_user_id: authData?.user?.id || null,
+      checkout_type: authData?.user?.id ? 'account' : 'guest',
+      first_source: analytics.firstSource,
+      first_referrer: analytics.firstReferrer || null,
+      first_landing_page: analytics.firstLandingPage,
+      first_seen_at: analytics.firstSeenAt,
+      first_utm_source: analytics.firstUtmSource || null,
+      first_utm_medium: analytics.firstUtmMedium || null,
+      first_utm_campaign: analytics.firstUtmCampaign || null,
+      conversion_source: analytics.conversionSource,
+      conversion_referrer: analytics.conversionReferrer || null,
+      conversion_landing_page: analytics.conversionLandingPage,
+      conversion_utm_source: analytics.conversionUtmSource || null,
+      conversion_utm_medium: analytics.conversionUtmMedium || null,
+      conversion_utm_campaign: analytics.conversionUtmCampaign || null,
+      device_type: analytics.deviceType,
+      visitor_country: analytics.country || null,
+      visitor_region: analytics.region || null,
+      visitor_city: analytics.city || null,
+    };
+
+    let { error: attemptError } = await supabase.from('payment_attempts').insert(enrichedAttempt);
+    if (attemptError && /column .* does not exist|schema cache/i.test(String(attemptError.message || ''))) {
+      const fallback = await supabase.from('payment_attempts').insert(baseAttempt);
+      attemptError = fallback.error;
+    }
     if (attemptError) throw attemptError;
 
     const fena = await createAndProcessPayment({

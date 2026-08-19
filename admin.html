@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
-<link rel="stylesheet" href="./assets/css/admin.css?v=20260805-batch-subscribers">
+<link rel="stylesheet" href="./assets/css/admin.css?v=20260819-customer-journeys">
 </head>
 <body class="admin-page">
   <main class="admin-shell">
@@ -163,6 +163,29 @@
         </article>
       </section>
 
+      <section class="metric-grid" aria-label="Customer journey metrics">
+        <article class="metric-card">
+          <span>New visitors</span>
+          <strong id="rangeNewVisitors">—</strong>
+          <small id="rangeNewVisitorsMeta">First observed in range</small>
+        </article>
+        <article class="metric-card">
+          <span>Returning visitors</span>
+          <strong id="rangeReturningVisitors">—</strong>
+          <small id="rangeReturningVisitorsMeta">Multiple visits or seen before</small>
+        </article>
+        <article class="metric-card">
+          <span>New accounts</span>
+          <strong id="rangeNewAccounts">—</strong>
+          <small id="rangeNewAccountsMeta">Created in selected range</small>
+        </article>
+        <article class="metric-card">
+          <span>Total accounts</span>
+          <strong id="rangeTotalAccounts">—</strong>
+          <small id="rangeTotalAccountsMeta">Registered UKMAXX accounts</small>
+        </article>
+      </section>
+
       <section class="admin-panel">
         <div class="panel-head">
           <div>
@@ -173,6 +196,18 @@
         </div>
         <p class="panel-note">Privacy-safe session view: source, location, products and last checkout stage. Click a row for the journey.</p>
         <div class="dropoff-list" id="checkoutDropoffs"></div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Customer intelligence</p>
+            <h2>Visitor journeys</h2>
+          </div>
+          <span class="panel-chip" id="visitorJourneyChip">—</span>
+        </div>
+        <p class="panel-note">Privacy-conscious first-party journeys showing first source, return visits, product interest, checkout progress and resulting orders.</p>
+        <div class="dropoff-list" id="visitorJourneys"></div>
       </section>
 
       <section class="admin-grid admin-grid-three">
@@ -288,6 +323,31 @@
       <section class="admin-panel">
         <div class="panel-head">
           <div>
+            <p class="eyebrow">Accounts</p>
+            <h2>Recent account creations</h2>
+          </div>
+          <span class="panel-chip" id="accountCreationChip">—</span>
+        </div>
+        <p class="panel-note">Registered customer accounts from Supabase Auth. Filtered by the selected dashboard range.</p>
+        <div class="orders-table-wrap">
+          <table class="orders-table accounts-table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Method</th>
+                <th>First source</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="recentAccounts"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-head">
+          <div>
             <p class="eyebrow">Live feed</p>
             <h2>Recent orders</h2>
           </div>
@@ -323,6 +383,6 @@
     </div>
   </aside>
 
-  <script type="module" src="./assets/js/admin.js?v=20260805-batch-subscribers"></script>
+  <script type="module" src="./assets/js/admin.js?v=20260819-customer-journeys"></script>
 </body>
 </html>

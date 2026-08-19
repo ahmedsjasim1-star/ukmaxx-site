@@ -264,10 +264,10 @@ window.__html.checkout = '<div class="checkout-backdrop" id="checkoutBackdrop" a
 
 window.__html.cookieBanner = '<div class="cookie-banner" id="cookieBanner">'
   + '<div class="cookie-banner-inner">'
-  + '<div class="cookie-banner-text">We use cookies to improve your experience and analyse traffic. By continuing, you agree to our <a href="/privacy-policy.html" style="color:#fff;text-decoration:underline">privacy policy</a>.</div>'
+  + '<div class="cookie-banner-text">With your permission, we use first-party analytics storage to understand visits, product interest and checkout performance. Essential basket and security storage still works if you reject analytics. Read our <a href="/privacy-policy.html" style="color:#fff;text-decoration:underline">privacy policy</a>.</div>'
   + '<div class="cookie-banner-btns">'
   + '<button class="btn btn-ghost" id="cookieReject" style="border-color:rgba(255,255,255,.3);color:#fff">Reject</button>'
-  + '<button class="btn btn-primary" id="cookieAccept">Accept all</button>'
+  + '<button class="btn btn-primary" id="cookieAccept">Accept analytics</button>'
   + '</div>'
   + '</div>'
   + '</div>';

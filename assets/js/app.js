@@ -1,19 +1,19 @@
 import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260815-fast-products';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260714-review-polish';
-import { renderCart, initCart } from './modules/cart.js?v=20260815-fast-products';
+import { renderCart, initCart } from './modules/cart.js?v=20260819-customer-journeys';
 import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js?v=20260813-catalogue';
 import { setupLightbox } from './modules/lightbox.js';
 import { setupExitIntent } from './modules/exitIntent.js?v=20260625-alerts';
 import { setupNewsletter } from './modules/newsletter.js';
-import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js';
+import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js?v=20260819-customer-journeys';
 import { setupTracking } from './modules/tracking.js';
 import { renderProductDetail, refreshProductDetailData, renderRelatedProducts } from './modules/productDetail.js?v=20260815-fast-products';
 import { setupAccountPage } from './modules/account.js?v=20260731-account-reorder';
 import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260813-catalogue';
 import { refreshLiveStock } from './data/products.js?v=20260815-fast-products';
 import { setupCoaPage } from './modules/coaPage.js?v=20260816-stat-links';
-import { setupAnalytics } from './modules/analytics.js?v=20260731-analytics-phase-a';
+import { setupAnalytics } from './modules/analytics.js?v=20260819-customer-journeys';
 import { setupWhatsAppSupport } from './modules/whatsappSupport.js?v=20260814-whatsapp-support';
 import { setupHomeProof } from './modules/homeProof.js?v=20260816-home-depth';
 
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupMobileStickyCta();
   setupLightbox();
   setupExitIntent();
-  import('./modules/siteNotice.js').then(({ setupCookieBanner }) => setupCookieBanner()).catch(() => {});
+  import('./modules/siteNotice.js?v=20260819-customer-journeys').then(({ setupCookieBanner }) => setupCookieBanner()).catch(() => {});
   setupNewsletter();
   initAuthGate();
   setupAuthForms();

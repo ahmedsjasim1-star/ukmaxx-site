@@ -269,6 +269,49 @@ function renderDropoffs(rows) {
   </button>`).join('');
 }
 
+function renderVisitorJourneys(rows) {
+  if (!rows?.length) return '<p class="empty-state">No visitor journeys in this range.</p>';
+  return rows.slice(0, 25).map((row, index) => `<button class="dropoff-row visitor-row" type="button" data-visitor-index="${index}">
+    <span class="dropoff-main">
+      <strong>${escapeHtml(row.firstSource || 'Direct')} ${row.returning ? '· Returning' : '· New visitor'}</strong>
+      <span>${escapeHtml(row.location || 'Unknown')} · ${escapeHtml(row.device || 'unknown')} · ${number(row.sessions)} session${Number(row.sessions) === 1 ? '' : 's'}</span>
+    </span>
+    <span class="dropoff-meta">
+      <strong>${number(row.pageviews)} pages</strong>
+      <span>${date(row.lastSeen)}</span>
+    </span>
+    <span class="dropoff-stage">
+      <strong>${escapeHtml(row.orderNumbers?.length ? `${row.orderNumbers.length} order${row.orderNumbers.length === 1 ? '' : 's'} · ${money(row.revenue)}` : row.checkoutStage || 'Browsing')}</strong>
+      <span>${escapeHtml(row.productsViewed?.join(', ') || row.lastPage || '/')}</span>
+    </span>
+  </button>`).join('');
+}
+
+function renderAccounts(rows) {
+  if (!rows?.length) return '<tr><td colspan="5" class="empty-state">No account creations in this range.</td></tr>';
+  return rows.map((account) => `<tr>
+    <td><strong>${escapeHtml(account.name || '—')}</strong></td>
+    <td>${escapeHtml(account.email || '—')}</td>
+    <td><span class="status-pill">${escapeHtml(account.provider || 'account')}</span></td>
+    <td>${escapeHtml(account.firstSource || 'Unknown')}</td>
+    <td>${date(account.createdAt)}</td>
+  </tr>`).join('');
+}
+
+function renderTimeline(rows) {
+  if (!rows?.length) return '<p class="empty-state">Journey data is not available for this record.</p>';
+  return `<ol class="journey-timeline">${rows.map((step) => `<li>
+    <span class="journey-dot" aria-hidden="true"></span>
+    <div><strong>${escapeHtml(step.label || step.type || 'Activity')}</strong>
+    <span>${escapeHtml(step.detail || step.product || step.page || '')}</span>
+    <small>${date(step.time)}</small></div>
+  </li>`).join('')}</ol>`;
+}
+
+function detailWide(label, content) {
+  return `<div class="order-detail-wide"><span>${escapeHtml(label)}</span>${content}</div>`;
+}
+
 function detail(label, value) {
   return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value || '—')}</strong></div>`;
 }
@@ -278,18 +321,69 @@ function openOrderDrawer(orderNumber) {
   const drawer = $('orderDrawer');
   if (!order || !drawer) return;
   $('orderDrawerTitle').textContent = order.orderNumber;
+  const items = (order.items || []).map((item) => `${item.name} ×${item.qty} (${money(item.lineTotal)})`).join(' · ');
   $('orderDrawerBody').innerHTML = [
-    detail('Customer', order.email),
+    detail('Customer', order.fullName || order.email),
+    detail('Email', order.email),
+    detail('Phone', order.phone),
+    detail('Delivery address', order.address),
     detail('Status', order.status),
     detail('Payment', order.paymentProvider),
+    detail('Checkout type', order.checkoutType),
+    detail('Products', items || 'Unavailable'),
     detail('Subtotal', money(order.subtotal)),
     detail('Discount', money(order.discount)),
     detail('Shipping', money(order.shipping)),
     detail('Total', money(order.total)),
     detail('Promo opt-in', order.promoOptIn ? 'Yes' : 'No'),
+    detail('Promo code', order.promoCode || 'None'),
+    detail('Tracking', order.trackingNumber || 'Not assigned'),
+    detail('Original source', order.firstSource),
+    detail('Conversion source', order.conversionSource),
+    detail('Original campaign', order.firstCampaign || 'None'),
+    detail('Conversion campaign', order.conversionCampaign || 'None'),
+    detail('First landing page', order.firstLandingPage),
+    detail('Conversion landing page', order.conversionLandingPage),
+    detail('Visitor location', order.location),
+    detail('Device', order.device),
+    detail('Visits before order', number(order.visitsBeforeOrder || 0)),
+    detail('Visitor type', order.returningVisitor ? 'Returning visitor' : 'First observed visit'),
+    detail('Account', order.accountCreatedAt ? `${order.signupProvider || 'Account'} · created ${date(order.accountCreatedAt)}` : 'Guest / no linked account'),
+    detail('Customer orders', `${number(order.customerOrderCount || 0)} · ${money(order.customerLifetimeValue || 0)} lifetime value`),
+    detail('First seen', date(order.firstSeenAt)),
     detail('Created', date(order.createdAt)),
     detail('Dispatched', date(order.dispatchedAt)),
     detail('Delivered', date(order.deliveredAt)),
+    detail('Review requested', date(order.reviewRequestSentAt)),
+    detailWide('Complete journey', renderTimeline(order.timeline || [])),
+  ].join('');
+  drawer.classList.add('is-open');
+  drawer.setAttribute('aria-hidden', 'false');
+}
+
+function openVisitorDrawer(index) {
+  const row = (currentDashboard?.ranges?.[selectedRange]?.visitorJourneys || [])[Number(index)];
+  const drawer = $('orderDrawer');
+  if (!row || !drawer) return;
+  $('orderDrawerTitle').textContent = row.accountEmail || `Visitor ${String(row.visitorId || '').slice(0, 8)}`;
+  $('orderDrawerBody').innerHTML = [
+    detail('Visitor type', row.returning ? 'Returning visitor' : 'New visitor'),
+    detail('Original source', row.firstSource),
+    detail('Latest source', row.latestSource),
+    detail('First landing page', row.firstLandingPage),
+    detail('Last page', row.lastPage),
+    detail('Location', row.location),
+    detail('Device', row.device),
+    detail('Sessions', number(row.sessions)),
+    detail('Pageviews', number(row.pageviews)),
+    detail('Products viewed', row.productsViewed?.join(', ') || 'None recorded'),
+    detail('Checkout stage', row.checkoutStage),
+    detail('Account', row.accountEmail || 'No linked account'),
+    detail('Orders', row.orderNumbers?.join(', ') || 'No linked paid order'),
+    detail('Revenue', money(row.revenue || 0)),
+    detail('First seen', date(row.firstSeen)),
+    detail('Last seen', date(row.lastSeen)),
+    detailWide('Visitor journey', renderTimeline(row.journey || [])),
   ].join('');
   drawer.classList.add('is-open');
   drawer.setAttribute('aria-hidden', 'false');
@@ -337,6 +431,7 @@ function renderDashboardRange(data) {
   const orders = range.orders || data.orders || {};
   const payments = range.payments || data.payments || {};
   const customers = range.customers || data.customers || {};
+  const accounts = range.accounts || data.accounts || {};
   const reviews = range.reviews || data.reviews || {};
   const emailSubscribers = range.emailSubscribers || data.emailSubscribers || {};
   const stock = data.products?.stock;
@@ -369,6 +464,14 @@ function renderDashboardRange(data) {
   setText('rangePageviewsMeta', `${sessions ? (pageviews / sessions).toFixed(1) : '0.0'} pages/session`);
   setText('rangePaymentIssues', number(payments.rejectedOrCancelled));
   setText('rangePaymentIssuesMeta', `${number(payments.totalAttempts)} payment attempts`);
+  setText('rangeNewVisitors', number(analytics.newVisitors || 0));
+  setText('rangeNewVisitorsMeta', `${number(visitors)} unique visitors in range`);
+  setText('rangeReturningVisitors', number(analytics.returningVisitors || 0));
+  setText('rangeReturningVisitorsMeta', `${number(sessions)} total sessions`);
+  setText('rangeNewAccounts', number(accounts.newInRange || 0));
+  setText('rangeNewAccountsMeta', rangeLabel);
+  setText('rangeTotalAccounts', number(accounts.total || 0));
+  setText('rangeTotalAccountsMeta', 'Registered UKMAXX accounts');
 
   const top = products.top || [];
   $('topProducts').innerHTML = renderBars(top);
@@ -378,6 +481,8 @@ function renderDashboardRange(data) {
   $('checkoutFunnel').innerHTML = renderCountBars(analytics.funnel || [], 'No checkout behaviour tracked yet.');
   $('checkoutDropoffs').innerHTML = renderDropoffs(range.checkoutDropoffs || []);
   setText('dropoffChip', `${number(range.checkoutDropoffs?.length || 0)} sessions`);
+  $('visitorJourneys').innerHTML = renderVisitorJourneys(range.visitorJourneys || []);
+  setText('visitorJourneyChip', `${number(range.visitorJourneys?.length || 0)} visitors`);
   $('productViews').innerHTML = renderCountBars(analytics.topProductViews || [], 'No product views tracked yet.');
   $('trafficSources').innerHTML = renderCountBars(analytics.sources || [], 'No traffic sources tracked yet.');
   $('visitorLocations').innerHTML = renderCountBars(analytics.locations || [], 'No visitor locations yet.');
@@ -397,6 +502,8 @@ function renderDashboardRange(data) {
 
   setText('emailSubscriberChip', `${number(emailSubscribers.newInRange || 0)} new · ${number(emailSubscribers.active || 0)} active`);
   $('emailSubscribersList').innerHTML = renderEmailSubscribers(emailSubscribers.recent || []);
+  setText('accountCreationChip', `${number(accounts.newInRange || 0)} new · ${number(accounts.total || 0)} total`);
+  $('recentAccounts').innerHTML = renderAccounts(accounts.recent || []);
 
   setText('openFulfilment', `${number(data.orders?.openFulfilment)} open fulfilment`);
   $('recentOrders').innerHTML = renderRecentOrders(data.orders?.recent || []);
@@ -530,6 +637,10 @@ $('recentOrders')?.addEventListener('click', (event) => {
 $('checkoutDropoffs')?.addEventListener('click', (event) => {
   const row = event.target.closest('[data-dropoff-index]');
   if (row) openDropoffDrawer(row.getAttribute('data-dropoff-index'));
+});
+$('visitorJourneys')?.addEventListener('click', (event) => {
+  const row = event.target.closest('[data-visitor-index]');
+  if (row) openVisitorDrawer(row.getAttribute('data-visitor-index'));
 });
 $('orderDrawerClose')?.addEventListener('click', closeOrderDrawer);
 $('orderDrawerBackdrop')?.addEventListener('click', closeOrderDrawer);
