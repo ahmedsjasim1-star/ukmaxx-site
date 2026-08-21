@@ -12,6 +12,19 @@ const PRODUCT_LABELS = {
   GHKCU: 'GHK-Cu 50mg',
 };
 
+// Keep tracking-order thumbnails aligned with the customer-facing catalogue.
+// These are presentation assets rather than live inventory data, so they
+// should not depend on potentially stale image_url values in Supabase.
+const PRODUCT_IMAGES = {
+  RT10: './images/ukmaxx-reta.png',
+  RT10X3: './images/ukmaxx-reta-bundle.png',
+  BC5: './images/ukmaxx-bpc-157.png',
+  IP5: './images/ukmaxx-ipamorelin.png',
+  NJ500: './images/ukmaxx-nad-500.png',
+  WA10: './images/ukmaxx-bac-water.png',
+  GHKCU: './images/ukmaxx-ghk-cu.png',
+};
+
 const ALLOWED_SITE_EVENTS = new Set([
   'page_view',
   'product_view',
@@ -66,13 +79,9 @@ module.exports = async (req, res) => {
       .select('sku,product_name,qty,line_total')
       .eq('order_id', order.id);
 
-    const enriched = await Promise.all((items || []).map(async (i) => {
-      const { data: prod } = await supabase
-        .from('products')
-        .select('image_url')
-        .eq('sku', i.sku)
-        .maybeSingle();
-      return { ...i, image_url: prod?.image_url || null };
+    const enriched = (items || []).map((item) => ({
+      ...item,
+      image_url: PRODUCT_IMAGES[String(item.sku || '').toUpperCase()] || null,
     }));
 
     const canShowPrivateDetails = !!normEmail && String(order.email || '').toLowerCase() === normEmail;

@@ -3,7 +3,7 @@ import { byId } from '../utils/dom.js';
 import { getSupabase } from '../data/supabase.js';
 
 const STATUS_ORDER = ['paid', 'processing', 'dispatched', 'delivered'];
-const STATUS_LABELS = { paid: 'Processing', processing: 'Processing', dispatched: 'Dispatched', delivered: 'Delivered', cancelled: 'Cancelled', refunded: 'Refunded' };
+const STATUS_LABELS = { paid: 'Order confirmed', processing: 'Preparing order', dispatched: 'Dispatched', delivered: 'Delivered', cancelled: 'Cancelled', refunded: 'Refunded' };
 
 export function setupTracking() {
   const params = new URLSearchParams(location.search);
@@ -61,6 +61,18 @@ function renderOrder(o) {
   byId('resSubtotal').textContent = `£${Number(o.subtotal || 0).toFixed(2)}`;
   byId('resShipping').textContent = Number(o.shipping || 0) === 0 ? 'Free' : `£${Number(o.shipping).toFixed(2)}`;
   byId('resTotal').textContent = `£${Number(o.total || 0).toFixed(2)}`;
+
+  const royalMailLink = byId('resRoyalMailLink');
+  if (royalMailLink) {
+    const trackingNumber = String(o.tracking_number || '').replace(/[^a-z0-9]/gi, '');
+    if (trackingNumber) {
+      royalMailLink.href = `https://www.royalmail.com/track-your-item#/tracking-results/${encodeURIComponent(trackingNumber)}`;
+      royalMailLink.hidden = false;
+    } else {
+      royalMailLink.removeAttribute('href');
+      royalMailLink.hidden = true;
+    }
+  }
 
   const statusBar = byId('resStatusBar');
   if (statusBar) {

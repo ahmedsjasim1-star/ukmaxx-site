@@ -36,8 +36,14 @@
 .result-meta-row:last-child{border-bottom:none}
 .result-meta-key{color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
 .result-meta-val{color:var(--text);font-weight:500;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;word-break:break-all}
-.result-actions{padding:16px 24px;background:var(--surface-3);border-top:1px solid var(--border)}
+.result-actions{padding:16px 24px;background:var(--surface-3);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .result-user{font-size:12.5px;color:var(--dim);line-height:1.5;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;word-break:break-word}
+.royal-mail-track{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:10px 16px;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-size:12.5px;font-weight:700;text-decoration:none;box-shadow:0 8px 18px rgba(10,126,140,.16);transition:transform .18s ease,background .18s ease,box-shadow .18s ease;margin-left:auto}
+.royal-mail-track[hidden]{display:none}
+.royal-mail-track svg{width:17px;height:17px;flex:none}
+.royal-mail-track:hover{background:var(--accent-hover);color:#fff;transform:translateY(-1px);box-shadow:0 10px 22px rgba(10,126,140,.22)}
+.royal-mail-track:focus-visible{outline:3px solid rgba(10,126,140,.25);outline-offset:3px}
+@media (max-width:599px){.result-actions{align-items:stretch}.royal-mail-track{width:100%;margin-left:0}}
 
 .result-status-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 24px;background:var(--surface-3);border-bottom:1px solid var(--border)}
 
@@ -59,4 +65,3 @@
 .result-status--delivered{background:var(--success-light);color:var(--success)}
 .result-status--cancelled,.result-status--refunded{background:#fde8e8;color:#c0392b}
 .result-date{font-size:13px;color:var(--dim);font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
-
