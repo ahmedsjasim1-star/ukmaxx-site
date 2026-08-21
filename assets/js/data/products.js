@@ -241,6 +241,8 @@ export const FURTHER_READING = {
     { label: 'Ghrelin receptor and GH secretagogue studies', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=ghrelin+receptor+growth+hormone+secretagogue' },
   ],
   GHKCU: [
+    { label: 'UKMAXX GHK-Cu 50mg UK guide', url: '/ghk-cu-50mg-uk.html' },
+    { label: 'Verify GHK-Cu batch GHK-2026-05-A', url: '/coa.html?batch=GHK-2026-05-A' },
     { label: 'GHK-Cu research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=GHK-Cu' },
     { label: 'Copper peptide research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=copper+peptide+GHK' },
   ],
