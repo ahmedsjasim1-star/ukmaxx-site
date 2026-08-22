@@ -113,6 +113,11 @@
 .article-cta .btn-primary,.article-cta .btn-primary:hover{color:#fff}
 .article-cta .btn-ghost{color:var(--text)}
 .article-cta .btn-ghost:hover{color:var(--accent)}
+.article-related{margin-top:18px;padding:18px;border:1px solid var(--border);border-radius:20px;background:#fff}
+.article-related>span{display:block;margin-bottom:11px;color:var(--text-3);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.article-related>div{display:flex;gap:8px;flex-wrap:wrap}
+.article-related a{display:inline-flex;padding:9px 12px;border:1px solid var(--border);border-radius:999px;background:var(--surface-2);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;text-decoration:none}
+.article-related a:hover{border-color:var(--accent-light);background:#fff;color:var(--accent)}
 .article-disclaimer{margin-top:28px!important;color:var(--text-3)!important;font-size:12px!important;line-height:1.6!important}
 @media (min-width:1020px){.article-layout{grid-template-columns:210px minmax(0,790px);justify-content:center}.article-toc{display:grid;gap:2px}.article-status-grid{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:700px){.article-hero{padding:42px 0 32px}.article-hero h1{font-size:43px}.article-dek{font-size:16px}.article-content{padding:32px 0 56px}.article-summary{padding:19px}.article-body section{margin-top:40px}.article-body p,.article-body li{font-size:15px}.article-formula{grid-template-columns:1fr;gap:7px;text-align:left}.article-formula b{padding-left:2px}.article-cta{padding:22px}.article-cta-actions .btn{width:100%}}
@@ -126,4 +131,4 @@
 .article-comparison-table tbody tr:last-child th,.article-comparison-table tbody tr:last-child td{border-bottom:0}
 .article-source-list{display:grid;gap:10px;margin:18px 0 0;padding-left:22px}
 .article-source-list li{font-size:14px;line-height:1.65}
-@media (max-width:700px){.article-table-wrap{margin-right:0;border-radius:16px}.article-table-wrap::after{content:'Swipe to compare';display:block;padding:8px 14px;border-top:1px solid var(--border);color:var(--text-3);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase}.article-comparison-table th,.article-comparison-table td{padding:13px 14px}}
+@media (max-width:700px){.article-table-wrap{margin-right:0;border-radius:16px}.article-table-wrap::after{content:'Swipe to compare';display:block;padding:8px 14px;border-top:1px solid var(--border);color:var(--text-3);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase}.article-comparison-table th,.article-comparison-table td{padding:13px 14px}.article-related a{width:100%;justify-content:flex-start}}
