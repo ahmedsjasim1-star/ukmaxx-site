@@ -241,13 +241,19 @@ function topCounts(rows, getLabel, limit = 6) {
 
 function sourceLabel(event) {
   const grouped = String(event.source_group || '').trim();
+  if (/^(payment\.)?fena\.co$/i.test(grouped)) return 'Payment return';
   if (grouped) return grouped;
-  if (event.utm_source) return String(event.utm_source);
+  if (event.utm_source) {
+    const source = String(event.utm_source).trim();
+    if (/^(payment\.)?fena\.co$/i.test(source)) return 'Payment return';
+    return source;
+  }
   if (!event.referrer) return 'Direct';
   try {
     const host = new URL(event.referrer).hostname.replace(/^www\./, '').toLowerCase();
     if (!host) return 'Referral';
     if (/ukmaxx\.co\.uk$/.test(host)) return 'Internal navigation';
+    if (/^(payment\.)?fena\.co$/.test(host)) return 'Payment return';
     if (['t.co', 'x.com', 'twitter.com'].includes(host)) return 'X / Twitter';
     if (['t.me', 'telegram.org'].includes(host)) return 'Telegram';
     if (host.includes('google') || host.includes('googlequicksearchbox')) return 'Google';
@@ -258,17 +264,20 @@ function sourceLabel(event) {
   }
 }
 
-function topSessionSources(pageViews, limit = 6) {
-  const bySession = new Map();
-  const sorted = [...pageViews].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+function topVisitorSources(allPageViews, scopedPageViews, limit = 6) {
+  const activeVisitors = new Set(scopedPageViews.map((event) => event.visitor_id || event.session_id).filter(Boolean));
+  const byVisitor = new Map();
+  const sorted = [...allPageViews].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
   for (const event of sorted) {
-    const session = event.session_id;
-    if (!session || bySession.has(session)) continue;
+    const visitor = event.visitor_id || event.session_id;
+    if (!visitor || !activeVisitors.has(visitor) || byVisitor.has(visitor)) continue;
     const label = sourceLabel(event);
-    bySession.set(session, label === 'Internal navigation' ? 'Direct' : label);
+    if (label === 'Internal navigation' || label === 'Payment return') continue;
+    byVisitor.set(visitor, label);
   }
-  const rows = [...bySession.values()]
-    .filter((label) => label && label !== 'Internal navigation')
+  const rows = [...activeVisitors]
+    .map((visitor) => byVisitor.get(visitor))
+    .filter(Boolean)
     .map((label) => ({ label }));
   return topCounts(rows, (row) => row.label, limit);
 }
@@ -707,6 +716,7 @@ function visitorJourneys(events, profiles, attempts, orders, products, from) {
 
 function analyticsForRange(events, paidOrders, attempts, products, from) {
   const productNames = new Map(products.map((product) => [String(product.sku || '').toUpperCase(), product.name || product.sku]));
+  const allPageViews = events.filter((event) => !event.is_internal && event.event_type === 'page_view');
   const scopedEvents = events.filter((event) => isSince(event, from));
   const realEvents = scopedEvents.filter((event) => !event.is_internal);
   const internalEvents = scopedEvents.filter((event) => event.is_internal);
@@ -732,7 +742,7 @@ function analyticsForRange(events, paidOrders, attempts, products, from) {
       return productNames.get(sku) || sku || cleanPath(event.page_path);
     }, 8),
     devices: topCounts(pageViews, (event) => event.device_type || 'unknown', 4),
-    sources: topSessionSources(pageViews, 6),
+    sources: topVisitorSources(allPageViews, pageViews, 6),
     locations: topUniqueLabels(pageViews, locationLabel, (event) => event.visitor_id || event.session_id, 8),
     funnel: [
       { label: 'Product views', value: eventCount('product_view') },
@@ -771,13 +781,23 @@ function cartLabel(items) {
   return items.map((item) => `${item.name} x${item.qty}`).join(', ');
 }
 
-function checkoutDropoffs(events, products, from, now = new Date()) {
+function checkoutDropoffs(events, products, attempts, from, now = new Date()) {
   const productNames = new Map(products.map((product) => [String(product.sku || '').toUpperCase(), product.name || product.sku]));
   const checkoutTypes = new Set(['add_to_cart', 'checkout_opened', 'payment_started', 'payment_failed', 'payment_success', 'product_view']);
   const realEvents = events
     .filter((event) => !event.is_internal && isSince(event, from) && checkoutTypes.has(event.event_type))
     .sort((a, b) => eventTime(a) - eventTime(b));
   const bySession = new Map();
+  const attemptsBySession = new Map();
+
+  attempts.forEach((attempt) => {
+    const context = attemptContext(attempt);
+    if (!context.sessionId) return;
+    const existing = attemptsBySession.get(context.sessionId);
+    if (!existing || new Date(attempt.created_at || 0) > new Date(existing.created_at || 0)) {
+      attemptsBySession.set(context.sessionId, attempt);
+    }
+  });
 
   for (const event of realEvents) {
     const session = event.session_id;
@@ -794,7 +814,11 @@ function checkoutDropoffs(events, products, from, now = new Date()) {
     const hasPaymentStarted = eventsForSession.some((event) => event.event_type === 'payment_started');
     const hasPaymentFailed = eventsForSession.some((event) => event.event_type === 'payment_failed');
     const hasPaymentSuccess = eventsForSession.some((event) => event.event_type === 'payment_success');
-    if ((!hasCheckoutOpened && !hasPaymentStarted) || hasPaymentSuccess) return null;
+    const paymentAttempt = attemptsBySession.get(session.sessionId);
+    const paymentStatus = String(paymentAttempt?.status || '').toLowerCase();
+    const paymentCompleted = Boolean(paymentAttempt?.order_id) || paymentStatus === 'paid';
+    const paymentFinishedUnsuccessfully = ['rejected', 'cancelled', 'overdue'].includes(paymentStatus);
+    if ((!hasCheckoutOpened && !hasPaymentStarted) || hasPaymentSuccess || paymentCompleted || paymentFinishedUnsuccessfully) return null;
 
     const last = eventsForSession.at(-1);
     if (eventTime(last) > activeCutoff && !hasPaymentFailed) return null;
@@ -869,7 +893,7 @@ function rangeDashboard(definition, from, { orders, items, products, attempts, p
     },
     payments: paymentSummary(scopedAttempts),
     analytics: analyticsForRange(events, scopedPaidOrders, attempts, products, from),
-    checkoutDropoffs: checkoutDropoffs(events, products, from, now),
+    checkoutDropoffs: checkoutDropoffs(events, products, attempts, from, now),
     visitorJourneys: visitorJourneys(events, profiles, attempts, orders, products, from),
     products: {
       top: topProducts(scopedOrders, items),
@@ -1206,3 +1230,9 @@ async function handleReviewRequest({ res, supabase }, { orderNumber }) {
   await audit(supabase, 'review_request_sent', order.id, { order_number: order.order_number });
   return res.status(200).json({ success: true, orderNumber: order.order_number });
 }
+
+module.exports.__test = {
+  checkoutDropoffs,
+  sourceLabel,
+  topVisitorSources,
+};

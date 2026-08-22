@@ -163,6 +163,7 @@ function sourceGroup({ referrer = '', utmSource = '' }) {
   const value = source || host;
   if (!value) return 'Direct';
   if (/ukmaxx\.co\.uk$/.test(value)) return 'Internal navigation';
+  if (/^(payment\.)?fena\.co$/.test(value)) return 'Payment return';
   if (/(^|\.)(t\.co|x\.com|twitter\.com)$/.test(value) || value.includes('twitter') || value === 'x') return 'X / Twitter';
   if (/(^|\.)(t\.me|telegram\.org)$/.test(value) || value.includes('telegram')) return 'Telegram';
   if (value.includes('google') || value.includes('googlequicksearchbox')) return 'Google';

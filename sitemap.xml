@@ -62,9 +62,15 @@
   </url>
   <url>
     <loc>https://www.ukmaxx.co.uk/research-library.html</loc>
-    <lastmod>2026-08-19</lastmod>
+    <lastmod>2026-08-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.ukmaxx.co.uk/peptide-vials-vs-pens.html</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://www.ukmaxx.co.uk/batch-transparency.html</loc>
