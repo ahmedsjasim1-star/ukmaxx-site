@@ -14,7 +14,7 @@ import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260813-catalogu
 import { refreshLiveStock } from './data/products.js?v=20260819-seo-clusters';
 import { setupCoaPage } from './modules/coaPage.js?v=20260816-stat-links';
 import { setupAnalytics } from './modules/analytics.js?v=20260819-restore-traffic';
-import { setupWhatsAppSupport } from './modules/whatsappSupport.js?v=20260819-restore-traffic';
+import { setupWhatsAppSupport } from './modules/whatsappSupport.js?v=20260822-international-enquiries';
 import { setupHomeProof } from './modules/homeProof.js?v=20260816-home-depth';
 
 document.addEventListener('DOMContentLoaded', () => {

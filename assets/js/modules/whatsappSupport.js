@@ -54,6 +54,10 @@ export function setupWhatsAppSupport() {
     trackEvent('whatsapp_support_click');
   });
 
+  document.getElementById('internationalWhatsApp')?.addEventListener('click', () => {
+    trackEvent('whatsapp_support_click', { placement: 'international_enquiry' });
+  });
+
   let frame = 0;
   const syncVisibility = () => {
     cancelAnimationFrame(frame);

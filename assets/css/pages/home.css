@@ -138,6 +138,16 @@
 .home-library-card h3{font-family:'Space Grotesk',sans-serif;font-size:22px;line-height:1.15;letter-spacing:-.02em;margin-bottom:10px;max-width:270px}
 .home-library-card p{font-size:13.5px;line-height:1.6;color:var(--dim);margin-bottom:24px}
 .home-library-read{margin-top:auto;color:var(--accent);font-size:13px;font-weight:700}
+.home-international-section{padding:24px 0 0;background:#fff}
+.home-international-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center;padding:22px 24px;border:1px solid #d9e2f8;border-radius:24px;background:linear-gradient(135deg,#f1f5ff 0%,#fbf9ff 52%,#fff 100%)}
+.home-international-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:17px;background:#e4ebfb;color:#5872ad}
+.home-international-icon svg{width:25px;height:25px}
+.home-international-copy span{display:block;margin-bottom:5px;color:#657eb7;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.11em;text-transform:uppercase}
+.home-international-copy h3{margin:0 0 4px;font-family:'Space Grotesk',sans-serif;font-size:21px;line-height:1.15;letter-spacing:-.02em;color:var(--text)}
+.home-international-copy p{max-width:680px;margin:0;color:var(--dim);font-size:13.5px;line-height:1.55}
+.home-international-btn{min-height:46px;gap:8px;border-color:#168c62;background:#1f9d6a;color:#fff;white-space:nowrap}
+.home-international-btn:hover{border-color:#117653;background:#168c62;color:#fff}
+.home-international-btn svg{width:19px;height:19px}
 .home-final-cta{margin-top:24px;background:#EAF6F7;border:1px solid #CFE5E8;border-radius:28px;padding:26px;display:grid;grid-template-columns:minmax(260px,.7fr) minmax(360px,1.3fr);gap:24px;align-items:center;overflow:hidden}
 .home-alert-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:9px}
 .home-final-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -158,8 +168,9 @@
   .home-proof-section{order:2}
   #why{order:3}
   #coa{order:4}
-  #reviews{order:5}
-  .home-library{order:6}
+  .home-international-section{order:5}
+  #reviews{order:6}
+  .home-library{order:7}
   .site-footer{order:99}
   .hero-grid{gap:12px}
   .hero-content{order:2}
@@ -216,6 +227,12 @@
   .home-library-card{flex:0 0 min(292px,82vw);min-height:245px;padding:21px 18px;border-radius:22px;scroll-snap-align:start}
   .home-library-tag{margin-bottom:24px}
   .home-library-card h3{font-size:20px}
+  .home-international-section{padding-top:18px}
+  .home-international-card{grid-template-columns:42px minmax(0,1fr);gap:12px;padding:18px;border-radius:22px}
+  .home-international-icon{width:42px;height:42px;border-radius:15px}
+  .home-international-copy h3{font-size:19px}
+  .home-international-copy p{font-size:12.8px}
+  .home-international-btn{grid-column:1/-1;width:100%;justify-content:center;margin-top:2px}
   .home-final-cta{margin-top:18px;border-radius:24px;padding:18px;display:block}
   .home-final-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .home-final-actions .btn{justify-content:center;padding-left:10px;padding-right:10px;font-size:12.5px}
