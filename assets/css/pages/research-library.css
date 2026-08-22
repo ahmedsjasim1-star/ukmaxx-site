@@ -11,6 +11,18 @@
 .library-card a{margin-top:auto;color:var(--accent);font-weight:700;text-decoration:none}
 .library-card a:hover{text-decoration:underline;text-underline-offset:3px}
 .library-chip{display:inline-flex;width:max-content;padding:5px 9px;border-radius:999px;background:rgba(10,126,140,.08);border:1px solid rgba(10,126,140,.18);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.library-card:nth-child(6n+1){background:linear-gradient(145deg,#edf9fa 0%,#fff 78%);border-color:#cbecef}
+.library-card:nth-child(6n+2){background:linear-gradient(145deg,#f1f5ff 0%,#fff 78%);border-color:#d9e2f8}
+.library-card:nth-child(6n+3){background:linear-gradient(145deg,#f5f1fb 0%,#fff 78%);border-color:#e4d9f1}
+.library-card:nth-child(6n+4){background:linear-gradient(145deg,#fff5ed 0%,#fff 78%);border-color:#f2dfce}
+.library-card:nth-child(6n+5){background:linear-gradient(145deg,#eef8f2 0%,#fff 78%);border-color:#d3eadb}
+.library-card:nth-child(6n){background:linear-gradient(145deg,#fff9e9 0%,#fff 78%);border-color:#eee4bd}
+.library-card:nth-child(6n+1) .library-chip{background:#dff3f5;border-color:#bfe3e7;color:#137e88}
+.library-card:nth-child(6n+2) .library-chip{background:#e6ecfb;border-color:#cbd7f0;color:#5770aa}
+.library-card:nth-child(6n+3) .library-chip{background:#ece4f5;border-color:#d9cae9;color:#7b619b}
+.library-card:nth-child(6n+4) .library-chip{background:#fbe8d9;border-color:#efd2bb;color:#a76737}
+.library-card:nth-child(6n+5) .library-chip{background:#dfefe5;border-color:#c5e1cf;color:#3f8058}
+.library-card:nth-child(6n) .library-chip{background:#f6eccb;border-color:#eadca9;color:#8c7026}
 .library-cta{padding:20px 0 72px;background:#fff}
 .library-cta-inner{display:flex;flex-direction:column;gap:20px;justify-content:space-between;align-items:flex-start;border:1px solid var(--border);border-radius:28px;padding:26px;background:linear-gradient(135deg,#f4fbfc,#fff)}
 @media (min-width:840px){.library-cta-inner{flex-direction:row;align-items:center;padding:32px}}
