@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const { getSupabaseAdmin } = require('./_lib/supabase');
-const { sendTelegramAdminAlert } = require('./_lib/notify');
+const { sendTelegramAdminAlert, sendTelegramAdminPhoto } = require('./_lib/notify');
 
 const PRODUCT_LABELS = {
   RT10: 'RETA 10mg',
@@ -34,12 +34,15 @@ const ALLOWED_SITE_EVENTS = new Set([
   'payment_success',
   'payment_failed',
   'review_opened',
+  'review_order_verified',
+  'review_submitted',
   'whatsapp_support_click',
 ]);
 
 module.exports = async (req, res) => {
   if (req.method === 'GET' && req.query?.type === 'reviews') return handleReviewsList(req, res);
   if (req.method === 'POST' && req.body?.type === 'track-event') return handleSiteEvent(req, res);
+  if (req.method === 'POST' && req.body?.type === 'review-order-options') return handleReviewOrderOptions(req, res);
   if (req.method === 'POST' && req.body?.type === 'submit-review') return handleReviewSubmit(req, res);
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
@@ -257,7 +260,7 @@ async function handleReviewsList(req, res) {
     const supabase = getSupabaseAdmin();
     let query = supabase
       .from('reviews_public')
-      .select('initials,product,rating,review_text,review_date,created_at')
+      .select('initials,display_name,display_mode,product,rating,review_text,image_paths,review_date,created_at')
       .order('review_date', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(200);
@@ -269,16 +272,101 @@ async function handleReviewsList(req, res) {
       console.error('reviews-list-db-error', { error: error?.message });
       return res.status(500).json({ error: 'Database error' });
     }
-    return res.status(200).json({ reviews: data || [] });
+    const reviews = await Promise.all((data || []).map(async (review) => {
+      const paths = Array.isArray(review.image_paths) ? review.image_paths.slice(0, 3) : [];
+      if (!paths.length) return { ...review, image_urls: [] };
+      const { data: signed } = await supabase.storage.from('review-images').createSignedUrls(paths, 3600);
+      return { ...review, image_urls: (signed || []).map((item) => item.signedUrl).filter(Boolean) };
+    }));
+    return res.status(200).json({ reviews });
   } catch (e) {
     console.error('reviews-list-error', { message: e?.message, stack: e?.stack });
     return res.status(500).json({ error: 'Server error' });
   }
 }
 
+function publicIdentity(fullName, mode, suppliedInitials = '') {
+  const words = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  const firstName = words[0] || 'Customer';
+  const generatedInitials = words.length > 1
+    ? `${words[0][0]}.${words[words.length - 1][0]}.`.toUpperCase()
+    : `${firstName[0] || 'U'}.`.toUpperCase();
+  const initials = String(suppliedInitials || generatedInitials)
+    .trim().replace(/[^a-z0-9. -]/gi, '').slice(0, 16) || generatedInitials;
+  return {
+    displayMode: mode === 'first_name' ? 'first_name' : 'initials',
+    displayName: mode === 'first_name' ? firstName.slice(0, 40) : initials,
+    firstName: firstName.slice(0, 40),
+    initials,
+  };
+}
+
+async function findVerifiedReviewOrder(supabase, orderNumber, email) {
+  const cleanOrderNumber = String(orderNumber || '').trim().toUpperCase().slice(0, 32);
+  const cleanEmail = String(email || '').trim().toLowerCase().slice(0, 180);
+  if (!cleanOrderNumber || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    return { error: 'invalid_order_details' };
+  }
+
+  const { data: order, error } = await supabase
+    .from('orders')
+    .select('id,order_number,email,status,full_name')
+    .eq('order_number', cleanOrderNumber)
+    .maybeSingle();
+  if (error) throw error;
+  if (!order || String(order.email || '').toLowerCase() !== cleanEmail) return { error: 'order_not_found' };
+  if (order.status !== 'delivered') return { error: 'order_not_delivered' };
+
+  const { data: items, error: itemsError } = await supabase
+    .from('order_items')
+    .select('sku,product_name,qty')
+    .eq('order_id', order.id);
+  if (itemsError) throw itemsError;
+  return { order, items: items || [], cleanEmail };
+}
+
+async function handleReviewOrderOptions(req, res) {
+  try {
+    const supabase = getSupabaseAdmin();
+    const verified = await findVerifiedReviewOrder(supabase, req.body?.orderNumber, req.body?.email);
+    if (verified.error) {
+      return res.status(verified.error === 'order_not_delivered' ? 409 : 404).json({ error: verified.error });
+    }
+    const identity = publicIdentity(verified.order.full_name, 'initials');
+    return res.status(200).json({
+      ok: true,
+      orderNumber: verified.order.order_number,
+      products: verified.items.map((item) => ({
+        sku: String(item.sku || '').trim().toUpperCase(),
+        name: PRODUCT_LABELS[String(item.sku || '').trim().toUpperCase()] || item.product_name,
+        qty: Number(item.qty || 1),
+      })),
+      identity: { firstName: identity.firstName, initials: identity.initials },
+    });
+  } catch (e) {
+    console.error('review-order-options-error', { message: e?.message });
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+function decodeReviewImage(value) {
+  const match = String(value || '').match(/^data:(image\/(?:jpeg|png|webp));base64,([a-z0-9+/=]+)$/i);
+  if (!match) throw new Error('invalid_review_image');
+  const mime = match[1].toLowerCase();
+  const buffer = Buffer.from(match[2], 'base64');
+  if (!buffer.length || buffer.length > 850 * 1024) throw new Error('review_image_too_large');
+  const valid = mime === 'image/jpeg'
+    ? buffer[0] === 0xff && buffer[1] === 0xd8
+    : mime === 'image/png'
+      ? buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+      : buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+  if (!valid) throw new Error('invalid_review_image');
+  return { buffer, mime, extension: mime === 'image/jpeg' ? 'jpg' : mime.split('/')[1] };
+}
+
 async function handleReviewSubmit(req, res) {
   try {
-    const { initials, reviewerName, product, rating, reviewText, orderNumber, email, hp } = req.body || {};
+    const { initials, reviewerName, displayMode, product, rating, reviewText, orderNumber, email, images, hp } = req.body || {};
     if (hp) return res.status(200).json({ ok: true });
 
     const cleanInitials = String(initials || '').trim().replace(/[^a-z0-9. -]/gi, '').slice(0, 16);
@@ -288,8 +376,9 @@ async function handleReviewSubmit(req, res) {
     const cleanOrderNumber = String(orderNumber || '').trim().toUpperCase().slice(0, 32);
     const cleanEmail = String(email || '').trim().toLowerCase().slice(0, 180);
     const cleanReviewerName = String(reviewerName || '').trim().replace(/[^a-z0-9.' -]/gi, '').replace(/\s+/g, ' ').slice(0, 80);
+    const cleanImages = Array.isArray(images) ? images.slice(0, 3) : [];
 
-    if (!cleanInitials || !cleanReviewerName || !cleanProduct || !cleanText || !cleanOrderNumber || !cleanEmail) {
+    if (!cleanProduct || !cleanText || !cleanOrderNumber || !cleanEmail) {
       return res.status(400).json({ error: 'missing_fields' });
     }
     if (!Number.isInteger(cleanRating) || cleanRating < 1 || cleanRating > 5) {
@@ -299,37 +388,27 @@ async function handleReviewSubmit(req, res) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return res.status(400).json({ error: 'invalid_email' });
 
     const supabase = getSupabaseAdmin();
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .select('id, order_number, email, status')
-      .eq('order_number', cleanOrderNumber)
-      .maybeSingle();
-    if (orderError) throw orderError;
-    if (!order || String(order.email || '').toLowerCase() !== cleanEmail) {
-      return res.status(404).json({ error: 'order_not_found' });
+    const verified = await findVerifiedReviewOrder(supabase, cleanOrderNumber, cleanEmail);
+    if (verified.error) {
+      return res.status(verified.error === 'order_not_delivered' ? 409 : 404).json({ error: verified.error });
     }
-    if (order.status !== 'delivered') {
-      return res.status(409).json({ error: 'order_not_delivered' });
-    }
-
-    const { data: items, error: itemsError } = await supabase
-      .from('order_items')
-      .select('sku')
-      .eq('order_id', order.id);
-    if (itemsError) throw itemsError;
-    const orderedSkus = new Set((items || []).map((i) => String(i.sku || '').trim().toUpperCase()));
+    const order = verified.order;
+    const orderedSkus = new Set(verified.items.map((i) => String(i.sku || '').trim().toUpperCase()));
     if (!orderedSkus.has(cleanProduct) && !(cleanProduct === 'RT10' && orderedSkus.has('RT10X3'))) {
       return res.status(403).json({ error: 'product_not_in_order' });
     }
 
+    const identity = publicIdentity(order.full_name || cleanReviewerName, displayMode, cleanInitials);
     const emailHash = crypto.createHash('sha256').update(cleanEmail).digest('hex');
     const insert = {
-      initials: cleanInitials,
+      initials: identity.initials,
+      display_name: identity.displayName,
+      display_mode: identity.displayMode,
       product: cleanProduct,
       rating: cleanRating,
       review_text: cleanText,
       status: 'pending',
-      reviewer_name: cleanReviewerName,
+      reviewer_name: order.full_name || cleanReviewerName || identity.firstName,
       order_number: order.order_number,
       email_hash: emailHash,
       source: 'onsite_verified_order',
@@ -340,14 +419,52 @@ async function handleReviewSubmit(req, res) {
       .insert(insert)
       .select('id')
       .single();
+    if (error?.code === '23505') return res.status(409).json({ error: 'review_already_exists' });
     if (error) throw error;
+
+    const imagePaths = [];
+    try {
+      for (const encoded of cleanImages) {
+        const image = decodeReviewImage(encoded);
+        const path = `${pendingReview.id}/${crypto.randomUUID()}.${image.extension}`;
+        const { error: uploadError } = await supabase.storage.from('review-images').upload(path, image.buffer, {
+          contentType: image.mime,
+          upsert: false,
+        });
+        if (uploadError) throw uploadError;
+        imagePaths.push(path);
+      }
+      if (imagePaths.length) {
+        const { error: imageUpdateError } = await supabase
+          .from('reviews_pending')
+          .update({ image_paths: imagePaths })
+          .eq('id', pendingReview.id);
+        if (imageUpdateError) throw imageUpdateError;
+      }
+    } catch (imageError) {
+      if (imagePaths.length) await supabase.storage.from('review-images').remove(imagePaths);
+      await supabase.from('reviews_pending').delete().eq('id', pendingReview.id);
+      const known = ['invalid_review_image', 'review_image_too_large'].includes(imageError?.message);
+      return res.status(400).json({ error: known ? imageError.message : 'review_image_upload_failed' });
+    }
 
     const productLabel = PRODUCT_LABELS[cleanProduct] || cleanProduct;
     const reviewCode = String(pendingReview?.id || '').slice(0, 8);
     try {
       await sendTelegramAdminAlert(
-        `<b>New UKMAXX review pending</b>\n\nReview code: <code>${escapeTelegram(reviewCode)}</code>\nOrder: <code>${escapeTelegram(order.order_number)}</code>\nProduct: <b>${escapeTelegram(productLabel)}</b>\nRating: ${cleanRating}/5\nName: ${escapeTelegram(cleanReviewerName)}\nPublic initials: ${escapeTelegram(cleanInitials)}\n\n${escapeTelegram(cleanText)}\n\nApprove: <code>/approvereview ${escapeTelegram(reviewCode)}</code>\nReject: <code>/rejectreview ${escapeTelegram(reviewCode)}</code>`
+        `<b>New UKMAXX review pending</b>\n\nReview code: <code>${escapeTelegram(reviewCode)}</code>\nOrder: <code>${escapeTelegram(order.order_number)}</code>\nProduct: <b>${escapeTelegram(productLabel)}</b>\nRating: ${cleanRating}/5\nCustomer: ${escapeTelegram(order.full_name || cleanReviewerName || 'Verified customer')}\nPublic as: ${escapeTelegram(identity.displayName)} (${identity.displayMode === 'first_name' ? 'first name' : 'initials'})\nPhotos: ${imagePaths.length}\n\n${escapeTelegram(cleanText)}\n\nApprove: <code>/approvereview ${escapeTelegram(reviewCode)}</code>\nReject: <code>/rejectreview ${escapeTelegram(reviewCode)}</code>`
       );
+      if (imagePaths.length) {
+        const { data: signed } = await supabase.storage.from('review-images').createSignedUrls(imagePaths, 86400);
+        for (let i = 0; i < (signed || []).length; i += 1) {
+          if (signed[i]?.signedUrl) {
+            await sendTelegramAdminPhoto(
+              signed[i].signedUrl,
+              `Review <code>${escapeTelegram(reviewCode)}</code> · photo ${i + 1}/${imagePaths.length}`,
+            );
+          }
+        }
+      }
     } catch (err) {
       console.error('review-telegram-alert-failed', { message: err?.message });
     }

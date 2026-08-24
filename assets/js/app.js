@@ -1,5 +1,5 @@
 import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260819-seo-clusters';
-import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260819-restore-traffic';
+import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260824-verified-review-photos';
 import { renderCart, initCart } from './modules/cart.js?v=20260819-restore-traffic';
 import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js?v=20260813-catalogue';

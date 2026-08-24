@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Leave a verified review — UKMAXX</title>
+  <meta name="description" content="Leave verified feedback for a delivered UKMAXX order.">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#0A7E8C">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="shortcut icon" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <link rel="canonical" href="https://www.ukmaxx.co.uk/review.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>try{if(localStorage.getItem('ukmaxx_age_verified')!=='true'){document.documentElement.classList.add('needs-age-gate');document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('pre-gate'));}}catch(e){document.documentElement.classList.add('needs-age-gate');}</script>
+  <link rel="stylesheet" href="./assets/css/variables.css">
+  <link rel="stylesheet" href="./assets/css/reset.css">
+  <link rel="stylesheet" href="./assets/css/base.css">
+  <link rel="stylesheet" href="./assets/css/components.css?v=20260824-verified-review-photos">
+  <link rel="stylesheet" href="./assets/css/pages/review.css">
+  <script src="./assets/html/bundle.js?v=20260824-verified-review-photos"></script>
+</head>
+<body class="review-page-body">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div id="ageGate" class="age-gate" aria-modal="true" role="dialog" aria-labelledby="ageGateTitle" aria-describedby="ageGateDesc">
+  <div class="age-gate-card">
+    <div class="age-gate-logo"><span class="logo-mark" aria-hidden="true"></span>UKMAXX</div>
+    <h2 id="ageGateTitle" class="age-gate-title">Research Compounds — Age Verification</h2>
+    <p id="ageGateDesc" class="age-gate-copy">You must be 18 or older to access this site. All products are supplied strictly for laboratory and in-vitro research use only. Not for human consumption.</p>
+    <div class="age-gate-actions">
+      <button id="ageEnterBtn" class="btn btn-primary btn-lg" type="button" style="flex:1">I am 18 or older — Enter</button>
+      <button id="ageExitBtn" class="btn btn-ghost btn-lg" type="button" style="flex:1">I am under 18</button>
+    </div>
+    <p class="age-gate-foot">By entering you confirm you are a qualified researcher aged 18 or older acting in compliance with all applicable laws.</p>
+  </div>
+</div>
+
+<script>document.write(window.__html.topbar)</script>
+<script>document.write(window.__html.header)</script>
+
+<main id="main" class="review-page">
+  <section class="review-hero" aria-labelledby="reviewTitle">
+    <div class="container review-shell">
+      <div class="review-intro">
+        <span class="review-eyebrow">Verified customer feedback</span>
+        <h1 id="reviewTitle">How did we do?</h1>
+        <p>Share an honest review of a delivered UKMAXX order. Every submission is matched to the order and checked before publication.</p>
+        <div class="review-trust-row" aria-label="Review safeguards">
+          <span>Verified orders only</span>
+          <span>Images moderated</span>
+          <span>You control your public name</span>
+        </div>
+      </div>
+
+      <div class="review-panel">
+        <section class="review-step" id="reviewVerifyStep" aria-labelledby="verifyHeading">
+          <div class="review-step-head">
+            <span class="review-step-number">01</span>
+            <div><h2 id="verifyHeading">Verify your order</h2><p>This information is used only to match your delivered order.</p></div>
+          </div>
+          <div class="review-fields review-fields--two">
+            <div class="field">
+              <label for="reviewOrderNumber">Order number</label>
+              <input id="reviewOrderNumber" placeholder="e.g. UKX26..." maxlength="32" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="reviewEmail">Order email</label>
+              <input id="reviewEmail" type="email" placeholder="Email used at checkout" maxlength="180" autocomplete="email">
+            </div>
+          </div>
+          <div id="reviewVerifyMsg" class="review-message" aria-live="polite"></div>
+          <button id="reviewVerifyBtn" class="btn btn-primary" type="button">Verify delivered order</button>
+        </section>
+
+        <form class="review-step review-compose" id="reviewForm" hidden novalidate>
+          <div class="review-step-head">
+            <span class="review-step-number">02</span>
+            <div><h2>Write your review</h2><p id="verifiedOrderText">Verified order</p></div>
+          </div>
+
+          <fieldset class="review-fieldset">
+            <legend>Product</legend>
+            <div id="reviewProductChoices" class="review-product-choices"></div>
+          </fieldset>
+
+          <fieldset class="review-fieldset">
+            <legend>Your rating</legend>
+            <div class="review-stars" id="reviewStars" aria-label="Choose a rating">
+              <button type="button" data-rating="1" aria-label="1 out of 5 stars">★</button>
+              <button type="button" data-rating="2" aria-label="2 out of 5 stars">★</button>
+              <button type="button" data-rating="3" aria-label="3 out of 5 stars">★</button>
+              <button type="button" data-rating="4" aria-label="4 out of 5 stars">★</button>
+              <button type="button" data-rating="5" aria-label="5 out of 5 stars">★</button>
+            </div>
+            <input id="reviewRating" type="hidden" value="">
+          </fieldset>
+
+          <div class="field">
+            <label for="reviewText">Your review</label>
+            <textarea id="reviewText" maxlength="500" rows="6" placeholder="Tell us about dispatch, packaging, communication, batch information or anything we could improve."></textarea>
+            <div class="review-field-note"><span>Minimum 12 characters</span><span id="reviewCharacterCount">0 / 500</span></div>
+          </div>
+
+          <fieldset class="review-fieldset">
+            <legend>Photos <span>Optional · up to 3</span></legend>
+            <label class="review-upload" for="reviewImages">
+              <input id="reviewImages" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple>
+              <span class="review-upload-icon" aria-hidden="true">+</span>
+              <strong>Add customer photos</strong>
+              <small>Images are resized before upload and checked before publication.</small>
+            </label>
+            <div id="reviewImagePreviews" class="review-image-previews"></div>
+            <p class="review-photo-warning">Please do not upload shipping labels, addresses, tracking details, identifiable people or other personal information.</p>
+          </fieldset>
+
+          <fieldset class="review-fieldset">
+            <legend>Display my review as</legend>
+            <div class="review-identity-options">
+              <label><input type="radio" name="reviewDisplayMode" value="initials" checked><span><strong id="reviewInitialsPreview">Initials</strong><small>Recommended for privacy</small></span></label>
+              <label><input type="radio" name="reviewDisplayMode" value="first_name"><span><strong id="reviewFirstNamePreview">First name</strong><small>Show your first name publicly</small></span></label>
+            </div>
+          </fieldset>
+
+          <label class="review-consent">
+            <input id="reviewConsent" type="checkbox">
+            <span>I understand that my approved review, selected public name and approved photos may appear publicly on UKMAXX.</span>
+          </label>
+
+          <input id="reviewHoneypot" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div id="reviewSubmitMsg" class="review-message" aria-live="polite"></div>
+          <button id="reviewSubmitBtn" class="btn btn-primary btn-block" type="submit">Submit review for approval</button>
+        </form>
+
+        <section id="reviewSuccess" class="review-success" hidden aria-live="polite">
+          <span class="review-success-icon">✓</span>
+          <h2>Thank you for your review.</h2>
+          <p>It has been matched to your order and sent for approval. Nothing appears publicly until it has been checked.</p>
+          <a class="btn btn-primary" href="/#reviews">View customer feedback</a>
+        </section>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>document.write(window.__html.footer)</script>
+<script>document.write(window.__html.mobileNav)</script>
+<script>document.write(window.__html.cartDrawer)</script>
+<script>document.write(window.__html.checkout)</script>
+<script>document.write(window.__html.toast)</script>
+<script>document.write(window.__html.cookieBanner)</script>
+<script type="module" src="./assets/js/app.js?v=20260824-verified-review-photos"></script>
+<script type="module" src="./assets/js/pages/review-page.js?v=20260824-verified-review-photos"></script>
+</body>
+</html>

@@ -1,6 +1,5 @@
 import { tpStars } from '../utils/money.js';
 import { $, byId } from '../utils/dom.js';
-import { trackEvent } from './analytics.js?v=20260819-restore-traffic';
 
 const REVIEW_ENDPOINT = '/api/track-order';
 const PRODUCT_LABELS = {
@@ -38,13 +37,32 @@ function productLabel(product) {
 
 function reviewCard(review) {
   const rating = Math.max(1, Math.min(5, Number(review.rating || 5)));
+  const images = Array.isArray(review.image_urls) ? review.image_urls.slice(0, 3) : [];
+  const imageHtml = images.length
+    ? `<div class="review-card-images" aria-label="Customer review photos">${images.map((url, index) => `<button class="review-card-image" type="button" data-review-image="${escapeHtml(url)}" aria-label="Open customer review photo ${index + 1}"><img src="${escapeHtml(url)}" alt="Customer review photo for ${escapeHtml(productLabel(review.product))}" loading="lazy"></button>`).join('')}</div>`
+    : '';
   return `<article class="review-card">
     <div class="review-card-head"><span>${escapeHtml(productLabel(review.product))}</span><span>${escapeHtml(reviewDate(review.review_date || review.created_at))}</span></div>
     ${tpStars(rating)}
     <div class="review-card-badge"><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Verified order</div>
     <p class="review-card-text">${escapeHtml(review.review_text)}</p>
-    <div class="review-card-author">&mdash; ${escapeHtml(review.initials)}</div>
+    ${imageHtml}
+    <div class="review-card-author">&mdash; ${escapeHtml(review.display_name || review.initials)}</div>
   </article>`;
+}
+
+function bindReviewImages(container) {
+  container?.querySelectorAll('[data-review-image]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const url = button.getAttribute('data-review-image');
+      if (!url) return;
+      const overlay = document.createElement('div');
+      overlay.className = 'review-image-lightbox';
+      overlay.innerHTML = `<button type="button" aria-label="Close review photo">&times;</button><img src="${escapeHtml(url)}" alt="Customer review photo">`;
+      overlay.addEventListener('click', (event) => { if (event.target === overlay || event.target.tagName === 'BUTTON') overlay.remove(); });
+      document.body.appendChild(overlay);
+    });
+  });
 }
 
 function emptyCard(message = 'Customer feedback will appear here once fulfilled UKMAXX orders have been reviewed and approved.') {
@@ -126,6 +144,7 @@ export async function renderReviews() {
   if (meta) meta.innerHTML = `Based on <strong>${rows.length}</strong> verified order review${rows.length === 1 ? '' : 's'}.`;
   renderBars(byId('feedbackBars'), rows);
   grid.innerHTML = rows.slice(0, 6).map(reviewCard).join('');
+  bindReviewImages(grid);
 }
 
 export async function renderProductReviewsSummary(productId) {
@@ -153,6 +172,7 @@ export async function renderProductReviewsSummary(productId) {
     list.innerHTML = hasRows
       ? rows.slice(0, 4).map(reviewCard).join('')
       : '<p class="pdp-reviews-empty">No reviews yet for this product.</p>';
+    bindReviewImages(list);
   }
 
   const ratingTop = byId('pdpRating');
@@ -166,11 +186,9 @@ export function setupReviewDrawer() {
   if (!drawer) return;
 
   const open = (product = '') => {
-    const productField = byId('reviewProduct');
-    if (productField && product) productField.value = product;
-    drawer.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    trackEvent('review_opened', { productSku: product || productField?.value || '' });
+    const params = new URLSearchParams();
+    if (product) params.set('product', product);
+    location.href = `/review.html${params.toString() ? `?${params.toString()}` : ''}`;
   };
   const shut = () => {
     drawer.style.display = 'none';
@@ -191,9 +209,11 @@ export function setupReviewDrawer() {
 
   const params = new URLSearchParams(location.search);
   if (params.get('review') === '1') {
-    const orderField = byId('reviewOrderNumber');
-    if (orderField && params.get('order')) orderField.value = params.get('order');
-    setTimeout(() => open(params.get('product') || ''), 250);
+    const next = new URLSearchParams();
+    if (params.get('order')) next.set('order', params.get('order'));
+    if (params.get('product')) next.set('product', params.get('product'));
+    location.replace(`/review.html${next.toString() ? `?${next.toString()}` : ''}`);
+    return;
   }
 
   byId('reviewSubmitBtn')?.addEventListener('click', async () => {

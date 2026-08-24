@@ -54,4 +54,25 @@ async function sendTelegramAdminAlert(text) {
   });
 }
 
-module.exports = { sendTelegramAdminAlert, sendTelegramOrderAlert };
+async function sendTelegramAdminPhoto(photo, caption = '') {
+  const token = process.env.TELEGRAM_ADMIN_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) throw new Error('telegram-admin-env-missing');
+
+  const r = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, photo, caption, parse_mode: 'HTML' }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok || data.ok === false) {
+    console.error('telegram-admin-photo-send-failed', {
+      status: r.status,
+      description: data?.description,
+      chatIdSuffix: String(chatId).slice(-4),
+    });
+    throw new Error(`telegram_admin_photo_send_failed:${data.description || r.status}`);
+  }
+}
+
+module.exports = { sendTelegramAdminAlert, sendTelegramAdminPhoto, sendTelegramOrderAlert };

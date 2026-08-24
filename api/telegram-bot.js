@@ -456,7 +456,7 @@ async function findPendingReviewByCode(supabase, code) {
 
   const { data, error } = await supabase
     .from('reviews_pending')
-    .select('id, initials, product, rating, review_text, status, reviewer_name, order_number, created_at')
+    .select('id, initials, display_name, display_mode, image_paths, product, rating, review_text, status, reviewer_name, order_number, created_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (error) throw error;
@@ -484,6 +484,10 @@ async function handleApproveReview(token, chatId, args) {
 
   const { error: insertError } = await supabase.from('reviews_public').insert({
     initials: review.initials,
+    display_name: review.display_name || review.initials,
+    display_mode: review.display_mode || 'initials',
+    image_paths: Array.isArray(review.image_paths) ? review.image_paths : [],
+    source_review_id: review.id,
     product: review.product,
     rating: review.rating,
     review_text: review.review_text,
@@ -526,6 +530,12 @@ async function handleRejectReview(token, chatId, args) {
     .update({ status: 'rejected' })
     .eq('id', review.id);
   if (error) throw error;
+
+  if (Array.isArray(review.image_paths) && review.image_paths.length) {
+    const { error: storageError } = await supabase.storage.from('review-images').remove(review.image_paths);
+    if (storageError) console.error('review-image-reject-cleanup-error', { reviewId: review.id, message: storageError.message });
+    await supabase.from('reviews_pending').update({ image_paths: [] }).eq('id', review.id);
+  }
 
   const productLabel = PRODUCT_LABELS[review.product] || review.product;
   await sendTelegram(
