@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="./assets/css/reset.css">
   <link rel="stylesheet" href="./assets/css/base.css">
   <link rel="stylesheet" href="./assets/css/components.css?v=20260824-verified-review-photos">
-  <link rel="stylesheet" href="./assets/css/pages/review.css">
+  <link rel="stylesheet" href="./assets/css/pages/review.css?v=20260825-multi-product-reviews">
   <script src="./assets/html/bundle.js?v=20260824-verified-review-photos"></script>
 </head>
 <body class="review-page-body">
@@ -137,8 +137,11 @@
         <section id="reviewSuccess" class="review-success" hidden aria-live="polite">
           <span class="review-success-icon">✓</span>
           <h2>Thank you for your review.</h2>
-          <p>It has been matched to your order and sent for approval. Nothing appears publicly until it has been checked.</p>
-          <a class="btn btn-primary" href="/#reviews">View customer feedback</a>
+          <p id="reviewSuccessText">It has been matched to your order and sent for approval. Nothing appears publicly until it has been checked.</p>
+          <div class="review-success-actions">
+            <button id="reviewAnotherProductBtn" class="btn btn-primary" type="button" hidden>Review another product</button>
+            <a class="btn btn-ghost" href="/#reviews">View customer feedback</a>
+          </div>
         </section>
       </div>
     </div>
@@ -152,6 +155,6 @@
 <script>document.write(window.__html.toast)</script>
 <script>document.write(window.__html.cookieBanner)</script>
 <script type="module" src="./assets/js/app.js?v=20260824-verified-review-photos"></script>
-<script type="module" src="./assets/js/pages/review-page.js?v=20260824-verified-review-photos"></script>
+<script type="module" src="./assets/js/pages/review-page.js?v=20260825-multi-product-reviews"></script>
 </body>
 </html>

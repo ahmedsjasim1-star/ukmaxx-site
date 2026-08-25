@@ -20,6 +20,16 @@ test('review API reuses track-order and enforces verified order and private imag
   assert.match(api, /order\.status !== 'delivered'/);
   assert.match(api, /storage\.from\('review-images'\)/);
   assert.match(api, /review_already_exists/);
+  assert.match(api, /order_reviews_complete/);
+  assert.match(api, /submittedProducts/);
+});
+
+test('multi-product review flow offers the next unreviewed product without re-verification', () => {
+  const html = read('review.html');
+  const page = read('assets/js/pages/review-page.js');
+  assert.match(html, /reviewAnotherProductBtn/);
+  assert.match(page, /Review another product|reviewAnotherProduct/);
+  assert.match(page, /still have.*product/);
 });
 
 test('review approval publishes the selected identity and moderated image paths', () => {

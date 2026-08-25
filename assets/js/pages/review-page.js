@@ -18,6 +18,7 @@ function errorMessage(code) {
     product_not_in_order: 'Please choose a product from this delivered order.',
     review_too_short: 'Please add a little more detail to your review.',
     review_already_exists: 'A review for this product and order has already been submitted.',
+    order_reviews_complete: 'Every product from this order already has a review submitted.',
     invalid_review_image: 'One of those files is not a supported image.',
     review_image_too_large: 'One image is still too large after processing. Please choose another.',
     review_image_upload_failed: 'We could not upload the images. Please try again or submit without them.',
@@ -31,10 +32,7 @@ function setVerifying(isBusy) {
   button.textContent = isBusy ? 'Checking order...' : 'Verify delivered order';
 }
 
-function renderProductChoices(products) {
-  const container = byId('reviewProductChoices');
-  if (!container) return;
-  const requested = new URLSearchParams(location.search).get('product')?.toUpperCase() || '';
+function uniqueProducts(products) {
   const unique = [];
   const seen = new Set();
   products.forEach((product) => {
@@ -42,6 +40,14 @@ function renderProductChoices(products) {
     seen.add(product.sku);
     unique.push(product);
   });
+  return unique;
+}
+
+function renderProductChoices(products) {
+  const container = byId('reviewProductChoices');
+  if (!container) return;
+  const requested = new URLSearchParams(location.search).get('product')?.toUpperCase() || '';
+  const unique = uniqueProducts(products);
   container.innerHTML = unique.map((product, index) => `
     <label class="review-product-choice">
       <input type="radio" name="reviewProduct" value="${product.sku}" ${(requested === product.sku || (!requested && unique.length === 1 && index === 0)) ? 'checked' : ''}>
@@ -67,8 +73,9 @@ async function verifyOrder() {
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.ok) return setMessage(message, errorMessage(data.error), 'error');
 
-    state.verified = { orderNumber: data.orderNumber, email, identity: data.identity };
-    renderProductChoices(data.products || []);
+    const products = uniqueProducts(data.products || []);
+    state.verified = { orderNumber: data.orderNumber, email, identity: data.identity, products };
+    renderProductChoices(products);
     byId('reviewInitialsPreview').textContent = data.identity?.initials || 'Initials';
     byId('reviewFirstNamePreview').textContent = data.identity?.firstName || 'First name';
     byId('verifiedOrderText').textContent = `${data.orderNumber} · delivered order verified`;
@@ -91,6 +98,26 @@ function setRating(rating) {
     button.classList.toggle('is-active', active);
     button.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
+}
+
+function resetReviewForm() {
+  state.images.forEach((image) => URL.revokeObjectURL(image.preview));
+  state.images = [];
+  renderImagePreviews();
+  renderProductChoices(state.verified?.products || []);
+  setRating(0);
+  byId('reviewText').value = '';
+  byId('reviewCharacterCount').textContent = '0 / 500';
+  byId('reviewConsent').checked = false;
+  setMessage(byId('reviewSubmitMsg'), 'Choose the next product from this delivered order.');
+}
+
+function reviewAnotherProduct() {
+  if (!state.verified?.products?.length) return;
+  resetReviewForm();
+  byId('reviewSuccess').hidden = true;
+  byId('reviewForm').hidden = false;
+  byId('reviewForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function fileToDataUrl(blob) {
@@ -209,6 +236,12 @@ async function submitReview(event) {
     trackEvent('review_submitted', { productSku: product, rating: state.rating, photoCount: state.images.length });
     state.images.forEach((image) => URL.revokeObjectURL(image.preview));
     state.images = [];
+    state.verified.products = (state.verified.products || []).filter((item) => item.sku !== product);
+    const remaining = state.verified.products.length;
+    byId('reviewSuccessText').textContent = remaining
+      ? `It has been matched to your order and sent for approval. You still have ${remaining} product${remaining === 1 ? '' : 's'} from this order available to review.`
+      : 'It has been matched to your order and sent for approval. Nothing appears publicly until it has been checked.';
+    byId('reviewAnotherProductBtn').hidden = remaining === 0;
     byId('reviewForm').hidden = true;
     byId('reviewVerifyStep').hidden = true;
     byId('reviewSuccess').hidden = false;
@@ -232,4 +265,5 @@ document.addEventListener('DOMContentLoaded', () => {
   byId('reviewText')?.addEventListener('input', () => { byId('reviewCharacterCount').textContent = `${byId('reviewText').value.length} / 500`; });
   byId('reviewImages')?.addEventListener('change', (event) => addImages(event.target.files));
   byId('reviewForm')?.addEventListener('submit', submitReview);
+  byId('reviewAnotherProductBtn')?.addEventListener('click', reviewAnotherProduct);
 });

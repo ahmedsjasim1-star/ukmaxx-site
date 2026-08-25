@@ -340,10 +340,19 @@ async function handleReviewOrderOptions(req, res) {
       return res.status(verified.error === 'order_not_delivered' ? 409 : 404).json({ error: verified.error });
     }
     const identity = publicIdentity(verified.order.full_name, 'initials');
+    const { data: submittedReviews, error: submittedError } = await supabase
+      .from('reviews_pending')
+      .select('product')
+      .eq('order_number', verified.order.order_number)
+      .in('status', ['pending', 'approved']);
+    if (submittedError) throw submittedError;
+    const submittedProducts = new Set((submittedReviews || []).map((review) => String(review.product || '').trim().toUpperCase()));
+    const availableProducts = verified.items.filter((item) => !submittedProducts.has(String(item.sku || '').trim().toUpperCase()));
+    if (!availableProducts.length) return res.status(409).json({ error: 'order_reviews_complete' });
     return res.status(200).json({
       ok: true,
       orderNumber: verified.order.order_number,
-      products: verified.items.map((item) => ({
+      products: availableProducts.map((item) => ({
         sku: String(item.sku || '').trim().toUpperCase(),
         name: PRODUCT_LABELS[String(item.sku || '').trim().toUpperCase()] || item.product_name,
         qty: Number(item.qty || 1),

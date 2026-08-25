@@ -60,5 +60,6 @@
 .review-success-icon{width:60px;height:60px;border-radius:50%;background:var(--success-light);color:var(--success);display:grid;place-items:center;font-size:28px;margin:0 auto 16px}
 .review-success h2{font-family:'Space Grotesk',sans-serif;font-size:26px;margin:0 0 9px;color:var(--text)}
 .review-success p{font-size:13.5px;line-height:1.6;color:var(--dim);max-width:500px;margin:0 auto 20px}
+.review-success-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
 @media(min-width:680px){.review-hero{padding-top:58px}.review-step{padding:30px 34px}.review-fields--two,.review-identity-options{grid-template-columns:1fr 1fr}.review-product-choices{grid-template-columns:1fr 1fr}}
-@media(max-width:480px){.review-hero{padding:32px 0 54px}.review-intro{text-align:left}.review-trust-row{justify-content:flex-start}.review-panel{border-radius:15px}.review-step{padding:20px}.review-stars{justify-content:space-between}.review-stars button{font-size:32px}}
+@media(max-width:480px){.review-hero{padding:32px 0 54px}.review-intro{text-align:left}.review-trust-row{justify-content:flex-start}.review-panel{border-radius:15px}.review-step{padding:20px}.review-stars{justify-content:space-between}.review-stars button{font-size:32px}.review-success-actions .btn{width:100%}}
