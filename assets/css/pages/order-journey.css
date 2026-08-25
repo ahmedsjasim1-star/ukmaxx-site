@@ -1,0 +1,33 @@
+.order-journey-page .article-hero{padding-bottom:54px}
+.journey-hero-photo,.article-photo{overflow:hidden;margin:34px 0 0;border:1px solid rgba(10,126,140,.18);border-radius:26px;background:#eaf5f6;box-shadow:0 18px 50px rgba(8,55,63,.1)}
+.journey-hero-photo img,.article-photo img{display:block;width:100%;height:auto}
+.journey-hero-photo figcaption,.article-photo figcaption{padding:12px 16px;background:rgba(255,255,255,.94);color:var(--text-3);font-size:12px;line-height:1.55}
+.article-photo{margin:24px 0 27px}
+.article-photo-detail{background:#eef8f9}
+.article-photo-portrait{max-width:560px;margin-right:auto;margin-left:auto;background:linear-gradient(145deg,#ecf7f8,#f8f4ee)}
+.article-photo-portrait img{max-height:720px;object-fit:contain}
+.verified-review-card{margin:24px 0 28px;padding:26px;border:1px solid rgba(28,141,112,.2);border-radius:24px;background:linear-gradient(145deg,#effaf5,#fff);box-shadow:0 15px 40px rgba(10,80,62,.07)}
+.verified-review-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.verified-stars{color:#df9d34;font-size:18px;letter-spacing:2px}
+.verified-order-badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#dff4ea;color:#17664e;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase}
+.verified-review-card blockquote{margin:0;padding:0;border:0;background:transparent;color:var(--text);font-size:20px;line-height:1.55}
+.verified-review-card figcaption{display:flex;gap:10px;margin-top:18px;color:var(--text-3);font-size:12px}
+.verified-review-card figcaption strong{color:var(--text)}
+.verified-review-card figcaption span::before{content:'·';margin-right:10px}
+.journey-chain{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:24px 0;padding:18px;border:1px solid rgba(10,126,140,.2);border-radius:20px;background:linear-gradient(135deg,#edf9fa,#fff)}
+.journey-chain span{display:inline-flex;padding:9px 12px;border-radius:999px;background:#fff;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;box-shadow:0 5px 16px rgba(8,55,63,.06)}
+.journey-chain b{color:var(--accent);font-weight:700}
+@media (max-width:700px){
+  .order-journey-page .article-hero{padding-bottom:38px}
+  .journey-hero-photo{margin-top:25px;border-radius:20px}
+  .journey-hero-photo figcaption,.article-photo figcaption{padding:11px 13px;font-size:11px}
+  .article-photo{border-radius:19px}
+  .article-photo-portrait{max-width:100%}
+  .article-photo-portrait img{max-height:none}
+  .verified-review-card{padding:20px;border-radius:20px}
+  .verified-review-card blockquote{font-size:18px}
+  .verified-review-topline{align-items:flex-start}
+  .journey-chain{gap:7px;padding:15px}
+  .journey-chain span{font-size:12px}
+  .journey-chain b{font-size:12px}
+}
