@@ -41,6 +41,7 @@ const ALLOWED_SITE_EVENTS = new Set([
 
 module.exports = async (req, res) => {
   if (req.method === 'GET' && req.query?.type === 'reviews') return handleReviewsList(req, res);
+  if (req.method === 'GET' && req.query?.type === 'visitor-context') return handleVisitorContext(req, res);
   if (req.method === 'POST' && req.body?.type === 'track-event') return handleSiteEvent(req, res);
   if (req.method === 'POST' && req.body?.type === 'review-order-options') return handleReviewOrderOptions(req, res);
   if (req.method === 'POST' && req.body?.type === 'submit-review') return handleReviewSubmit(req, res);
@@ -118,6 +119,12 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Server error' });
   }
 };
+
+function handleVisitorContext(req, res) {
+  const country = cleanHeader(req.headers['x-vercel-ip-country'], 2).toUpperCase();
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  return res.status(200).json({ country: /^[A-Z]{2}$/.test(country) ? country : null });
+}
 
 function clean(value, max = 240) {
   return String(value || '').trim().slice(0, max);

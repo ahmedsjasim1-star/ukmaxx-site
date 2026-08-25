@@ -10,6 +10,8 @@ import { getAnalyticsContext, trackEvent } from './analytics.js?v=20260819-resto
 const SHIP_THRESHOLD = FREE_SHIPPING_THRESHOLD || 100;
 const SHIP_FLAT = FLAT_SHIPPING || 4.99;
 const PROMOS = PROMO_CODES || { MAXX10: { type: 'percent', value: 0.10, label: '10% off' } };
+const WHATSAPP_NUMBER = '447438637604';
+let visitorCountryPromise;
 
 function normalizeSku(raw = '') {
   const t = String(raw).trim();
@@ -78,6 +80,50 @@ function cartAnalyticsPayload(c = getCart()) {
     cartValue: Number(t.tot.toFixed(2)),
     promoCode: t.code || '',
   };
+}
+
+function visitorCountry() {
+  if (!visitorCountryPromise) {
+    visitorCountryPromise = fetch('/api/track-order?type=visitor-context', {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    })
+      .then(async (response) => response.ok ? response.json() : {})
+      .then((data) => String(data?.country || '').trim().toUpperCase())
+      .catch(() => '');
+  }
+  return visitorCountryPromise;
+}
+
+function countryName(countryCode) {
+  try {
+    return new Intl.DisplayNames([navigator.language || 'en-GB'], { type: 'region' }).of(countryCode) || countryCode;
+  } catch {
+    return countryCode;
+  }
+}
+
+async function syncInternationalCheckoutNotice(c = getCart()) {
+  const notice = byId('checkoutInternationalNotice');
+  const link = byId('checkoutInternationalWhatsApp');
+  if (!notice || !link) return;
+  notice.hidden = true;
+
+  const countryCode = await visitorCountry();
+  if (!countryCode || countryCode === 'GB') return;
+
+  const country = countryName(countryCode);
+  const basket = c.map((item) => `${PRODUCTS[item.sku]?.name || item.sku} x${item.qty}`).join(', ');
+  const message = `Hi UKMAXX, I'm based in ${country} and would like to ask about future availability${basket ? ` for ${basket}` : ''}.`;
+  const text = byId('checkoutInternationalText');
+  if (text) text.textContent = `Online checkout is UK-only. Ask about future availability in ${country}.`;
+  link.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  link.onclick = () => trackEvent('whatsapp_support_click', {
+    placement: 'international_checkout',
+    detectedCountry: countryCode,
+    ...cartAnalyticsPayload(c),
+  });
+  notice.hidden = false;
 }
 
 export function renderCart() {
@@ -264,6 +310,7 @@ export async function openCheckout() {
   m.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   renderCheckoutSummary();
+  void syncInternationalCheckoutNotice(c);
   trackEvent('checkout_opened', cartAnalyticsPayload(c));
 }
 
@@ -374,6 +421,7 @@ function orderRef() {
 }
 
 export function initCart() {
+  void visitorCountry();
   delegate(document.body, '[data-add]', 'click', (e, btn) => {
     e.stopPropagation();
     const sku = btn.dataset.add;
