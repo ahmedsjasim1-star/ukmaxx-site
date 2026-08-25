@@ -116,7 +116,7 @@ async function syncInternationalCheckoutNotice(c = getCart()) {
   const basket = c.map((item) => `${PRODUCTS[item.sku]?.name || item.sku} x${item.qty}`).join(', ');
   const message = `Hi UKMAXX, I'm based in ${country} and would like to ask about future availability${basket ? ` for ${basket}` : ''}.`;
   const text = byId('checkoutInternationalText');
-  if (text) text.textContent = `Online checkout is UK-only. Ask about future availability in ${country}.`;
+  if (text) text.textContent = `Online checkout is UK-only. Contact us about ordering from ${country}.`;
   link.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
   link.onclick = () => trackEvent('whatsapp_support_click', {
     placement: 'international_checkout',

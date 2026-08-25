@@ -297,8 +297,8 @@
 .checkout-international-copy{display:flex;min-width:0;flex-direction:column;gap:2px;font-size:11.5px;line-height:1.4}
 .checkout-international-copy strong{font-family:'Space Grotesk',sans-serif;font-size:13px;color:#393260}
 .checkout-international-copy span{color:#6c658e}
-.checkout-international-link{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:7px 11px;border-radius:999px;background:#745fc2;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:11.5px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background .15s ease,transform .12s ease}
-.checkout-international-link:hover{background:#644fad;color:#fff}
+.checkout-international-link{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:7px 11px;border-radius:999px;background:#25d366;color:#082b1c;font-family:'Space Grotesk',sans-serif;font-size:11.5px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background .15s ease,transform .12s ease}
+.checkout-international-link:hover{background:#20c45e;color:#061f15}
 .checkout-international-link:active{transform:scale(.98)}
 @media(max-width:430px){.checkout-international-notice{gap:10px;padding:10px 10px 10px 12px}.checkout-international-copy span{font-size:11px}.checkout-international-link{padding:7px 10px}}
 .checkout-fields{display:flex;flex-direction:column;gap:12px;margin:18px 0 16px}

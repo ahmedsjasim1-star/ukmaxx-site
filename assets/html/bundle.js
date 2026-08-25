@@ -229,7 +229,7 @@ window.__html.checkout = '<div class="checkout-backdrop" id="checkoutBackdrop" a
   + '<h4>Delivery details</h4>'
   + '<p class="checkout-step-sub">Enter your details, then continue to secure Pay by Bank. No card details are needed — you approve a bank-to-bank payment in your banking app or online banking.</p>'
   + '<aside class="checkout-international-notice" id="checkoutInternationalNotice" hidden aria-live="polite">'
-  + '<div class="checkout-international-copy"><strong>Outside the UK?</strong><span id="checkoutInternationalText">Online checkout currently supports UK delivery only.</span></div>'
+  + '<div class="checkout-international-copy"><strong>Outside the UK?</strong><span id="checkoutInternationalText">Online checkout is UK-only. Contact us about ordering from your country.</span></div>'
   + '<a class="checkout-international-link" id="checkoutInternationalWhatsApp" href="#" target="_blank" rel="noopener noreferrer" aria-label="Ask UKMAXX about international availability on WhatsApp">WhatsApp us</a>'
   + '</aside>'
   + '<div class="checkout-fields">'
