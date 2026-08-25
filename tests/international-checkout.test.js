@@ -26,5 +26,8 @@ test('checkout has a country-gated international WhatsApp notice', () => {
   assert.match(bundle, /checkoutInternationalNotice/);
   assert.match(cart, /countryCode === 'GB'/);
   assert.match(cart, /international_checkout/);
+  assert.match(cart, /Basket value:/);
+  assert.match(cart, /shipping cost and expected timeframe/);
+  assert.doesNotMatch(cart, /future availability/);
   assert.match(css, /checkout-international-notice/);
 });
