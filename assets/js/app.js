@@ -1,6 +1,6 @@
 import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260827-bundle-chips';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260827-bundle-chips';
-import { renderCart, initCart } from './modules/cart.js?v=20260827-bundle-chips';
+import { renderCart, initCart } from './modules/cart.js?v=20260827-promo-clarity';
 import { initAgeGate } from './modules/ageGate.js';
 import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js?v=20260813-catalogue';
 import { setupLightbox } from './modules/lightbox.js';

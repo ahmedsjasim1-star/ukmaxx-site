@@ -52,13 +52,29 @@ function getPromoCode() {
   return String(raw).trim().toUpperCase();
 }
 
+function promoEligibility(c) {
+  let eligibleSubtotal = 0;
+  const excludedNames = [];
+  c.forEach((item) => {
+    const product = PRODUCTS[item.sku];
+    if (!product) return;
+    if (product.promoExcluded || product.launchPrice) {
+      if (!excludedNames.includes(product.name)) excludedNames.push(product.name);
+      return;
+    }
+    eligibleSubtotal += product.price * item.qty;
+  });
+  return { eligibleSubtotal, excludedNames };
+}
+
+function readableList(items) {
+  if (items.length < 2) return items[0] || '';
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
 function cartTotals(c) {
   const sub = c.reduce((a, b) => a + PRODUCTS[b.sku].price * b.qty, 0);
-  const promoEligibleSub = c.reduce((a, b) => {
-    const product = PRODUCTS[b.sku];
-    if (!product || product.promoExcluded || product.launchPrice) return a;
-    return a + product.price * b.qty;
-  }, 0);
+  const promoEligibleSub = promoEligibility(c).eligibleSubtotal;
   const code = getPromoCode();
   const promo = PROMOS[code];
   const discount = promo ? (promo.type === 'percent' ? promoEligibleSub * promo.value : Math.min(promo.value, promoEligibleSub)) : 0;
@@ -137,6 +153,7 @@ async function syncInternationalCheckoutNotice(c = getCart()) {
 
 export function renderCart() {
   const c = getCart();
+  const eligibility = promoEligibility(c);
   const count = c.reduce((a, b) => a + b.qty, 0);
   ['cartCount', 'cartCountHeader', 'cartCountMobile'].forEach(id => {
     const el = byId(id);
@@ -217,7 +234,8 @@ export function renderCart() {
       ${t.promo && t.discount > 0 ? `<div class="cart-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
       <div class="cart-totals-row"><span>Shipping</span><span>${t.ship === 0 ? '<strong style="color:var(--success)">FREE</strong>' : money(t.ship)}</span></div>
       <div class="cart-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>
-      ${t.promo && t.promoEligibleSub < t.sub ? '<div class="cart-promo-note">MAXX10 applies to eligible full-price items only. Launch-priced items are already discounted.</div>' : ''}`;
+      ${t.promo && !eligibility.eligibleSubtotal && eligibility.excludedNames.length ? `<div class="cart-promo-note">MAXX10 is not applied because every item in this basket already has launch pricing.</div>` : ''}
+      ${t.promo && eligibility.eligibleSubtotal && eligibility.excludedNames.length ? `<div class="cart-promo-note">MAXX10 was applied to eligible full-price items. Launch-priced ${readableList(eligibility.excludedNames)} ${eligibility.excludedNames.length === 1 ? 'was' : 'were'} excluded.</div>` : ''}`;
   }
   renderCheckoutSummary();
 }
@@ -225,6 +243,7 @@ export function renderCart() {
 function renderCheckoutSummary() {
   const c = getCart();
   const t = cartTotals(c);
+  const eligibility = promoEligibility(c);
   const itemsEl = byId('checkoutSummaryItems');
   const sumsEl = byId('checkoutSummary');
   if (itemsEl) {
@@ -246,7 +265,8 @@ function renderCheckoutSummary() {
       ${t.promo && t.discount > 0 ? `<div class="checkout-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
       <div class="checkout-totals-row"><span>Shipping</span><span>${t.ship === 0 ? '<strong style="color:var(--success)">FREE</strong>' : money(t.ship)}</span></div>
       <div class="checkout-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>
-      ${t.promo && t.promoEligibleSub < t.sub ? '<div class="checkout-promo-note">Launch-priced items are excluded from MAXX10.</div>' : ''}`;
+      ${t.promo && !eligibility.eligibleSubtotal && eligibility.excludedNames.length ? `<div class="checkout-promo-note">MAXX10 is not applied because every item in this basket already has launch pricing.</div>` : ''}
+      ${t.promo && eligibility.eligibleSubtotal && eligibility.excludedNames.length ? `<div class="checkout-promo-note">MAXX10 was applied to eligible items only. Launch-priced ${readableList(eligibility.excludedNames)} ${eligibility.excludedNames.length === 1 ? 'was' : 'were'} excluded.</div>` : ''}`;
   }
 }
 
@@ -495,20 +515,52 @@ export function initCart() {
     const msg = byId('promoMsg');
     const code = (input?.value || '').trim().toUpperCase();
     if (PROMOS[code]) {
+      const c = getCart();
+      const eligibility = promoEligibility(c);
+      if (!c.length || eligibility.eligibleSubtotal <= 0) {
+        removeStorage(PROMO_KEY);
+        renderCart();
+        const launchItems = readableList(eligibility.excludedNames);
+        const text = launchItems
+          ? `${code} wasn’t applied. ${launchItems} ${eligibility.excludedNames.length === 1 ? 'already has' : 'already have'} launch pricing, so additional discounts don’t apply.`
+          : `Add an eligible full-price item before applying ${code}.`;
+        if (msg) {
+          msg.textContent = text;
+          msg.classList.remove('is-success');
+          msg.classList.add('is-warning');
+        }
+        toast('Promo not applied', text, 'error');
+        return;
+      }
+
       setRaw(PROMO_KEY, code);
-      if (msg) { msg.textContent = `${code} applied — ${PROMOS[code].label}`; msg.classList.add('is-success'); }
-      toast('Promo applied', `${code}: ${PROMOS[code].label}`);
+      renderCart();
+      const totals = cartTotals(c);
+      const saving = money(totals.discount);
+      const mixed = eligibility.excludedNames.length > 0;
+      const text = mixed
+        ? `${code} applied to eligible items — you saved ${saving}. Launch-priced ${readableList(eligibility.excludedNames)} ${eligibility.excludedNames.length === 1 ? 'was' : 'were'} excluded.`
+        : `${code} applied — you saved ${saving}.`;
+      if (msg) {
+        msg.textContent = text;
+        msg.classList.remove('is-warning');
+        msg.classList.add('is-success');
+      }
+      toast('Promo applied', text);
     } else {
       removeStorage(PROMO_KEY);
-      if (msg) { msg.textContent = code ? 'Invalid promo code.' : 'Promo removed.'; msg.classList.remove('is-success'); }
+      if (msg) {
+        msg.textContent = code ? 'Invalid promo code.' : 'Promo removed.';
+        msg.classList.remove('is-success', 'is-warning');
+      }
       if (code) toast('Invalid code', 'That promo code is not recognised.', 'error');
+      renderCart();
     }
-    renderCart();
   });
 
   byId('promoCode')?.addEventListener('input', () => {
     const msg = byId('promoMsg');
-    if (msg) { msg.textContent = ''; msg.classList.remove('is-success'); }
+    if (msg) { msg.textContent = ''; msg.classList.remove('is-success', 'is-warning'); }
   });
 
   const params = new URLSearchParams(location.search);
