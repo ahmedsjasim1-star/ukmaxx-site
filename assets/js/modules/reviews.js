@@ -6,6 +6,7 @@ const PRODUCT_LABELS = {
   RT10: 'RETA 10mg',
   RT10X3: 'RETA 3-pack bundle',
   BC5X3: 'BPC-157 3-pack bundle',
+  GHKCUX3: 'GHK-Cu 3-pack bundle',
   BC5: 'BPC-157',
   IP5: 'Ipamorelin',
   NJ500: 'NAD+ 500mg',
@@ -178,7 +179,7 @@ export async function renderProductReviewsSummary(productId) {
 
   const ratingTop = byId('pdpRating');
   const reviewCountTop = byId('pdpReviewCount');
-  if (ratingTop) ratingTop.textContent = hasRows ? avg.toFixed(1) : '0.0';
+  if (ratingTop) ratingTop.textContent = hasRows ? avg.toFixed(1) : '';
   if (reviewCountTop) reviewCountTop.textContent = hasRows ? `${rows.length} review${rows.length === 1 ? '' : 's'}` : 'Awaiting verified reviews';
 }
 

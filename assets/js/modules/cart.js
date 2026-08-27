@@ -1,6 +1,6 @@
 import { toast } from './toast.js';
 import { getCurrentUser } from './auth.js?v=20260819-customer-journeys';
-import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-bpc-bundle';
+import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-ghk-bundle';
 import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw, setRaw, removeStorage } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
@@ -18,6 +18,7 @@ function normalizeSku(raw = '') {
   const key = t.split('-')[0].trim().toUpperCase();
   if (key.startsWith('RT10X3')) return 'RT10X3';
   if (key.startsWith('BC5X3')) return 'BC5X3';
+  if (key.startsWith('GHKCUX3')) return 'GHKCUX3';
   if (key.startsWith('RT10')) return 'RT10';
   if (key.startsWith('BC5')) return 'BC5';
   if (key.startsWith('IP5')) return 'IP5';

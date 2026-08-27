@@ -5,6 +5,7 @@ const PRODUCT_WEIGHTS_GRAMS = {
   WA10: 120,
   RT10X3: 195,
   BC5X3: 195,
+  GHKCUX3: 195,
   BC5: 25,
   IP5: 25,
   NJ500: 25,

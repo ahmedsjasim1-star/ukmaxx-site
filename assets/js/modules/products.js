@@ -1,4 +1,4 @@
-import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-bpc-bundle';
+import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-ghk-bundle';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
@@ -11,6 +11,7 @@ const CATALOGUE_CARD_CONTENT = {
   RT10: { chip: 'Triple receptor agonist', className: 'catalogue-chip--reta', description: 'Targets GIP, GLP-1 and glucagon receptors in metabolic research.' },
   RT10X3: { chip: 'Research bundle', className: 'catalogue-chip--bundle', description: 'Three RT10 vials from one verified batch, plus one BAC Water.' },
   BC5X3: { chip: 'Research bundle', className: 'catalogue-chip--bundle', description: 'Three BPC-157 5mg vials from one verified batch, plus one BAC Water.' },
+  GHKCUX3: { chip: 'Copper peptide bundle', className: 'catalogue-chip--bundle', description: 'Three GHK-Cu 50mg vials from one verified batch, plus one BAC Water.' },
   WA10: { chip: 'In stock', className: 'badge-stock', description: 'Support water for compatible laboratory reconstitution workflows.' },
 };
 
@@ -63,8 +64,8 @@ function productCard(p, bundle = false) {
   const hasPrice = Number.isFinite(Number(p.price));
   const priceWrap = !hasPrice
     ? `<div class="product-price product-price--tbc">TBC</div>`
-    : comparisonPrice > Number(p.price)
-    ? `<div class="product-price-wrap"><div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div><span class="product-price-original${p.separatePrice ? ' is-separate' : ''}">${money(comparisonPrice)}${p.separatePrice ? ' separately' : ''}</span></div>`
+    : comparisonPrice > Number(p.price) && !p.separatePrice
+    ? `<div class="product-price-wrap"><div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div><span class="product-price-original">${money(comparisonPrice)}</span></div>`
     : `<div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div>`;
 
   return `<article class="product-card${p.featured ? ' is-featured' : ''}" data-sku="${p.id}">
@@ -101,6 +102,7 @@ const CATALOGUE_ORDER = {
   RT10: 50,
   RT10X3: 60,
   BC5X3: 70,
+  GHKCUX3: 80,
   IP5: 90,
 };
 

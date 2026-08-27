@@ -15,6 +15,7 @@ const PRODUCT_LABELS = {
   RT10: 'RETA 10mg',
   RT10X3: 'RETA 3-Pack',
   BC5X3: 'BPC 157 3-Pack',
+  GHKCUX3: 'GHK-Cu 3-Pack',
   BC5: 'BPC 157',
   IP5: 'IPAM 5mg',
   NJ500: 'NAD+ 500mg',
@@ -206,6 +207,7 @@ async function getItems(supabase, orderId) {
 const BUNDLE_COMPONENTS = {
   RT10X3: { RT10: 3, WA10: 1 },
   BC5X3: { BC5: 3, WA10: 1 },
+  GHKCUX3: { GHKCU: 3, WA10: 1 },
 };
 
 function calculateBundleStock(productsBySku, sku) {
@@ -220,7 +222,7 @@ async function getStockProducts(supabase) {
   const { data, error } = await supabase
     .from('products')
     .select('sku,name,stock_quantity,is_active')
-    .in('sku', ['RT10', 'WA10', 'RT10X3', 'BC5', 'BC5X3', 'IP5', 'NJ500', 'GHKCU'])
+    .in('sku', ['RT10', 'WA10', 'RT10X3', 'BC5', 'BC5X3', 'IP5', 'NJ500', 'GHKCU', 'GHKCUX3'])
     .order('sku', { ascending: true });
   if (error) throw error;
   return data || [];
@@ -234,6 +236,7 @@ async function handleStock(token, chatId) {
   const bySku = new Map(products.map((product) => [product.sku, product]));
   const bundleStock = calculateBundleStock(bySku, 'RT10X3');
   const bpcBundleStock = calculateBundleStock(bySku, 'BC5X3');
+  const ghkBundleStock = calculateBundleStock(bySku, 'GHKCUX3');
   const lines = [
     '<b>UKMAXX Live Stock</b>',
     '',
@@ -243,6 +246,7 @@ async function handleStock(token, chatId) {
     `BAC Water (WA10): <b>${Number(bySku.get('WA10')?.stock_quantity || 0)}</b>`,
     `RETA 3-Pack (RT10X3): <b>${bundleStock}</b> bundles available`,
     `BPC 157 3-Pack (BC5X3): <b>${bpcBundleStock}</b> bundles available`,
+    `GHK-Cu 3-Pack (GHKCUX3): <b>${ghkBundleStock}</b> bundles available`,
     '',
     'Bundle stock is calculated from the live component stock for each bundle.',
   ];
