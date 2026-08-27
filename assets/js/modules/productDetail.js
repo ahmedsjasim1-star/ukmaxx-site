@@ -1,22 +1,24 @@
-import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-ghk-bundle';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-bundle-chips';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
-import { renderProductReviewsSummary } from './reviews.js?v=20260827-ghk-bundle';
+import { renderProductReviewsSummary } from './reviews.js?v=20260827-bundle-chips';
 
 const PRODUCT_POSITIONING = {
   GHKCU: { label: 'Copper peptide', className: 'positioning-badge--ghk' },
   BC5: { label: 'Body protection compound', className: 'positioning-badge--bpc' },
   NJ500: { label: 'Coenzyme', className: 'positioning-badge--nad' },
   RT10: { label: 'Triple receptor agonist', className: 'positioning-badge--reta' },
-  RT10X3: { label: 'Research bundle', className: 'positioning-badge--bundle' },
-  BC5X3: { label: 'Research bundle', className: 'positioning-badge--bundle' },
-  GHKCUX3: { label: 'Copper peptide bundle', className: 'positioning-badge--bundle' },
+  RT10X3: { label: 'Triple receptor bundle', className: 'positioning-badge--reta' },
+  BC5X3: { label: 'Body protection bundle', className: 'positioning-badge--bpc' },
+  GHKCUX3: { label: 'Copper peptide bundle', className: 'positioning-badge--ghk' },
+  UKXRB1: { label: 'Signature research bundle', className: 'positioning-badge--bundle' },
 };
 
 const BUNDLE_CONTENTS = {
   RT10X3: ['3× Retatrutide 10mg vials', '1× 10ml BAC Water vial'],
   BC5X3: ['3× BPC-157 5mg vials', '1× 10ml BAC Water vial'],
   GHKCUX3: ['3× GHK-Cu 50mg vials', '1× 10ml BAC Water vial'],
+  UKXRB1: ['1× RETA 10mg vial', '1× BPC-157 5mg vial', '1× GHK-Cu 50mg vial', '1× 10ml BAC Water vial'],
 };
 
 function productPositioningBadge(product) {
@@ -103,6 +105,15 @@ export function refreshProductDetailData() {
 function launchChecklist(product, purchasable) {
   if (!product || product.id === 'WA10' || !purchasable) return [];
   const lab = product.coa?.lab === 'Janoshik Analytical' ? 'Janoshik tested' : 'Third-party tested';
+  if (Array.isArray(product.coas) && product.coas.length) {
+    return [
+      product.coas.length + ' Janoshik records',
+      product.coas.length + ' batch-specific COAs',
+      'UK stock',
+      'Royal Mail Tracked 24',
+      'Failed batches published'
+    ];
+  }
   return [
     lab,
     'Batch-specific COA',
@@ -270,7 +281,9 @@ function renderPdpProduct(root) {
 
   const specsMini = byId('pdpSpecsMini');
   if (specsMini) {
-    specsMini.innerHTML = purchasable
+    specsMini.innerHTML = Array.isArray(p.coas) && p.coas.length
+      ? '<span>Evidence: <strong>' + p.coas.length + ' published COAs</strong></span><span>Batches: <strong>' + p.coas.length + ' independently tracked</strong></span><span>Lab: <strong>Janoshik Analytical</strong></span>'
+      : purchasable
       ? '<span>Quality: <strong>' + getQualityLabel(p) + '</strong></span><span>Batch: <strong>' + p.batch + '</strong></span><span>Lab: <strong>' + p.coa.lab + '</strong></span>'
       : '<span>Status: <strong>' + getReleaseLabel(p) + '</strong></span><span>COA: <strong>' + getCoaStatusLabel(p) + '</strong></span>';
   }
@@ -285,11 +298,12 @@ function renderPdpProduct(root) {
   }
   const galleryThumbs = byId('pdpGalleryThumbs');
   if (galleryThumbs) {
-    const thumbs = [
-      { src: p.image, alt: p.name, label: p.name },
-      ...(p.coaSampleImage ? [{ src: p.coaSampleImage, alt: p.name + ' Janoshik sample photo', label: 'Sample photo' }] : []),
-      ...(p.coaImage ? [{ src: p.coaImage, alt: p.name + ' COA report', label: 'COA report' }] : []),
-    ];
+    const thumbs = Array.isArray(p.gallery) && p.gallery.length ? p.gallery : [
+        { src: p.image, alt: p.name, label: p.name },
+        ...(p.coaSampleImage ? [{ src: p.coaSampleImage, alt: p.name + ' Janoshik sample photo', label: 'Sample photo' }] : []),
+        ...(p.coaImage ? [{ src: p.coaImage, alt: p.name + ' COA report', label: 'COA report' }] : []),
+      ];
+    galleryThumbs.classList.toggle('has-many', thumbs.length > 4);
     galleryThumbs.innerHTML = thumbs.map(function (thumb, index) {
       return '<button class="pdp-thumb' + (index === 0 ? ' is-active' : '') + '" type="button" aria-label="' + thumb.label + '" data-img="' + thumb.src + '" data-alt="' + thumb.alt + '"><img src="' + thumb.src + '" alt="' + thumb.alt + '" width="80" height="64" loading="lazy"></button>';
     }).join('');
@@ -385,7 +399,9 @@ function renderPdpProduct(root) {
 
   const overviewText = byId('pdpOverviewText');
   if (overviewText) {
-    overviewText.innerHTML = purchasable
+    overviewText.innerHTML = Array.isArray(p.coas) && p.coas.length
+      ? '<p>' + p.description + '</p><p>The three compounds are each connected to a separate released batch and original <strong>Janoshik Analytical</strong> report. Open the verification section below to compare every assay, purity result and batch code.</p>'
+      : purchasable
       ? (p.id === 'WA10'
         ? '<p>' + p.description + '</p><p>Quality: <strong>' + getQualityLabel(p) + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>'
         : '<p>' + p.description + '</p><p>This batch was independently tested by <strong>' + p.coa.lab + '</strong> using <strong>' + p.coa.method + '</strong>. Purity verified at <strong>' + p.purity + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>')
@@ -423,14 +439,26 @@ function renderPdpProduct(root) {
   }
 
   const coaRows = byId('pdpCoaRows');
+  const coaHeading = byId('pdpCoaHeading');
+  const coaSubheading = byId('pdpCoaSubheading');
   if (coaRows) {
-    if (d.coa && (p.coaUrl || p.coa?.status === 'VERIFIED' || p.coa?.status === 'REJECTED')) {
+    if (Array.isArray(p.coas) && p.coas.length) {
+      if (coaHeading) coaHeading.textContent = 'Three batches, independently verified';
+      if (coaSubheading) coaSubheading.textContent = 'Each compound links to its own Janoshik Analytical record';
+      coaRows.innerHTML = p.coas.map(function (record) {
+        return '<article class="pdp-multi-coa"><div><span>' + record.product + '</span><strong>' + record.batch + '</strong></div><dl><div><dt>Result</dt><dd>' + record.result + '</dd></div><div><dt>Purity</dt><dd>' + record.purity + '</dd></div><div><dt>Method</dt><dd>' + record.method + '</dd></div></dl><a href="' + record.url + '" target="_blank" rel="noopener">Open Janoshik record →</a></article>';
+      }).join('');
+    } else if (d.coa && (p.coaUrl || p.coa?.status === 'VERIFIED' || p.coa?.status === 'REJECTED')) {
+      if (coaHeading) coaHeading.textContent = 'This batch has been third-party verified';
+      if (coaSubheading) coaSubheading.textContent = 'Independent laboratory analysis by Janoshik Analytical';
       coaRows.innerHTML = d.coa.split('\n').map(function (line) {
         var parts = line.split(':');
         if (parts.length < 2) return '';
         return '<div class="pdp-coa-row"><strong>' + parts[0].trim() + '</strong><span>' + parts.slice(1).join(':').trim() + '</span></div>';
       }).join('');
     } else {
+      if (coaHeading) coaHeading.textContent = 'Batch verification pending';
+      if (coaSubheading) coaSubheading.textContent = 'This product is unavailable until its verification record is published';
       coaRows.innerHTML = '<div class="pdp-coa-row" style="opacity:.6;font-style:italic"><strong>Awaiting COA</strong><span>Third-party certificate of analysis pending for this product.</span></div>';
     }
   }
@@ -444,7 +472,9 @@ function renderPdpProduct(root) {
   }
   var coaViewBtn = byId('pdpCoaView');
   var coaCtaWrap = coaViewBtn ? coaViewBtn.closest('.pdp-coa-cta') : null;
-  if (!p.coaUrl && !p.coaImage) {
+  if (Array.isArray(p.coas) && p.coas.length) {
+    if (coaCtaWrap) coaCtaWrap.innerHTML = '<div class="left"><strong>Three independent records</strong>Each compound remains linked to its own released batch and original report.</div><a class="btn btn-ghost" href="/coa.html">Open batch checker</a>';
+  } else if (!p.coaUrl && !p.coaImage) {
     if (coaCtaWrap) coaCtaWrap.innerHTML = p.coa?.status === 'VERIFIED'
       ? '<div class="left"><strong>' + getQualityLabel(p) + '</strong> Batch quality details are listed above.</div>'
       : '<div class="left"><strong>Awaiting COA</strong> Certificate of analysis pending for this product.</div>';

@@ -7,6 +7,7 @@ const PRODUCT_LABELS = {
   RT10X3: 'RETA 3-pack bundle',
   BC5X3: 'BPC-157 3-pack bundle',
   GHKCUX3: 'GHK-Cu 3-pack bundle',
+  UKXRB1: 'UKMAXX Research Bundle',
   BC5: 'BPC-157',
   IP5: 'Ipamorelin',
   NJ500: 'NAD+ 500mg',

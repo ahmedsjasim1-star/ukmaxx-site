@@ -1,4 +1,4 @@
-import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-ghk-bundle';
+import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-bundle-chips';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
@@ -9,9 +9,10 @@ const CATALOGUE_CARD_CONTENT = {
   BC5: { chip: 'Body protection compound', className: 'catalogue-chip--bpc', description: 'Studied in preclinical tissue-protection and repair models.' },
   NJ500: { chip: 'Coenzyme', className: 'catalogue-chip--nad', description: 'Studied in cellular energy, redox and mitochondrial research.' },
   RT10: { chip: 'Triple receptor agonist', className: 'catalogue-chip--reta', description: 'Targets GIP, GLP-1 and glucagon receptors in metabolic research.' },
-  RT10X3: { chip: 'Research bundle', className: 'catalogue-chip--bundle', description: 'Three RT10 vials from one verified batch, plus one BAC Water.' },
-  BC5X3: { chip: 'Research bundle', className: 'catalogue-chip--bundle', description: 'Three BPC-157 5mg vials from one verified batch, plus one BAC Water.' },
-  GHKCUX3: { chip: 'Copper peptide bundle', className: 'catalogue-chip--bundle', description: 'Three GHK-Cu 50mg vials from one verified batch, plus one BAC Water.' },
+  RT10X3: { chip: 'Triple receptor bundle', className: 'catalogue-chip--reta', description: 'Three RT10 vials from one verified batch, plus one BAC Water.' },
+  BC5X3: { chip: 'Body protection bundle', className: 'catalogue-chip--bpc', description: 'Three BPC-157 5mg vials from one verified batch, plus one BAC Water.' },
+  GHKCUX3: { chip: 'Copper peptide bundle', className: 'catalogue-chip--ghk', description: 'Three GHK-Cu 50mg vials from one verified batch, plus one BAC Water.' },
+  UKXRB1: { chip: 'Signature research bundle', className: 'catalogue-chip--bundle', description: 'RETA 10mg, BPC-157 5mg and GHK-Cu 50mg, plus one BAC Water.' },
   WA10: { chip: 'In stock', className: 'badge-stock', description: 'Support water for compatible laboratory reconstitution workflows.' },
 };
 
@@ -100,6 +101,7 @@ const CATALOGUE_ORDER = {
   BC5: 30,
   NJ500: 40,
   RT10: 50,
+  UKXRB1: 55,
   RT10X3: 60,
   BC5X3: 70,
   GHKCUX3: 80,
