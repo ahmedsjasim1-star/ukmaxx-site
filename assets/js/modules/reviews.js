@@ -5,6 +5,7 @@ const REVIEW_ENDPOINT = '/api/track-order';
 const PRODUCT_LABELS = {
   RT10: 'RETA 10mg',
   RT10X3: 'RETA 3-pack bundle',
+  BC5X3: 'BPC-157 3-pack bundle',
   BC5: 'BPC-157',
   IP5: 'Ipamorelin',
   NJ500: 'NAD+ 500mg',

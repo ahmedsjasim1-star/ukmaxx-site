@@ -1,4 +1,4 @@
-import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260819-seo-clusters';
+import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-bpc-bundle';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
@@ -10,6 +10,7 @@ const CATALOGUE_CARD_CONTENT = {
   NJ500: { chip: 'Coenzyme', className: 'catalogue-chip--nad', description: 'Studied in cellular energy, redox and mitochondrial research.' },
   RT10: { chip: 'Triple receptor agonist', className: 'catalogue-chip--reta', description: 'Targets GIP, GLP-1 and glucagon receptors in metabolic research.' },
   RT10X3: { chip: 'Research bundle', className: 'catalogue-chip--bundle', description: 'Three RT10 vials from one verified batch, plus one BAC Water.' },
+  BC5X3: { chip: 'Research bundle', className: 'catalogue-chip--bundle', description: 'Three BPC-157 5mg vials from one verified batch, plus one BAC Water.' },
   WA10: { chip: 'In stock', className: 'badge-stock', description: 'Support water for compatible laboratory reconstitution workflows.' },
 };
 
@@ -50,7 +51,8 @@ function productCard(p, bundle = false) {
     : `<span class="badge badge-coming">${p.coa?.status === 'REJECTED' ? 'Not available' : getReleaseLabel(p)}</span>`;
   const coaBadge = !p.coaUrl && !purchasable ? `<span class="badge badge-awaiting">${getCoaStatusLabel(p)}</span>` : '';
   const bestBadge = !catalogueMode && p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Featured'}</span>` : '';
-  const saveBadge = !catalogueMode && p.originalPrice ? `<span class="badge badge-new">Save ${money(p.originalPrice - p.price)}</span>` : '';
+  const comparisonPrice = Number(p.separatePrice || p.originalPrice || 0);
+  const saveBadge = !catalogueMode && comparisonPrice > Number(p.price) ? `<span class="badge badge-new">Save ${money(comparisonPrice - p.price)}</span>` : '';
   const catalogueBadge = catalogueContent?.chip ? `<span class="badge catalogue-chip ${catalogueContent.className}">${catalogueContent.chip}</span>` : '';
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
@@ -61,8 +63,8 @@ function productCard(p, bundle = false) {
   const hasPrice = Number.isFinite(Number(p.price));
   const priceWrap = !hasPrice
     ? `<div class="product-price product-price--tbc">TBC</div>`
-    : p.originalPrice
-    ? `<div class="product-price-wrap"><div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div><span class="product-price-original">${money(p.originalPrice)}</span></div>`
+    : comparisonPrice > Number(p.price)
+    ? `<div class="product-price-wrap"><div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div><span class="product-price-original${p.separatePrice ? ' is-separate' : ''}">${money(comparisonPrice)}${p.separatePrice ? ' separately' : ''}</span></div>`
     : `<div class="product-price"><span class="currency">£</span>${p.price.toFixed(2)}</div>`;
 
   return `<article class="product-card${p.featured ? ' is-featured' : ''}" data-sku="${p.id}">
@@ -98,6 +100,7 @@ const CATALOGUE_ORDER = {
   NJ500: 40,
   RT10: 50,
   RT10X3: 60,
+  BC5X3: 70,
   IP5: 90,
 };
 

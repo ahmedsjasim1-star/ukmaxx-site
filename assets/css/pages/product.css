@@ -44,6 +44,7 @@ body{padding-bottom:70px}
 .pdp-price{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-.02em;color:var(--text);line-height:1}
 .pdp-price .currency{font-size:18px;color:var(--dim);margin-right:2px;font-weight:500}
 .pdp-price-original{font-size:16px;color:var(--dim);text-decoration:line-through}
+.pdp-price-original.is-separate{text-decoration:none;font-size:13px}
 .pdp-save-badge{display:inline-flex;align-items:center;padding:4px 9px;background:var(--danger);color:#fff;border-radius:6px;font-size:11.5px;font-weight:600;letter-spacing:.02em}
 .pdp-checklist{display:grid;grid-template-columns:1fr;gap:7px;margin:-4px 0 14px;padding:12px 14px;background:linear-gradient(135deg,rgba(10,126,140,.08),rgba(15,138,79,.06));border:1px solid rgba(10,126,140,.16);border-radius:var(--radius)}
 .pdp-checklist span{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--text-2)}

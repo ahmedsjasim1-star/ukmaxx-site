@@ -157,6 +157,7 @@
 .product-price{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--text);line-height:1}
 .product-price .currency{font-size:14px;font-weight:600;color:var(--dim);margin-right:2px;vertical-align:6px}
 .product-price-original{font-size:13px;color:var(--dim);text-decoration:line-through;font-weight:500;display:block;font-family:'Inter',sans-serif;margin-top:2px}
+.product-price-original.is-separate{text-decoration:none;font-size:11px}
 .product-price-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:0}
 .add-btn{padding:10px 16px;background:var(--text);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;border-radius:var(--radius-sm);transition:background .15s ease,transform .12s ease;min-height:40px;display:inline-flex;align-items:center;gap:6px}
 .add-btn:hover{background:var(--accent)}

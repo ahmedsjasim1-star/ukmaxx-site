@@ -1,4 +1,4 @@
-import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260819-seo-clusters';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-bpc-bundle';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 import { renderProductReviewsSummary } from './reviews.js?v=20260714-review-polish';
@@ -9,6 +9,12 @@ const PRODUCT_POSITIONING = {
   NJ500: { label: 'Coenzyme', className: 'positioning-badge--nad' },
   RT10: { label: 'Triple receptor agonist', className: 'positioning-badge--reta' },
   RT10X3: { label: 'Research bundle', className: 'positioning-badge--bundle' },
+  BC5X3: { label: 'Research bundle', className: 'positioning-badge--bundle' },
+};
+
+const BUNDLE_CONTENTS = {
+  RT10X3: ['3× Retatrutide 10mg vials', '1× 10ml BAC Water vial'],
+  BC5X3: ['3× BPC-157 5mg vials', '1× 10ml BAC Water vial'],
 };
 
 function productPositioningBadge(product) {
@@ -214,11 +220,16 @@ function renderPdpProduct(root) {
   const pdpCurrency = $('#pdpPriceRow .currency');
   if (pdpCurrency) pdpCurrency.style.display = hasNumericPrice ? '' : 'none';
 
-  if (p.originalPrice) {
+  const comparisonPrice = Number(p.separatePrice || p.originalPrice || 0);
+  if (comparisonPrice > Number(p.price)) {
     const origEl = byId('pdpPriceOriginal');
-    if (origEl) { origEl.textContent = money(p.originalPrice); origEl.style.display = ''; }
+    if (origEl) {
+      origEl.textContent = money(comparisonPrice) + (p.separatePrice ? ' separately' : '');
+      origEl.classList.toggle('is-separate', Boolean(p.separatePrice));
+      origEl.style.display = '';
+    }
     const saveEl = byId('pdpSaveBadge');
-    if (saveEl) { saveEl.textContent = 'Save ' + money(p.originalPrice - p.price); saveEl.style.display = ''; }
+    if (saveEl) { saveEl.textContent = 'Save ' + money(comparisonPrice - p.price); saveEl.style.display = ''; }
   } else {
     const origEl = byId('pdpPriceOriginal');
     if (origEl) origEl.style.display = 'none';
@@ -378,10 +389,7 @@ function renderPdpProduct(root) {
   }
   const featureList = byId('pdpFeatureList');
   if (featureList) {
-    let features = sku === 'RT10X3' ? [
-      '3\u00D7 Retatrutide 10mg vials',
-      '1\u00D7 10ml BAC Water vial',
-    ] : [
+    let features = BUNDLE_CONTENTS[sku] ? [...BUNDLE_CONTENTS[sku]] : [
       '1\u00D7 ' + p.name + ' vial',
     ];
     features = features.concat([

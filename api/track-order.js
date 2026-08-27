@@ -5,6 +5,7 @@ const { sendTelegramAdminAlert, sendTelegramAdminPhoto } = require('./_lib/notif
 const PRODUCT_LABELS = {
   RT10: 'RETA 10mg',
   RT10X3: 'RETA 3-Pack',
+  BC5X3: 'BPC 157 3-Pack',
   BC5: 'BPC 157',
   IP5: 'IPAM 5mg',
   NJ500: 'NAD+ 500mg',
@@ -18,6 +19,7 @@ const PRODUCT_LABELS = {
 const PRODUCT_IMAGES = {
   RT10: './images/ukmaxx-reta.png',
   RT10X3: './images/ukmaxx-reta-bundle.png',
+  BC5X3: './images/ukmaxx-bpc-bundle.png',
   BC5: './images/ukmaxx-bpc-157.png',
   IP5: './images/ukmaxx-ipamorelin.png',
   NJ500: './images/ukmaxx-nad-500.png',
