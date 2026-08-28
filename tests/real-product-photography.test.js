@@ -48,3 +48,10 @@ test('bundle verification-card photographs are used as the primary images', () =
   assert.match(products, /GHKCUX3: '\.\/images\/product-photography\/ukmaxx-ghk-cu-3-pack-verification-card\.jpg'/);
   assert.match(products, /UKXRB1: '\.\/images\/product-photography\/ukmaxx-research-bundle-verification-card\.jpg'/);
 });
+
+test('homepage sharing metadata uses the research bundle without changing the visible hero', () => {
+  const homepage = read('index.html');
+  assert.match(homepage, /property="og:image" content="https:\/\/www\.ukmaxx\.co\.uk\/images\/product-photography\/ukmaxx-research-bundle-verification-card\.jpg\?v=20260828-social"/);
+  assert.match(homepage, /name="twitter:image" content="https:\/\/www\.ukmaxx\.co\.uk\/images\/product-photography\/ukmaxx-research-bundle-verification-card\.jpg\?v=20260828-social"/);
+  assert.match(homepage, /<img src="\.\/images\/ukmaxx-hero-products-v2\.jpg"/);
+});
