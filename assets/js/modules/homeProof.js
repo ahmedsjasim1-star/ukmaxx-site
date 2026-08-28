@@ -1,4 +1,4 @@
-import { COA, EXIT_KEY, PRODUCTS } from '../data/products.js?v=20260819-seo-clusters';
+import { COA, EXIT_KEY, PRODUCTS } from '../data/products.js?v=20260828-real-photos';
 import { getSupabase } from '../data/supabase.js';
 import { toast } from './toast.js';
 import { setRaw } from '../utils/storage.js';

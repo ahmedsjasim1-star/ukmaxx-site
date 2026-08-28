@@ -1,4 +1,4 @@
-import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260827-bundle-chips';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260828-real-photos';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 import { renderProductReviewsSummary } from './reviews.js?v=20260827-bundle-chips';
@@ -298,11 +298,14 @@ function renderPdpProduct(root) {
   }
   const galleryThumbs = byId('pdpGalleryThumbs');
   if (galleryThumbs) {
-    const thumbs = Array.isArray(p.gallery) && p.gallery.length ? p.gallery : [
+    const galleryItems = Array.isArray(p.gallery) && p.gallery.length ? p.gallery : [
         { src: p.image, alt: p.name, label: p.name },
         ...(p.coaSampleImage ? [{ src: p.coaSampleImage, alt: p.name + ' Janoshik sample photo', label: 'Sample photo' }] : []),
         ...(p.coaImage ? [{ src: p.coaImage, alt: p.name + ' COA report', label: 'COA report' }] : []),
       ];
+    const thumbs = p.id === 'UKXRB1'
+      ? galleryItems.filter(function (thumb) { return thumb.label !== 'RETA sample'; })
+      : galleryItems;
     galleryThumbs.classList.toggle('has-many', thumbs.length > 4);
     galleryThumbs.innerHTML = thumbs.map(function (thumb, index) {
       return '<button class="pdp-thumb' + (index === 0 ? ' is-active' : '') + '" type="button" aria-label="' + thumb.label + '" data-img="' + thumb.src + '" data-alt="' + thumb.alt + '"><img src="' + thumb.src + '" alt="' + thumb.alt + '" width="80" height="64" loading="lazy"></button>';

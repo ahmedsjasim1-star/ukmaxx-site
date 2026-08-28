@@ -1,4 +1,4 @@
-import { COA, PRODUCTS, getCoaStatusLabel, getReleaseLabel } from '../data/products.js?v=20260819-seo-clusters';
+import { COA, PRODUCTS, getCoaStatusLabel, getReleaseLabel } from '../data/products.js?v=20260828-real-photos';
 import { getSupabase } from '../data/supabase.js';
 
 function byId(id) {
@@ -140,7 +140,7 @@ function mapSupabaseRecord(row) {
     lab: row.lab_name || 'Pending',
     report: row.batch_code,
     testDate: formatDate(row.tested_at),
-    image: row.image_url || product.image || '',
+    image: product.image || row.image_url || '',
     url: row.coa_url || '',
     batchSize,
     soldCount,

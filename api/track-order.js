@@ -19,16 +19,16 @@ const PRODUCT_LABELS = {
 // These are presentation assets rather than live inventory data, so they
 // should not depend on potentially stale image_url values in Supabase.
 const PRODUCT_IMAGES = {
-  RT10: './images/ukmaxx-reta.png',
-  RT10X3: './images/ukmaxx-reta-bundle.png',
-  BC5X3: './images/ukmaxx-bpc-bundle.png',
-  GHKCUX3: './images/ukmaxx-ghkcu-bundle.png',
-  UKXRB1: './images/ukmaxx-research-bundle.png',
-  BC5: './images/ukmaxx-bpc-157.png',
+  RT10: './images/product-photography/ukmaxx-retatrutide-10mg-product.jpg',
+  RT10X3: './images/product-photography/ukmaxx-retatrutide-3-pack-bundle.jpg',
+  BC5X3: './images/product-photography/ukmaxx-bpc-157-3-pack-bundle.jpg',
+  GHKCUX3: './images/product-photography/ukmaxx-ghk-cu-3-pack-bundle.jpg',
+  UKXRB1: './images/product-photography/ukmaxx-research-bundle.jpg',
+  BC5: './images/product-photography/ukmaxx-bpc-157-5mg-product.jpg',
   IP5: './images/ukmaxx-ipamorelin.png',
-  NJ500: './images/ukmaxx-nad-500.png',
-  WA10: './images/ukmaxx-bac-water.png',
-  GHKCU: './images/ukmaxx-ghk-cu.png',
+  NJ500: './images/product-photography/ukmaxx-nad-plus-500mg-product.jpg',
+  WA10: './images/product-photography/ukmaxx-bacteriostatic-water-10ml-product.jpg',
+  GHKCU: './images/product-photography/ukmaxx-ghk-cu-50mg-product.jpg',
 };
 
 const ALLOWED_SITE_EVENTS = new Set([

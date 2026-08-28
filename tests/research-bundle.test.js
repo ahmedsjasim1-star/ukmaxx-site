@@ -35,14 +35,18 @@ test('every order path expands UKXRB1 into its four live-stock components', () =
   assert.match(migration, /allocate_coa_batch_sale\(v_order\.id, v_component_sku, v_component_qty \* v_qty\)/);
 });
 
-test('four-image vial gallery, three COAs and discovery links are wired', () => {
+test('real bundle gallery, three COAs and discovery links are wired', () => {
   const products = read('assets/js/data/products.js');
   const detail = read('assets/js/modules/productDetail.js');
+  const definition = products.match(/UKXRB1:\{[^\n]+/)?.[0] || '';
 
-  assert.ok(fs.existsSync(path.join(root, 'images/ukmaxx-research-bundle.png')));
-  assert.match(products, /gallery:\[(?:.|\n)*?label:'GHK-Cu sample'/);
-  assert.equal((products.match(/label:'(?:Bundle|RETA sample|BPC sample|GHK-Cu sample)'/g) || []).length, 4);
-  assert.doesNotMatch(products.match(/UKXRB1:\{[^\n]+/)?.[0] || '', /label:'(?:RETA COA|BPC COA|GHK-Cu COA)'/);
+  assert.ok(fs.existsSync(path.join(root, 'images/product-photography/ukmaxx-research-bundle.jpg')));
+  assert.ok(fs.existsSync(path.join(root, 'images/product-photography/ukmaxx-research-bundle-verification-card.jpg')));
+  assert.match(definition, /gallery:\[(?:.|\n)*?label:'GHK-Cu sample'/);
+  assert.equal((definition.match(/label:'(?:Bundle|Verification card|RETA sample|BPC sample|GHK-Cu sample)'/g) || []).length, 5);
+  assert.match(detail, /p\.id === 'UKXRB1'/);
+  assert.match(detail, /thumb\.label !== 'RETA sample'/);
+  assert.doesNotMatch(definition, /label:'(?:RETA COA|BPC COA|GHK-Cu COA)'/);
   assert.equal((products.match(/product:'(?:RETA 10MG|BPC 157|GHK-Cu 50MG)'/g) || []).length, 3);
   assert.match(detail, /galleryThumbs\.classList\.toggle\('has-many', thumbs\.length > 4\)/);
   assert.match(detail, /pdp-multi-coa/);
@@ -50,7 +54,7 @@ test('four-image vial gallery, three COAs and discovery links are wired', () => 
   assert.match(read('retatrutide-10mg-uk.html'), /product\.html\?sku=UKXRB1/);
   assert.match(read('bpc-157-5mg-uk.html'), /product\.html\?sku=UKXRB1/);
   assert.match(read('ghk-cu-50mg-uk.html'), /product\.html\?sku=UKXRB1/);
-  assert.match(read('api/track-order.js'), /UKXRB1: '\.\/images\/ukmaxx-research-bundle\.png'/);
+  assert.match(read('api/track-order.js'), /UKXRB1: '\.\/images\/product-photography\/ukmaxx-research-bundle\.jpg'/);
 });
 
 test('bundle chips inherit the corresponding product colour families', () => {

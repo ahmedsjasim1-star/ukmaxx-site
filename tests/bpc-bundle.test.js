@@ -31,8 +31,8 @@ test('every order path expands BC5X3 into three BC5 and one WA10', () => {
 });
 
 test('BPC bundle is discoverable and uses the supplied product image', () => {
-  assert.equal(fs.existsSync(path.join(root, 'images/ukmaxx-bpc-bundle.png')), true);
+  assert.equal(fs.existsSync(path.join(root, 'images/product-photography/ukmaxx-bpc-157-3-pack-bundle.jpg')), true);
   assert.match(read('sitemap.xml'), /product\.html\?sku=BC5X3/);
   assert.match(read('bpc-157-5mg-uk.html'), /product\.html\?sku=BC5X3/);
-  assert.match(read('api/track-order.js'), /BC5X3: '\.\/images\/ukmaxx-bpc-bundle\.png'/);
+  assert.match(read('api/track-order.js'), /BC5X3: '\.\/images\/product-photography\/ukmaxx-bpc-157-3-pack-bundle\.jpg'/);
 });
