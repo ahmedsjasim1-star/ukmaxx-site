@@ -54,7 +54,7 @@ test('real bundle gallery, three COAs and discovery links are wired', () => {
   assert.match(read('retatrutide-10mg-uk.html'), /product\.html\?sku=UKXRB1/);
   assert.match(read('bpc-157-5mg-uk.html'), /product\.html\?sku=UKXRB1/);
   assert.match(read('ghk-cu-50mg-uk.html'), /product\.html\?sku=UKXRB1/);
-  assert.match(read('api/track-order.js'), /UKXRB1: '\.\/images\/product-photography\/ukmaxx-research-bundle\.jpg'/);
+  assert.match(read('api/track-order.js'), /UKXRB1: '\.\/images\/product-photography\/ukmaxx-research-bundle-verification-card\.jpg'/);
 });
 
 test('bundle chips inherit the corresponding product colour families', () => {

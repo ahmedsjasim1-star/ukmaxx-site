@@ -11,6 +11,28 @@ export const PRODUCTS = {
   UKXRB1:{id:'UKXRB1',slug:'ukmaxx-research-bundle',name:'UKMAXX RESEARCH BUNDLE',shortName:'SIGNATURE KIT',description:'One RETA 10mg vial, one BPC-157 5mg vial, one GHK-Cu 50mg vial and one BAC Water 10ml vial, with three published Janoshik records.',seoTitle:'UKMAXX Research Bundle | RETA, BPC-157, GHK-Cu & BAC Water',seoDescription:'UKMAXX research bundle with RETA 10mg, BPC-157 5mg, GHK-Cu 50mg and BAC Water 10ml. Three batch-specific Janoshik records, UK stock and Tracked 24 dispatch.',aliases:['UKMAXX research bundle','research peptide bundle UK','RETA BPC GHK bundle','peptide starter bundle UK','UK peptide research kit','UKXRB1'],purity:'Three verified batches',qualityLabel:'3 published COAs',batch:'Three active batches',price:114.99,reviewCount:0,image:'./images/product-photography/ukmaxx-research-bundle.jpg',category:'bundles',featured:true,stock:'in_stock',stockCount:19,sortOrder:5,coa:{lab:'Janoshik Analytical',method:'Three independent analyses',status:'VERIFIED'},gallery:[{src:'./images/product-photography/ukmaxx-research-bundle.jpg',alt:'UKMAXX Research Bundle with RETA 10mg, BPC-157 5mg, GHK-Cu 50mg and BAC Water',label:'Bundle'},{src:'./images/product-photography/ukmaxx-research-bundle-verification-card.jpg',alt:'UKMAXX Research Bundle with batch verification card',label:'Verification card'},{src:'./images/reta-coa-vial-2026-06.jpg',alt:'RETA 10mg Janoshik sample vial',label:'RETA sample'},{src:'./images/bpc-coa-vial-2026-07.jpg',alt:'BPC-157 5mg Janoshik sample vial',label:'BPC sample'},{src:'./images/ghkcu-coa-vial-2026-07.jpg',alt:'GHK-Cu 50mg Janoshik sample vial',label:'GHK-Cu sample'}],coas:[{product:'RETA 10MG',batch:'RT10-2026-06-A',result:'10.12mg',purity:'99.223%',method:'UPLC/MS',url:'https://verify.janoshik.com/tests/193587-RT10_I8UPPV43CJ42'},{product:'BPC 157',batch:'BPC-2026-05-A',result:'4.84mg',purity:'99.746%',method:'HPLC',url:'https://verify.janoshik.com/tests/208699-BPC157_5mg_AK9GVE8V85T7'},{product:'GHK-Cu 50MG',batch:'GHK-2026-05-A',result:'46.68mg',purity:'99.799%',method:'HPLC',url:'https://verify.janoshik.com/tests/208700-GHKCu_50mg_ENTH4P5LPBYX'}]}
 };
 
+const BUNDLE_CARD_PRIMARY_IMAGES = {
+  RT10X3: './images/product-photography/ukmaxx-retatrutide-3-pack-verification-card.jpg',
+  BC5X3: './images/product-photography/ukmaxx-bpc-157-3-pack-verification-card.jpg',
+  GHKCUX3: './images/product-photography/ukmaxx-ghk-cu-3-pack-verification-card.jpg',
+  UKXRB1: './images/product-photography/ukmaxx-research-bundle-verification-card.jpg',
+};
+
+Object.entries(BUNDLE_CARD_PRIMARY_IMAGES).forEach(([sku, cardImage]) => {
+  const product = PRODUCTS[sku];
+  if (!product || !Array.isArray(product.gallery)) return;
+  const plainImage = product.image;
+  const cardEntry = product.gallery.find((item) => item.src === cardImage);
+  const plainEntry = product.gallery.find((item) => item.src === plainImage);
+  const remaining = product.gallery.filter((item) => item !== cardEntry && item !== plainEntry);
+  product.image = cardImage;
+  product.gallery = [
+    { ...(cardEntry || {}), src: cardImage, label: 'Bundle' },
+    { ...(plainEntry || {}), src: plainImage, label: 'Plain bundle' },
+    ...remaining,
+  ];
+});
+
 export const BUNDLE_COMPONENTS = {
   RT10X3: { RT10: 3, WA10: 1 },
   BC5X3: { BC5: 3, WA10: 1 },

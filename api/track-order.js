@@ -20,10 +20,10 @@ const PRODUCT_LABELS = {
 // should not depend on potentially stale image_url values in Supabase.
 const PRODUCT_IMAGES = {
   RT10: './images/product-photography/ukmaxx-retatrutide-10mg-product.jpg',
-  RT10X3: './images/product-photography/ukmaxx-retatrutide-3-pack-bundle.jpg',
-  BC5X3: './images/product-photography/ukmaxx-bpc-157-3-pack-bundle.jpg',
-  GHKCUX3: './images/product-photography/ukmaxx-ghk-cu-3-pack-bundle.jpg',
-  UKXRB1: './images/product-photography/ukmaxx-research-bundle.jpg',
+  RT10X3: './images/product-photography/ukmaxx-retatrutide-3-pack-verification-card.jpg',
+  BC5X3: './images/product-photography/ukmaxx-bpc-157-3-pack-verification-card.jpg',
+  GHKCUX3: './images/product-photography/ukmaxx-ghk-cu-3-pack-verification-card.jpg',
+  UKXRB1: './images/product-photography/ukmaxx-research-bundle-verification-card.jpg',
   BC5: './images/product-photography/ukmaxx-bpc-157-5mg-product.jpg',
   IP5: './images/ukmaxx-ipamorelin.png',
   NJ500: './images/product-photography/ukmaxx-nad-plus-500mg-product.jpg',

@@ -11,7 +11,7 @@ import { setupTracking } from './modules/tracking.js';
 import { renderProductDetail, refreshProductDetailData, renderRelatedProducts } from './modules/productDetail.js?v=20260828-four-image-bundle';
 import { setupAccountPage } from './modules/account.js?v=20260731-account-reorder';
 import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260813-catalogue';
-import { refreshLiveStock } from './data/products.js?v=20260828-real-photos';
+import { refreshLiveStock } from './data/products.js?v=20260828-bundle-card-main';
 import { setupCoaPage } from './modules/coaPage.js?v=20260816-stat-links';
 import { setupAnalytics } from './modules/analytics.js?v=20260819-restore-traffic';
 import { setupWhatsAppSupport } from './modules/whatsappSupport.js?v=20260822-international-enquiries';

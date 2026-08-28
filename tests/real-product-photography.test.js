@@ -40,3 +40,11 @@ test('product SEO pages use the corresponding real photograph', () => {
   assert.match(read('nad-500mg-uk.html'), /ukmaxx-nad-plus-500mg-product\.jpg/);
   assert.match(read('bacteriostatic-water-10ml-uk.html'), /ukmaxx-bacteriostatic-water-10ml-product\.jpg/);
 });
+
+test('bundle verification-card photographs are used as the primary images', () => {
+  const products = read('assets/js/data/products.js');
+  assert.match(products, /RT10X3: '\.\/images\/product-photography\/ukmaxx-retatrutide-3-pack-verification-card\.jpg'/);
+  assert.match(products, /BC5X3: '\.\/images\/product-photography\/ukmaxx-bpc-157-3-pack-verification-card\.jpg'/);
+  assert.match(products, /GHKCUX3: '\.\/images\/product-photography\/ukmaxx-ghk-cu-3-pack-verification-card\.jpg'/);
+  assert.match(products, /UKXRB1: '\.\/images\/product-photography\/ukmaxx-research-bundle-verification-card\.jpg'/);
+});

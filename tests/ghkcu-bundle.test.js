@@ -34,5 +34,5 @@ test('GHK-Cu bundle image and discovery links are wired', () => {
   assert.ok(fs.existsSync(path.join(root, 'images/product-photography/ukmaxx-ghk-cu-3-pack-bundle.jpg')));
   assert.match(read('sitemap.xml'), /product\.html\?sku=GHKCUX3/);
   assert.match(read('ghk-cu-50mg-uk.html'), /product\.html\?sku=GHKCUX3/);
-  assert.match(read('api/track-order.js'), /GHKCUX3: '\.\/images\/product-photography\/ukmaxx-ghk-cu-3-pack-bundle\.jpg'/);
+  assert.match(read('api/track-order.js'), /GHKCUX3: '\.\/images\/product-photography\/ukmaxx-ghk-cu-3-pack-verification-card\.jpg'/);
 });
