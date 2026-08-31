@@ -9,10 +9,9 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 test('BPC 3-pack is priced as a MAXX10-eligible full-price bundle', () => {
   const products = read('assets/js/data/products.js');
   const fena = read('api/create-fena-payment.js');
-  assert.match(products, /BC5X3:\{[^\n]+price:89\.99,separatePrice:98\.96/);
+  assert.match(products, /Object\.assign\(PRODUCTS\.BC5X3, \{ price: 84\.99 \}\)/);
   assert.match(products, /BC5X3: \{ BC5: 3, WA10: 1 \}/);
-  const excluded = fena.match(/PROMO_EXCLUDED_SKUS = new Set\(\[([^\]]*)\]\)/)?.[1] || '';
-  assert.doesNotMatch(excluded, /BC5X3/);
+  assert.doesNotMatch(fena, /PROMO_EXCLUDED_SKUS/);
 });
 
 test('every order path expands BC5X3 into three BC5 and one WA10', () => {

@@ -514,3 +514,5 @@
 .exit-card p{font-size:14px;color:var(--dim);line-height:1.6;margin-bottom:20px}
 .exit-card .exit-close{position:absolute;top:12px;right:12px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--dim);background:var(--surface-3)}
 .exit-card .exit-close:hover{background:var(--border)}
+.cart-gift-badge{display:inline-block;margin-left:5px;padding:3px 6px;border-radius:999px;background:#e8f8f3;color:#087c70;font:700 9px/1 'IBM Plex Mono',monospace;vertical-align:2px}
+.cart-item-price{display:flex;align-items:center;gap:6px}.cart-item-price s{color:#8b999b;font-size:11px;font-weight:400}.cart-item-free{color:#087c70;font-weight:800}.cart-item-gift-note{display:block;color:#087c70;font-size:10px}.cart-totals-row.is-gift,.checkout-totals-row.is-gift{color:#087c70;font-weight:700}

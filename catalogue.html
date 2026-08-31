@@ -62,8 +62,8 @@
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
 <link rel="stylesheet" href="./assets/css/components.css?v=20260831-sold-out-ux">
-<link rel="stylesheet" href="./assets/css/pages/catalogue.css?v=20260828-photo-fit">
-<script src="./assets/html/bundle.js?v=20260831-rt20"></script>
+<link rel="stylesheet" href="./assets/css/pages/catalogue.css?v=20260831-custom-bundle">
+<script src="./assets/html/bundle.js?v=20260831-permanent-pricing-v2"></script>
 </head>
 <body data-excluded-skus="IP5" data-catalogue-cards="true">
 
@@ -108,6 +108,24 @@
           <p class="section-sub">Grouped research products with their included items shown on the product page.</p>
         </div>
       </div>
+      <article class="custom-bundle-feature">
+        <div class="custom-bundle-visual" aria-hidden="true">
+          <div class="custom-bundle-vials">
+            <div class="custom-bundle-feature-media custom-bundle-feature-media--rt20"><img src="./images/product-photography/ukmaxx-retatrutide-20mg-product.jpg" alt=""></div>
+            <div class="custom-bundle-feature-media"><img src="./images/product-photography/ukmaxx-bpc-157-5mg-product.jpg" alt=""></div>
+            <div class="custom-bundle-feature-media"><img src="./images/product-photography/ukmaxx-ghk-cu-50mg-product.jpg" alt=""></div>
+          </div>
+          <span class="custom-bundle-plus">+</span>
+          <div class="custom-bundle-gift"><div class="custom-bundle-feature-media"><img src="./images/product-photography/ukmaxx-bacteriostatic-water-10ml-product.jpg" alt=""></div><span>FREE</span></div>
+        </div>
+        <div class="custom-bundle-feature-copy">
+          <span class="badge catalogue-chip catalogue-chip--custom">Build your own</span>
+          <h3>Choose any three single vials</h3>
+          <p>Mix any three available research peptides or coenzymes, save 5% automatically and receive one BAC Water 10ml free. MAXX10 can also be applied.</p>
+          <div class="custom-bundle-feature-points"><span>Save 5%</span><span>Mix or match</span><span>Free BAC Water</span></div>
+          <button class="btn btn-primary" type="button" data-open-custom-bundle>Build your bundle</button>
+        </div>
+      </article>
       <div class="product-grid" id="bundlesGrid"></div>
     </div>
   </section>
@@ -122,6 +140,31 @@
   <script>document.write(window.__html.footer)</script>
 </main>
 
+<div class="custom-bundle-backdrop" id="customBundleBackdrop" aria-hidden="true">
+  <section class="custom-bundle-dialog" role="dialog" aria-modal="true" aria-labelledby="customBundleTitle">
+    <header class="custom-bundle-dialog-head">
+      <div>
+        <span class="section-eyebrow">Build your own</span>
+        <h2 id="customBundleTitle">Choose three single vials</h2>
+        <p>Mix or match available peptides and coenzymes. Your free BAC Water is added automatically.</p>
+      </div>
+      <button class="custom-bundle-close" id="customBundleClose" type="button" aria-label="Close bundle builder">×</button>
+    </header>
+    <div class="custom-bundle-dialog-body">
+      <div class="custom-bundle-picker">
+        <div class="custom-bundle-picker-head"><strong>Your choices</strong><span id="customBundleCount">0 of 3 selected</span></div>
+        <div class="custom-bundle-options" id="customBundleOptions"></div>
+      </div>
+      <aside class="custom-bundle-summary">
+        <span class="custom-bundle-summary-kicker">Your bundle</span>
+        <div id="customBundleSummary"></div>
+        <button class="btn btn-primary btn-lg" id="customBundleAdd" type="button" disabled>Add bundle to basket</button>
+        <p class="custom-bundle-terms">Pre-built bundles and BAC Water do not count towards the three-vial selection.</p>
+      </aside>
+    </div>
+  </section>
+</div>
+
 <script>document.write(window.__html.mobileNav)</script>
 <script>document.write(window.__html.cartDrawer)</script>
 <script>document.write(window.__html.checkout)</script>
@@ -130,6 +173,7 @@
 <script>document.write(window.__html.cookieBanner)</script>
 <script>document.write(window.__html.toast)</script>
 
-<script type="module" src="./assets/js/app.js?v=20260831-sold-out-ux"></script>
+<script type="module" src="./assets/js/app.js?v=20260831-permanent-pricing-v2"></script>
+<script type="module" src="./assets/js/modules/customBundle.js?v=20260831-permanent-pricing-v2"></script>
 </body>
 </html>

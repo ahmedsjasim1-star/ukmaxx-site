@@ -3,6 +3,7 @@ const { getSupabaseAdmin } = require('./_lib/supabase');
 
 const SITE_URL = process.env.SITE_URL || 'https://www.ukmaxx.co.uk';
 const COA_PENDING_SKUS = new Set(['IP5']);
+const CUSTOM_BUNDLE_ELIGIBLE_SKUS = new Set(['RT10', 'RT20', 'BC5', 'GHKCU', 'NJ500']);
 const BUNDLE_COMPONENTS = {
   RT10X3: { RT10: 3, WA10: 1 },
   RT20X3: { RT20: 3, WA10: 1 },
@@ -22,9 +23,17 @@ function normalizeCart(cartItems) {
     const sku = String(raw?.sku || '').trim().toUpperCase();
     const qty = Number(raw?.qty);
     if (!sku || !Number.isSafeInteger(qty) || qty < 1 || qty > 50) continue;
-    quantities.set(sku, (quantities.get(sku) || 0) + qty);
+    const current = quantities.get(sku) || { qty: 0, bundleQty: 0 };
+    current.qty += qty;
+    if (CUSTOM_BUNDLE_ELIGIBLE_SKUS.has(sku)) {
+      const bundleQty = Number(raw?.bundleQty || 0);
+      if (Number.isSafeInteger(bundleQty) && bundleQty > 0) current.bundleQty += Math.min(qty, bundleQty);
+    }
+    quantities.set(sku, current);
   }
-  return [...quantities].map(([sku, qty]) => ({ sku, qty })).filter((item) => item.qty <= 50);
+  return [...quantities]
+    .map(([sku, item]) => ({ sku, qty: item.qty, bundleQty: Math.min(item.qty, item.bundleQty) }))
+    .filter((item) => item.qty <= 50);
 }
 
 function addRequiredStock(requirements, sku, qty) {
@@ -36,6 +45,30 @@ function addRequiredStock(requirements, sku, qty) {
     return;
   }
   requirements.set(sku, (requirements.get(sku) || 0) + qty);
+}
+
+function customBundleGiftQuantity(items) {
+  const qualifyingVials = items.reduce((total, item) => (
+    CUSTOM_BUNDLE_ELIGIBLE_SKUS.has(item.sku) ? total + item.bundleQty : total
+  ), 0);
+  const bacQuantity = items.find((item) => item.sku === 'WA10')?.qty || 0;
+  return Math.min(Math.floor(qualifyingVials / 3), bacQuantity);
+}
+
+function customBundleDiscountedQuantities(items, productsBySku) {
+  const discountedUnitCount = customBundleGiftQuantity(items) * 3;
+  const quantities = new Map();
+  if (!discountedUnitCount) return quantities;
+  items
+    .filter((item) => CUSTOM_BUNDLE_ELIGIBLE_SKUS.has(item.sku))
+    .flatMap((item) => Array.from({ length: item.bundleQty }, () => ({
+      sku: item.sku,
+      price: Number(productsBySku.get(item.sku)?.price || 0),
+    })))
+    .sort((a, b) => a.price - b.price)
+    .slice(0, discountedUnitCount)
+    .forEach((unit) => quantities.set(unit.sku, (quantities.get(unit.sku) || 0) + 1));
+  return quantities;
 }
 
 module.exports = async (req, res) => {
@@ -69,20 +102,50 @@ module.exports = async (req, res) => {
     const bySku = new Map((products || []).map((product) => [product.sku, product]));
     const lineItems = [];
     let subtotalPence = 0;
+    const freeBacQty = customBundleGiftQuantity(normalized);
+    const bundleDiscountedQuantities = customBundleDiscountedQuantities(normalized, bySku);
+    let bundleDiscountPence = 0;
     for (const item of normalized) {
       const product = bySku.get(item.sku);
       if (!product || !product.is_active) return res.status(400).json({ error: `Unavailable SKU: ${item.sku}` });
       if (COA_PENDING_SKUS.has(item.sku)) return res.status(400).json({ error: `${item.sku} is coming soon and awaiting COA` });
       const unitAmount = Math.round(Number(product.price) * 100);
-      subtotalPence += unitAmount * item.qty;
-      lineItems.push({
-        price_data: {
-          currency: 'gbp',
-          product_data: { name: product.name, metadata: { sku: product.sku } },
-          unit_amount: unitAmount,
-        },
-        quantity: item.qty,
-      });
+      const giftQty = item.sku === 'WA10' ? freeBacQty : 0;
+      const discountedQty = Number(bundleDiscountedQuantities.get(item.sku) || 0);
+      const regularQty = item.qty - giftQty - discountedQty;
+      const discountedUnitAmount = unitAmount - Math.round(unitAmount * 0.05);
+      subtotalPence += (unitAmount * regularQty) + (discountedUnitAmount * discountedQty);
+      bundleDiscountPence += (unitAmount - discountedUnitAmount) * discountedQty;
+      if (regularQty > 0) {
+        lineItems.push({
+          price_data: {
+            currency: 'gbp',
+            product_data: { name: product.name, metadata: { sku: product.sku } },
+            unit_amount: unitAmount,
+          },
+          quantity: regularQty,
+        });
+      }
+      if (discountedQty > 0) {
+        lineItems.push({
+          price_data: {
+            currency: 'gbp',
+            product_data: { name: `${product.name} — Build-your-own bundle`, metadata: { sku: product.sku, bundle_saving: '5_percent' } },
+            unit_amount: discountedUnitAmount,
+          },
+          quantity: discountedQty,
+        });
+      }
+      if (giftQty > 0) {
+        lineItems.push({
+          price_data: {
+            currency: 'gbp',
+            product_data: { name: `${product.name} — Build-your-own bundle gift`, metadata: { sku: product.sku, bundle_gift: 'true' } },
+            unit_amount: 0,
+          },
+          quantity: giftQty,
+        });
+      }
     }
     for (const [sku, qty] of stockRequirements.entries()) {
       const product = bySku.get(sku);
@@ -141,6 +204,8 @@ module.exports = async (req, res) => {
         checkout_type: authData?.user?.id ? 'account' : 'guest',
         promo_opt_in: req.body?.promoOptIn ? 'true' : 'false',
         promo_code: validPromo ? 'MAXX10' : '',
+        custom_bundle_free_bac_qty: String(freeBacQty),
+        custom_bundle_discount: String(bundleDiscountPence / 100),
         cart: JSON.stringify(normalized),
       },
     }, {

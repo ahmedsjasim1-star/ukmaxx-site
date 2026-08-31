@@ -3,7 +3,7 @@ const { createAndProcessPayment } = require('./_lib/fena');
 
 const SITE_URL = process.env.SITE_URL || 'https://www.ukmaxx.co.uk';
 const COA_PENDING_SKUS = new Set(['IP5']);
-const PROMO_EXCLUDED_SKUS = new Set(['NJ500']);
+const CUSTOM_BUNDLE_ELIGIBLE_SKUS = new Set(['RT10', 'RT20', 'BC5', 'GHKCU', 'NJ500']);
 const BUNDLE_COMPONENTS = {
   RT10X3: { RT10: 3, WA10: 1 },
   RT20X3: { RT20: 3, WA10: 1 },
@@ -77,9 +77,17 @@ function normalizeCart(cartItems) {
     const sku = String(raw?.sku || '').trim().toUpperCase();
     const qty = Number(raw?.qty);
     if (!sku || !Number.isSafeInteger(qty) || qty < 1 || qty > 50) continue;
-    quantities.set(sku, (quantities.get(sku) || 0) + qty);
+    const current = quantities.get(sku) || { qty: 0, bundleQty: 0 };
+    current.qty += qty;
+    if (CUSTOM_BUNDLE_ELIGIBLE_SKUS.has(sku)) {
+      const bundleQty = Number(raw?.bundleQty || 0);
+      if (Number.isSafeInteger(bundleQty) && bundleQty > 0) current.bundleQty += Math.min(qty, bundleQty);
+    }
+    quantities.set(sku, current);
   }
-  return [...quantities].map(([sku, qty]) => ({ sku, qty })).filter((item) => item.qty <= 50);
+  return [...quantities]
+    .map(([sku, item]) => ({ sku, qty: item.qty, bundleQty: Math.min(item.qty, item.bundleQty) }))
+    .filter((item) => item.qty <= 50);
 }
 
 function addRequiredStock(requirements, sku, qty) {
@@ -91,6 +99,25 @@ function addRequiredStock(requirements, sku, qty) {
     return;
   }
   requirements.set(sku, (requirements.get(sku) || 0) + qty);
+}
+
+function customBundleGiftQuantity(items) {
+  const qualifyingVials = items.reduce((total, item) => (
+    CUSTOM_BUNDLE_ELIGIBLE_SKUS.has(item.sku) ? total + item.bundleQty : total
+  ), 0);
+  const bacQuantity = items.find((item) => item.sku === 'WA10')?.qty || 0;
+  return Math.min(Math.floor(qualifyingVials / 3), bacQuantity);
+}
+
+function customBundleDiscount(items, productsBySku) {
+  const discountedUnitCount = customBundleGiftQuantity(items) * 3;
+  if (!discountedUnitCount) return 0;
+  const unitPrices = items
+    .filter((item) => CUSTOM_BUNDLE_ELIGIBLE_SKUS.has(item.sku))
+    .flatMap((item) => Array.from({ length: item.bundleQty }, () => Number(productsBySku.get(item.sku)?.price || 0)))
+    .slice(0, discountedUnitCount);
+  const discountPence = unitPrices.reduce((total, price) => total + Math.round(price * 100 * 0.05), 0);
+  return discountPence / 100;
 }
 
 function makeOrderNumber() {
@@ -157,19 +184,22 @@ module.exports = async (req, res) => {
     const orderItems = [];
     let subtotal = 0;
     let promoEligibleSubtotal = 0;
+    const freeBacQty = customBundleGiftQuantity(normalized);
     for (const item of normalized) {
       const product = bySku.get(item.sku);
       if (!product || !product.is_active) return res.status(400).json({ error: `Unavailable SKU: ${item.sku}` });
       if (COA_PENDING_SKUS.has(item.sku)) return res.status(400).json({ error: `${item.sku} is coming soon and awaiting COA` });
       const unit = Number(product.price);
-      subtotal += unit * item.qty;
-      if (!PROMO_EXCLUDED_SKUS.has(item.sku)) promoEligibleSubtotal += unit * item.qty;
+      const chargeableQty = item.sku === 'WA10' ? Math.max(0, item.qty - freeBacQty) : item.qty;
+      const lineTotal = Number((unit * chargeableQty).toFixed(2));
+      subtotal += lineTotal;
+      promoEligibleSubtotal += lineTotal;
       orderItems.push({
         sku: item.sku,
-        product_name: product.name,
+        product_name: item.sku === 'WA10' && freeBacQty ? `${product.name} (${freeBacQty} free bundle gift${freeBacQty === 1 ? '' : 's'})` : product.name,
         qty: item.qty,
         price: unit,
-        line_total: unit * item.qty,
+        line_total: lineTotal,
       });
     }
     for (const [sku, qty] of stockRequirements.entries()) {
@@ -180,6 +210,8 @@ module.exports = async (req, res) => {
       }
     }
 
+    const bundleDiscount = customBundleDiscount(normalized, bySku);
+    promoEligibleSubtotal = Math.max(0, promoEligibleSubtotal - bundleDiscount);
     const requestedPromo = String(req.body?.promoCode || '').trim().toUpperCase();
     const validPromo = requestedPromo === 'MAXX10';
     const promoApplies = validPromo && promoEligibleSubtotal > 0;
@@ -194,7 +226,8 @@ module.exports = async (req, res) => {
       if (prior?.length) return res.status(409).json({ error: 'MAXX10 has already been used for this email.' });
     }
 
-    const discount = promoApplies ? Number((promoEligibleSubtotal * 0.10).toFixed(2)) : 0;
+    const promoDiscount = promoApplies ? Number((promoEligibleSubtotal * 0.10).toFixed(2)) : 0;
+    const discount = Number((bundleDiscount + promoDiscount).toFixed(2));
     const discounted = subtotal - discount;
     const shipping = discounted >= 100 ? 0 : 4.99;
     const total = Number((discounted + shipping).toFixed(2));
@@ -217,6 +250,9 @@ module.exports = async (req, res) => {
       currency: 'gbp',
       promo_opt_in: !!req.body?.promoOptIn,
       promo_code: promoApplies ? 'MAXX10' : '',
+      custom_bundle_free_bac_qty: freeBacQty,
+      custom_bundle_discount: bundleDiscount,
+      promo_discount: promoDiscount,
       items: orderItems,
       analytics,
     };

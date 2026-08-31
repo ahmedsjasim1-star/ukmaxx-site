@@ -9,9 +9,9 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 test('GHK-Cu bundle uses the agreed price and remains MAXX10 eligible', () => {
   const products = read('assets/js/data/products.js');
   const fena = read('api/create-fena-payment.js');
-  assert.match(products, /GHKCUX3:\{[^\n]+price:89\.99,separatePrice:98\.96/);
+  assert.match(products, /Object\.assign\(PRODUCTS\.GHKCUX3, \{ price: 84\.99 \}\)/);
   assert.match(products, /GHKCUX3: \{ GHKCU: 3, WA10: 1 \}/);
-  assert.doesNotMatch(fena.match(/PROMO_EXCLUDED_SKUS[^;]+/)?.[0] || '', /GHKCUX3/);
+  assert.doesNotMatch(fena, /PROMO_EXCLUDED_SKUS/);
 });
 
 test('every order path expands GHKCUX3 into three GHKCU and one WA10', () => {

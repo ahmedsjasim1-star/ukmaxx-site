@@ -6,25 +6,20 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('MAXX10 identifies launch-only, mixed and fully eligible baskets clearly', () => {
+test('MAXX10 applies to permanent prices after automatic bundle savings', () => {
   const cart = read('assets/js/modules/cart.js');
 
   assert.match(cart, /eligibleSubtotal <= 0/);
-  assert.match(cart, /wasn’t applied\./);
-  assert.match(cart, /'already has' : 'already have'/);
-  assert.match(cart, /launch pricing, so additional discounts don’t apply/);
-  assert.match(cart, /every item in this basket already has launch pricing/);
-  assert.match(cart, /applied to eligible items — you saved/);
   assert.match(cart, /applied — you saved/);
-  assert.match(cart, /Launch-priced .* excluded/);
+  assert.match(cart, /promoEligibility\(c\)\.eligibleSubtotal - bundleDiscount/);
   assert.match(cart, /msg\.classList\.add\('is-warning'\)/);
 });
 
-test('basket explanation distinguishes launch pricing from full-price eligibility', () => {
+test('basket explanation states that MAXX10 stacks with the custom bundle saving', () => {
   const bundle = read('assets/html/bundle.js');
   const css = read('assets/css/components.css');
 
-  assert.match(bundle, /MAXX10<\/strong> gives 10% off full-price items/);
-  assert.match(bundle, /cannot be combined with another offer/);
+  assert.match(bundle, /MAXX10<\/strong> gives 10% off eligible products/);
+  assert.match(bundle, /stacks with the automatic 5% build-your-own bundle saving/);
   assert.match(css, /\.cart-promo-msg\.is-warning/);
 });

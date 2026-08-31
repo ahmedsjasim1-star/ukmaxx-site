@@ -12,9 +12,9 @@ test('RT20 single and bundle use the agreed full prices and remain MAXX10 eligib
 
   assert.match(products, /RT20:\{[^\n]+price:94\.99/);
   assert.doesNotMatch(products.match(/RT20:\{[^\n]+/)?.[0] || '', /originalPrice|launchPrice|promoExcluded/);
-  assert.match(products, /RT20X3:\{[^\n]+price:284\.99,separatePrice:293\.96/);
+  assert.match(products, /Object\.assign\(PRODUCTS\.RT20X3, \{ price: 269\.99 \}\)/);
   assert.match(products, /RT20X3: \{ RT20: 3, WA10: 1 \}/);
-  assert.doesNotMatch(fena.match(/PROMO_EXCLUDED_SKUS[^;]+/)?.[0] || '', /RT20/);
+  assert.doesNotMatch(fena, /PROMO_EXCLUDED_SKUS/);
 });
 
 test('RT20 COA data matches Janoshik report 225850', () => {

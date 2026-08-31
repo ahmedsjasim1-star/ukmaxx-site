@@ -1,6 +1,6 @@
 import { toast } from './toast.js';
 import { getCurrentUser } from './auth.js?v=20260819-customer-journeys';
-import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-sold-out-ux';
+import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, CUSTOM_BUNDLE_ELIGIBLE_SKUS, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-permanent-pricing-v2';
 import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw, setRaw, removeStorage } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
@@ -37,9 +37,16 @@ function sanitizeCart(arr = []) {
     const qty = Math.max(0, Number(i?.qty || 0));
     if (!sku || !PRODUCTS[sku] || !isPurchasable(PRODUCTS[sku]) || !qty) return;
     const maxQty = Math.max(0, Number(PRODUCTS[sku].stockCount || 0));
-    map.set(sku, Math.min(maxQty, (map.get(sku) || 0) + qty));
+    const current = map.get(sku) || { qty: 0, bundleQty: 0 };
+    current.qty = Math.min(maxQty, current.qty + qty);
+    if (CUSTOM_BUNDLE_ELIGIBLE_SKUS.includes(sku)) {
+      current.bundleQty = Math.min(current.qty, current.bundleQty + Math.max(0, Number(i?.bundleQty || 0)));
+    }
+    map.set(sku, current);
   });
-  return [...map.entries()].filter(([, qty]) => qty > 0).map(([sku, qty]) => ({ sku, qty }));
+  return [...map.entries()]
+    .filter(([, item]) => item.qty > 0)
+    .map(([sku, item]) => ({ sku, qty: item.qty, ...(item.bundleQty ? { bundleQty: item.bundleQty } : {}) }));
 }
 
 function getCart() { return sanitizeCart(getStorage(CART_KEY) || []); }
@@ -54,36 +61,50 @@ function getPromoCode() {
   return String(raw).trim().toUpperCase();
 }
 
+function customBundleGiftQuantity(c) {
+  const qualifyingVials = c.reduce((total, item) => (
+    CUSTOM_BUNDLE_ELIGIBLE_SKUS.includes(item.sku) ? total + Number(item.bundleQty || 0) : total
+  ), 0);
+  const bacQuantity = Number(c.find((item) => item.sku === 'WA10')?.qty || 0);
+  return Math.min(Math.floor(qualifyingVials / 3), bacQuantity);
+}
+
+function customBundleDiscount(c) {
+  const discountedUnitCount = customBundleGiftQuantity(c) * 3;
+  if (!discountedUnitCount) return 0;
+  const unitPrices = c
+    .filter((item) => CUSTOM_BUNDLE_ELIGIBLE_SKUS.includes(item.sku))
+    .flatMap((item) => Array.from({ length: Number(item.bundleQty || 0) }, () => Number(PRODUCTS[item.sku]?.price || 0)))
+    .slice(0, discountedUnitCount);
+  const discountPence = unitPrices.reduce((total, price) => total + Math.round(price * 100 * 0.05), 0);
+  return discountPence / 100;
+}
+
 function promoEligibility(c) {
   let eligibleSubtotal = 0;
-  const excludedNames = [];
+  const freeBacQty = customBundleGiftQuantity(c);
   c.forEach((item) => {
     const product = PRODUCTS[item.sku];
     if (!product) return;
-    if (product.promoExcluded || product.launchPrice) {
-      if (!excludedNames.includes(product.name)) excludedNames.push(product.name);
-      return;
-    }
-    eligibleSubtotal += product.price * item.qty;
+    const chargeableQty = item.sku === 'WA10' ? Math.max(0, item.qty - freeBacQty) : item.qty;
+    eligibleSubtotal += product.price * chargeableQty;
   });
-  return { eligibleSubtotal, excludedNames };
-}
-
-function readableList(items) {
-  if (items.length < 2) return items[0] || '';
-  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+  return { eligibleSubtotal };
 }
 
 function cartTotals(c) {
   const sub = c.reduce((a, b) => a + PRODUCTS[b.sku].price * b.qty, 0);
-  const promoEligibleSub = promoEligibility(c).eligibleSubtotal;
+  const freeBacQty = customBundleGiftQuantity(c);
+  const bundleGiftDiscount = freeBacQty * Number(PRODUCTS.WA10?.price || 0);
+  const bundleDiscount = customBundleDiscount(c);
+  const promoEligibleSub = Math.max(0, promoEligibility(c).eligibleSubtotal - bundleDiscount);
   const code = getPromoCode();
   const promo = PROMOS[code];
   const discount = promo ? (promo.type === 'percent' ? promoEligibleSub * promo.value : Math.min(promo.value, promoEligibleSub)) : 0;
-  const discounted = sub - discount;
+  const discounted = sub - bundleGiftDiscount - bundleDiscount - discount;
   const ship = !c.length ? 0 : (discounted >= SHIP_THRESHOLD ? 0 : SHIP_FLAT);
   const tot = discounted + ship;
-  return { sub, promoEligibleSub, discount, discounted, ship, tot, code, promo };
+  return { sub, promoEligibleSub, discount, bundleGiftDiscount, bundleDiscount, freeBacQty, discounted, ship, tot, code, promo };
 }
 
 function cartAnalyticsPayload(c = getCart()) {
@@ -95,7 +116,8 @@ function cartAnalyticsPayload(c = getCart()) {
         sku: item.sku,
         name: product.name || item.sku,
         qty: item.qty,
-        lineTotal: Number(((product.price || 0) * item.qty).toFixed(2)),
+        lineTotal: Number(((product.price || 0) * (item.sku === 'WA10' ? Math.max(0, item.qty - t.freeBacQty) : item.qty)).toFixed(2)),
+        freeQuantity: item.sku === 'WA10' ? t.freeBacQty : 0,
       };
     }),
     cartValue: Number(t.tot.toFixed(2)),
@@ -155,7 +177,6 @@ async function syncInternationalCheckoutNotice(c = getCart()) {
 
 export function renderCart() {
   const c = getCart();
-  const eligibility = promoEligibility(c);
   const count = c.reduce((a, b) => a + b.qty, 0);
   ['cartCount', 'cartCountHeader', 'cartCountMobile'].forEach(id => {
     const el = byId(id);
@@ -201,10 +222,15 @@ export function renderCart() {
   if (footEl) footEl.style.display = '';
   itemsEl.innerHTML = c.map(i => {
     const p = PRODUCTS[i.sku];
+    const freeQty = i.sku === 'WA10' ? t.freeBacQty : 0;
+    const chargeableQty = Math.max(0, i.qty - freeQty);
+    const itemPrice = chargeableQty === 0
+      ? `<span class="cart-item-free">FREE</span><s>${money(p.price * i.qty)}</s>`
+      : `${money(p.price * chargeableQty)}${freeQty ? `<span class="cart-item-gift-note">${freeQty} free</span>` : ''}`;
     return `<div class="cart-item">
       <img class="cart-thumb" src="${p.image}" alt="${p.name}">
       <div class="cart-item-info">
-        <div class="cart-item-name">${p.name}</div>
+        <div class="cart-item-name">${p.name}${freeQty ? ' <span class="cart-gift-badge">Bundle gift</span>' : ''}</div>
         <div class="cart-item-meta">${p.id} · ${p.purity}</div>
         <div class="cart-item-bottom">
           <div class="qty-control" role="group" aria-label="Quantity for ${p.name}">
@@ -212,7 +238,7 @@ export function renderCart() {
             <span class="qty-value">${i.qty}</span>
             <button class="qty-btn" aria-label="Increase quantity" data-a="inc" data-sku="${i.sku}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
           </div>
-          <div class="cart-item-price">${money(p.price * i.qty)}</div>
+          <div class="cart-item-price">${itemPrice}</div>
         </div>
         <button class="cart-item-remove" data-a="rm" data-sku="${i.sku}">Remove</button>
       </div>
@@ -233,11 +259,11 @@ export function renderCart() {
   if (totalsEl) {
     totalsEl.innerHTML = `
       <div class="cart-totals-row"><span>Subtotal</span><span>${money(t.sub)}</span></div>
+      ${t.bundleGiftDiscount > 0 ? `<div class="cart-totals-row is-gift"><span>Build-your-own bundle gift</span><span>-${money(t.bundleGiftDiscount)}</span></div>` : ''}
+      ${t.bundleDiscount > 0 ? `<div class="cart-totals-row is-discount"><span>Build-your-own bundle saving (5%)</span><span>-${money(t.bundleDiscount)}</span></div>` : ''}
       ${t.promo && t.discount > 0 ? `<div class="cart-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
       <div class="cart-totals-row"><span>Shipping</span><span>${t.ship === 0 ? '<strong style="color:var(--success)">FREE</strong>' : money(t.ship)}</span></div>
-      <div class="cart-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>
-      ${t.promo && !eligibility.eligibleSubtotal && eligibility.excludedNames.length ? `<div class="cart-promo-note">MAXX10 is not applied because every item in this basket already has launch pricing.</div>` : ''}
-      ${t.promo && eligibility.eligibleSubtotal && eligibility.excludedNames.length ? `<div class="cart-promo-note">MAXX10 was applied to eligible full-price items. Launch-priced ${readableList(eligibility.excludedNames)} ${eligibility.excludedNames.length === 1 ? 'was' : 'were'} excluded.</div>` : ''}`;
+      <div class="cart-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>`;
   }
   renderCheckoutSummary();
 }
@@ -245,30 +271,31 @@ export function renderCart() {
 function renderCheckoutSummary() {
   const c = getCart();
   const t = cartTotals(c);
-  const eligibility = promoEligibility(c);
   const itemsEl = byId('checkoutSummaryItems');
   const sumsEl = byId('checkoutSummary');
   if (itemsEl) {
     itemsEl.innerHTML = c.map(i => {
       const p = PRODUCTS[i.sku];
+      const freeQty = i.sku === 'WA10' ? t.freeBacQty : 0;
+      const chargeableQty = Math.max(0, i.qty - freeQty);
       return `<div class="checkout-summary-item">
         <img src="${p.image}" alt="${p.name}">
         <div class="checkout-summary-item-info">
-          <div class="checkout-summary-item-name">${p.name}</div>
-          <div class="checkout-summary-item-qty">× ${i.qty}</div>
+          <div class="checkout-summary-item-name">${p.name}${freeQty ? ' · Bundle gift' : ''}</div>
+          <div class="checkout-summary-item-qty">× ${i.qty}${freeQty ? ` · ${freeQty} free` : ''}</div>
         </div>
-        <div class="checkout-summary-item-price">${money(p.price * i.qty)}</div>
+        <div class="checkout-summary-item-price">${chargeableQty ? money(p.price * chargeableQty) : 'FREE'}</div>
       </div>`;
     }).join('');
   }
   if (sumsEl) {
     sumsEl.innerHTML = `
       <div class="checkout-totals-row"><span>Subtotal</span><span>${money(t.sub)}</span></div>
+      ${t.bundleGiftDiscount > 0 ? `<div class="checkout-totals-row is-gift"><span>Build-your-own bundle gift</span><span>-${money(t.bundleGiftDiscount)}</span></div>` : ''}
+      ${t.bundleDiscount > 0 ? `<div class="checkout-totals-row is-discount"><span>Build-your-own bundle saving (5%)</span><span>-${money(t.bundleDiscount)}</span></div>` : ''}
       ${t.promo && t.discount > 0 ? `<div class="checkout-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
       <div class="checkout-totals-row"><span>Shipping</span><span>${t.ship === 0 ? '<strong style="color:var(--success)">FREE</strong>' : money(t.ship)}</span></div>
-      <div class="checkout-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>
-      ${t.promo && !eligibility.eligibleSubtotal && eligibility.excludedNames.length ? `<div class="checkout-promo-note">MAXX10 is not applied because every item in this basket already has launch pricing.</div>` : ''}
-      ${t.promo && eligibility.eligibleSubtotal && eligibility.excludedNames.length ? `<div class="checkout-promo-note">MAXX10 was applied to eligible items only. Launch-priced ${readableList(eligibility.excludedNames)} ${eligibility.excludedNames.length === 1 ? 'was' : 'were'} excluded.</div>` : ''}`;
+      <div class="checkout-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>`;
   }
 }
 
@@ -312,12 +339,58 @@ export function addSkuQty(s, qty) {
   return { ok: true, requested: num, added, maxQty, limited: added < num };
 }
 
+export function addCustomBundle(selection = []) {
+  const chosen = Array.isArray(selection) ? selection.map(normalizeSku) : [];
+  if (chosen.length !== 3 || chosen.some((sku) => !CUSTOM_BUNDLE_ELIGIBLE_SKUS.includes(sku))) {
+    toast('Choose three vials', 'Select exactly three eligible single vials to build this bundle.', 'error');
+    return { ok: false };
+  }
+  if (!isPurchasable(PRODUCTS.WA10)) {
+    toast('Bundle unavailable', 'The free BAC Water is currently unavailable.', 'error');
+    return { ok: false };
+  }
+
+  const requested = new Map();
+  [...chosen, 'WA10'].forEach((sku) => requested.set(sku, (requested.get(sku) || 0) + 1));
+  const c = getCart();
+  for (const [sku, qty] of requested.entries()) {
+    const product = PRODUCTS[sku];
+    const currentQty = Number(c.find((item) => item.sku === sku)?.qty || 0);
+    if (!isPurchasable(product) || currentQty + qty > Number(product.stockCount || 0)) {
+      toast('Not enough stock', `${product?.name || sku} no longer has enough stock for this selection.`, 'error');
+      return { ok: false };
+    }
+  }
+
+  requested.forEach((qty, sku) => {
+    const item = c.find((entry) => entry.sku === sku);
+    const selectedQty = chosen.filter((chosenSku) => chosenSku === sku).length;
+    if (item) {
+      item.qty += qty;
+      if (selectedQty) item.bundleQty = Number(item.bundleQty || 0) + selectedQty;
+    } else {
+      c.push({ sku, qty, ...(selectedQty ? { bundleQty: selectedQty } : {}) });
+    }
+  });
+  setCart(c);
+  renderCart();
+  trackEvent('add_to_cart', {
+    productSku: 'CUSTOM3',
+    quantity: 1,
+    customBundleSelection: chosen,
+    ...cartAnalyticsPayload(),
+  });
+  toast('Bundle added', 'Your three selected vials and free BAC Water are in the basket.');
+  return { ok: true, selection: chosen };
+}
+
 function chg(s, d) {
   const c = getCart();
   const f = c.find(x => x.sku === s);
   if (!f) return;
   f.qty += d;
   f.qty = Math.min(f.qty, Math.max(1, Number(PRODUCTS[s]?.stockCount || 1)));
+  if (Number(f.bundleQty || 0) > f.qty) f.bundleQty = f.qty;
   if (f.qty <= 0) c.splice(c.indexOf(f), 1);
   setCart(c);
   renderCart();
@@ -524,10 +597,7 @@ export function initCart() {
       if (!c.length || eligibility.eligibleSubtotal <= 0) {
         removeStorage(PROMO_KEY);
         renderCart();
-        const launchItems = readableList(eligibility.excludedNames);
-        const text = launchItems
-          ? `${code} wasn’t applied. ${launchItems} ${eligibility.excludedNames.length === 1 ? 'already has' : 'already have'} launch pricing, so additional discounts don’t apply.`
-          : `Add an eligible full-price item before applying ${code}.`;
+        const text = `Add an eligible item before applying ${code}.`;
         if (msg) {
           msg.textContent = text;
           msg.classList.remove('is-success');
@@ -541,10 +611,7 @@ export function initCart() {
       renderCart();
       const totals = cartTotals(c);
       const saving = money(totals.discount);
-      const mixed = eligibility.excludedNames.length > 0;
-      const text = mixed
-        ? `${code} applied to eligible items — you saved ${saving}. Launch-priced ${readableList(eligibility.excludedNames)} ${eligibility.excludedNames.length === 1 ? 'was' : 'were'} excluded.`
-        : `${code} applied — you saved ${saving}.`;
+      const text = `${code} applied — you saved ${saving}.`;
       if (msg) {
         msg.textContent = text;
         msg.classList.remove('is-warning');
@@ -609,4 +676,5 @@ export function initCart() {
 window.renderCart = renderCart;
 window.addSku = addSku;
 window.addSkuQty = addSkuQty;
+window.addCustomBundle = addCustomBundle;
 window.openCheckout = openCheckout;

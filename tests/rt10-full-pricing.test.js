@@ -18,12 +18,9 @@ test('RT10 single and bundle use full pricing without launch-price presentation'
   }
 });
 
-test('MAXX10 applies to RT10 products while NAD remains excluded', () => {
+test('MAXX10 applies to both RT10 and permanently priced NAD', () => {
   const fena = read('api/create-fena-payment.js');
-  const excluded = fena.match(/PROMO_EXCLUDED_SKUS = new Set\(\[([^\]]*)\]\)/)?.[1] || '';
-
-  assert.doesNotMatch(excluded, /RT10/);
-  assert.match(excluded, /NJ500/);
+  assert.doesNotMatch(fena, /PROMO_EXCLUDED_SKUS/);
 });
 
 test('Supabase migration restores RT10 prices without changing stock', () => {

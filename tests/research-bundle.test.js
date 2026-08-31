@@ -11,10 +11,10 @@ test('flagship research bundle uses the agreed price with silent MAXX10 eligibil
   const fena = read('api/create-fena-payment.js');
   const definition = products.match(/UKXRB1:\{[^\n]+/)?.[0] || '';
 
-  assert.match(definition, /price:114\.99/);
+  assert.match(products, /Object\.assign\(PRODUCTS\.UKXRB1, \{ price: 109\.99 \}\)/);
   assert.doesNotMatch(definition, /separatePrice|originalPrice|launchPrice|promoExcluded/);
   assert.match(products, /UKXRB1: \{ RT10: 1, BC5: 1, GHKCU: 1, WA10: 1 \}/);
-  assert.doesNotMatch(fena.match(/PROMO_EXCLUDED_SKUS[^;]+/)?.[0] || '', /UKXRB1/);
+  assert.doesNotMatch(fena, /PROMO_EXCLUDED_SKUS/);
 });
 
 test('every order path expands UKXRB1 into its four live-stock components', () => {
