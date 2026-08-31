@@ -1,4 +1,4 @@
-import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260831-rt20';
+import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260831-rt20-copy';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260831-rt20';
 import { renderCart, initCart } from './modules/cart.js?v=20260831-rt20';
 import { initAgeGate } from './modules/ageGate.js';

@@ -10,7 +10,7 @@ const CATALOGUE_CARD_CONTENT = {
   NJ500: { chip: 'Coenzyme', className: 'catalogue-chip--nad', description: 'Studied in cellular energy, redox and mitochondrial research.' },
   RT10: { chip: 'Triple receptor agonist', className: 'catalogue-chip--reta', description: 'Targets GIP, GLP-1 and glucagon receptors in metabolic research.' },
   RT10X3: { chip: 'Triple receptor bundle', className: 'catalogue-chip--reta', description: 'Three RT10 vials from one verified batch, plus one BAC Water.' },
-  RT20: { chip: 'Triple receptor agonist', className: 'catalogue-chip--reta', description: '20mg label claim, linked to a 23.20mg and 99.607% Janoshik batch result.' },
+  RT20: { chip: 'Triple receptor agonist', className: 'catalogue-chip--reta', description: 'Targets GIP, GLP-1 and glucagon receptors in metabolic research.' },
   RT20X3: { chip: 'Triple receptor bundle', className: 'catalogue-chip--reta', description: 'Three RT20 vials from one verified batch, plus one BAC Water.' },
   BC5X3: { chip: 'Body protection bundle', className: 'catalogue-chip--bpc', description: 'Three BPC-157 5mg vials from one verified batch, plus one BAC Water.' },
   GHKCUX3: { chip: 'Copper peptide bundle', className: 'catalogue-chip--ghk', description: 'Three GHK-Cu 50mg vials from one verified batch, plus one BAC Water.' },
