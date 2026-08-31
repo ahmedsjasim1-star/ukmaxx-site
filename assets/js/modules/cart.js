@@ -1,6 +1,6 @@
 import { toast } from './toast.js';
 import { getCurrentUser } from './auth.js?v=20260819-customer-journeys';
-import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-rt20';
+import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-rt10-full-price';
 import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw, setRaw, removeStorage } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';

@@ -1,4 +1,4 @@
-import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-rt20';
+import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-rt10-full-price';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
