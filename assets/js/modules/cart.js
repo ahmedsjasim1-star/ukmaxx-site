@@ -472,7 +472,7 @@ export function initCart() {
   });
 
   delegate(document.body, '.product-card', 'click', (e, card) => {
-    if (e.target.closest('[data-add]') || e.target.closest('.product-name a')) return;
+    if (e.target.closest('[data-add], [data-restock-alert]') || e.target.closest('.product-name a')) return;
     location.href = `./product.html?sku=${card.dataset.sku}`;
   });
 

@@ -37,3 +37,12 @@ test('basket feedback reports accepted quantity and suppresses false add confirm
   assert.match(cart, /quantity: added/);
   assert.doesNotMatch(cart, /`\$\{num\}× \$\{p\.name\} added\.`/);
 });
+
+test('catalogue restock actions open the alert form without navigating to the product page', () => {
+  const cart = read('assets/js/modules/cart.js');
+  const exitIntent = read('assets/js/modules/exitIntent.js');
+
+  assert.match(cart, /closest\('\[data-add\], \[data-restock-alert\]'\)/);
+  assert.match(exitIntent, /closest\('\[data-restock-alert\]'\)/);
+  assert.match(exitIntent, /show\(true\)/);
+});
