@@ -5,6 +5,7 @@ const SITE_URL = process.env.SITE_URL || 'https://www.ukmaxx.co.uk';
 const COA_PENDING_SKUS = new Set(['IP5']);
 const BUNDLE_COMPONENTS = {
   RT10X3: { RT10: 3, WA10: 1 },
+  RT20X3: { RT20: 3, WA10: 1 },
   BC5X3: { BC5: 3, WA10: 1 },
   GHKCUX3: { GHKCU: 3, WA10: 1 },
   UKXRB1: { RT10: 1, BC5: 1, GHKCU: 1, WA10: 1 },

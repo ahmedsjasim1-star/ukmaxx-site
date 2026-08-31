@@ -5,6 +5,8 @@ const REVIEW_ENDPOINT = '/api/track-order';
 const PRODUCT_LABELS = {
   RT10: 'RETA 10mg',
   RT10X3: 'RETA 3-pack bundle',
+  RT20: 'RETA 20mg',
+  RT20X3: 'RETA 20mg 3-pack bundle',
   BC5X3: 'BPC-157 3-pack bundle',
   GHKCUX3: 'GHK-Cu 3-pack bundle',
   UKXRB1: 'UKMAXX Research Bundle',

@@ -1,6 +1,6 @@
 import { toast } from './toast.js';
 import { getCurrentUser } from './auth.js?v=20260819-customer-journeys';
-import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260828-bundle-card-main';
+import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-rt20';
 import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw, setRaw, removeStorage } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
@@ -17,10 +17,12 @@ function normalizeSku(raw = '') {
   const t = String(raw).trim();
   const key = t.split('-')[0].trim().toUpperCase();
   if (key.startsWith('RT10X3')) return 'RT10X3';
+  if (key.startsWith('RT20X3')) return 'RT20X3';
   if (key.startsWith('BC5X3')) return 'BC5X3';
   if (key.startsWith('GHKCUX3')) return 'GHKCUX3';
   if (key.startsWith('UKXRB1')) return 'UKXRB1';
   if (key.startsWith('RT10')) return 'RT10';
+  if (key.startsWith('RT20')) return 'RT20';
   if (key.startsWith('BC5')) return 'BC5';
   if (key.startsWith('IP5')) return 'IP5';
   if (key.startsWith('NJ500')) return 'NJ500';
@@ -216,7 +218,7 @@ export function renderCart() {
       </div>
     </div>`;
   }).join('');
-  const peptideSkus = ['RT10', 'BC5', 'IP5', 'GHKCU', 'NJ500'];
+  const peptideSkus = ['RT10', 'RT20', 'BC5', 'IP5', 'GHKCU', 'NJ500'];
   const hasPeptide = c.some(i => peptideSkus.includes(i.sku));
   const hasBac = c.some(i => i.sku === 'WA10');
   if (hasPeptide && !hasBac) {

@@ -14,6 +14,8 @@ const TELEGRAM_API = 'https://api.telegram.org/bot';
 const PRODUCT_LABELS = {
   RT10: 'RETA 10mg',
   RT10X3: 'RETA 3-Pack',
+  RT20: 'RETA 20mg',
+  RT20X3: 'RETA 20mg 3-Pack',
   BC5X3: 'BPC 157 3-Pack',
   GHKCUX3: 'GHK-Cu 3-Pack',
   UKXRB1: 'UKMAXX Research Bundle',
@@ -207,6 +209,7 @@ async function getItems(supabase, orderId) {
 
 const BUNDLE_COMPONENTS = {
   RT10X3: { RT10: 3, WA10: 1 },
+  RT20X3: { RT20: 3, WA10: 1 },
   BC5X3: { BC5: 3, WA10: 1 },
   GHKCUX3: { GHKCU: 3, WA10: 1 },
   UKXRB1: { RT10: 1, BC5: 1, GHKCU: 1, WA10: 1 },
@@ -224,7 +227,7 @@ async function getStockProducts(supabase) {
   const { data, error } = await supabase
     .from('products')
     .select('sku,name,stock_quantity,is_active')
-    .in('sku', ['RT10', 'WA10', 'RT10X3', 'BC5', 'BC5X3', 'IP5', 'NJ500', 'GHKCU', 'GHKCUX3', 'UKXRB1'])
+    .in('sku', ['RT10', 'RT20', 'WA10', 'RT10X3', 'RT20X3', 'BC5', 'BC5X3', 'IP5', 'NJ500', 'GHKCU', 'GHKCUX3', 'UKXRB1'])
     .order('sku', { ascending: true });
   if (error) throw error;
   return data || [];
@@ -237,6 +240,7 @@ async function handleStock(token, chatId) {
   const products = await getStockProducts(supabase);
   const bySku = new Map(products.map((product) => [product.sku, product]));
   const bundleStock = calculateBundleStock(bySku, 'RT10X3');
+  const rt20BundleStock = calculateBundleStock(bySku, 'RT20X3');
   const bpcBundleStock = calculateBundleStock(bySku, 'BC5X3');
   const ghkBundleStock = calculateBundleStock(bySku, 'GHKCUX3');
   const researchBundleStock = calculateBundleStock(bySku, 'UKXRB1');
@@ -244,10 +248,12 @@ async function handleStock(token, chatId) {
     '<b>UKMAXX Live Stock</b>',
     '',
     `RETA 10MG (RT10): <b>${Number(bySku.get('RT10')?.stock_quantity || 0)}</b>`,
+    `RETA 20MG (RT20): <b>${Number(bySku.get('RT20')?.stock_quantity || 0)}</b>`,
     `BPC 157 (BC5): <b>${Number(bySku.get('BC5')?.stock_quantity || 0)}</b>`,
     `GHK-Cu 50MG (GHKCU): <b>${Number(bySku.get('GHKCU')?.stock_quantity || 0)}</b>`,
     `BAC Water (WA10): <b>${Number(bySku.get('WA10')?.stock_quantity || 0)}</b>`,
     `RETA 3-Pack (RT10X3): <b>${bundleStock}</b> bundles available`,
+    `RETA 20MG 3-Pack (RT20X3): <b>${rt20BundleStock}</b> bundles available`,
     `BPC 157 3-Pack (BC5X3): <b>${bpcBundleStock}</b> bundles available`,
     `GHK-Cu 3-Pack (GHKCUX3): <b>${ghkBundleStock}</b> bundles available`,
     `UKMAXX Research Bundle (UKXRB1): <b>${researchBundleStock}</b> bundles available`,

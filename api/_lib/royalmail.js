@@ -2,8 +2,10 @@ const ROYALMAIL_API_BASE = 'https://api.parcel.royalmail.com/api/v1';
 
 const PRODUCT_WEIGHTS_GRAMS = {
   RT10: 25,
+  RT20: 25,
   WA10: 120,
   RT10X3: 195,
+  RT20X3: 195,
   BC5X3: 195,
   GHKCUX3: 195,
   UKXRB1: 195,

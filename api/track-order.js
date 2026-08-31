@@ -5,6 +5,8 @@ const { sendTelegramAdminAlert, sendTelegramAdminPhoto } = require('./_lib/notif
 const PRODUCT_LABELS = {
   RT10: 'RETA 10mg',
   RT10X3: 'RETA 3-Pack',
+  RT20: 'RETA 20mg',
+  RT20X3: 'RETA 20mg 3-Pack',
   BC5X3: 'BPC 157 3-Pack',
   GHKCUX3: 'GHK-Cu 3-Pack',
   UKXRB1: 'UKMAXX Research Bundle',
@@ -21,6 +23,8 @@ const PRODUCT_LABELS = {
 const PRODUCT_IMAGES = {
   RT10: './images/product-photography/ukmaxx-retatrutide-10mg-product.jpg',
   RT10X3: './images/product-photography/ukmaxx-retatrutide-3-pack-verification-card.jpg',
+  RT20: './images/product-photography/ukmaxx-retatrutide-20mg-product.jpg',
+  RT20X3: './images/product-photography/ukmaxx-retatrutide-20mg-3-pack-verification-card.jpg',
   BC5X3: './images/product-photography/ukmaxx-bpc-157-3-pack-verification-card.jpg',
   GHKCUX3: './images/product-photography/ukmaxx-ghk-cu-3-pack-verification-card.jpg',
   UKXRB1: './images/product-photography/ukmaxx-research-bundle-verification-card.jpg',
@@ -416,7 +420,9 @@ async function handleReviewSubmit(req, res) {
     }
     const order = verified.order;
     const orderedSkus = new Set(verified.items.map((i) => String(i.sku || '').trim().toUpperCase()));
-    if (!orderedSkus.has(cleanProduct) && !(cleanProduct === 'RT10' && orderedSkus.has('RT10X3'))) {
+    if (!orderedSkus.has(cleanProduct)
+      && !(cleanProduct === 'RT10' && orderedSkus.has('RT10X3'))
+      && !(cleanProduct === 'RT20' && orderedSkus.has('RT20X3'))) {
       return res.status(403).json({ error: 'product_not_in_order' });
     }
 

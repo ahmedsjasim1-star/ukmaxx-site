@@ -1,4 +1,4 @@
-import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260828-bundle-card-main';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-rt20';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 import { renderProductReviewsSummary } from './reviews.js?v=20260827-bundle-chips';
@@ -9,6 +9,8 @@ const PRODUCT_POSITIONING = {
   NJ500: { label: 'Coenzyme', className: 'positioning-badge--nad' },
   RT10: { label: 'Triple receptor agonist', className: 'positioning-badge--reta' },
   RT10X3: { label: 'Triple receptor bundle', className: 'positioning-badge--reta' },
+  RT20: { label: 'Triple receptor agonist', className: 'positioning-badge--reta' },
+  RT20X3: { label: 'Triple receptor bundle', className: 'positioning-badge--reta' },
   BC5X3: { label: 'Body protection bundle', className: 'positioning-badge--bpc' },
   GHKCUX3: { label: 'Copper peptide bundle', className: 'positioning-badge--ghk' },
   UKXRB1: { label: 'Signature research bundle', className: 'positioning-badge--bundle' },
@@ -16,6 +18,7 @@ const PRODUCT_POSITIONING = {
 
 const BUNDLE_CONTENTS = {
   RT10X3: ['3× Retatrutide 10mg vials', '1× 10ml BAC Water vial'],
+  RT20X3: ['3× Retatrutide 20mg vials', '1× 10ml BAC Water vial'],
   BC5X3: ['3× BPC-157 5mg vials', '1× 10ml BAC Water vial'],
   GHKCUX3: ['3× GHK-Cu 50mg vials', '1× 10ml BAC Water vial'],
   UKXRB1: ['1× RETA 10mg vial', '1× BPC-157 5mg vial', '1× GHK-Cu 50mg vial', '1× 10ml BAC Water vial'],

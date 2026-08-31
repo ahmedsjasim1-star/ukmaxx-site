@@ -1,4 +1,4 @@
-import { COA, PRODUCTS, getCoaStatusLabel, getReleaseLabel } from '../data/products.js?v=20260828-bundle-card-main';
+import { COA, PRODUCTS, getCoaStatusLabel, getReleaseLabel } from '../data/products.js?v=20260831-rt20';
 import { getSupabase } from '../data/supabase.js';
 
 function byId(id) {

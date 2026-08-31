@@ -1,4 +1,4 @@
-import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260828-bundle-card-main';
+import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-rt20';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
@@ -10,6 +10,8 @@ const CATALOGUE_CARD_CONTENT = {
   NJ500: { chip: 'Coenzyme', className: 'catalogue-chip--nad', description: 'Studied in cellular energy, redox and mitochondrial research.' },
   RT10: { chip: 'Triple receptor agonist', className: 'catalogue-chip--reta', description: 'Targets GIP, GLP-1 and glucagon receptors in metabolic research.' },
   RT10X3: { chip: 'Triple receptor bundle', className: 'catalogue-chip--reta', description: 'Three RT10 vials from one verified batch, plus one BAC Water.' },
+  RT20: { chip: 'Triple receptor agonist', className: 'catalogue-chip--reta', description: '20mg label claim, linked to a 23.20mg and 99.607% Janoshik batch result.' },
+  RT20X3: { chip: 'Triple receptor bundle', className: 'catalogue-chip--reta', description: 'Three RT20 vials from one verified batch, plus one BAC Water.' },
   BC5X3: { chip: 'Body protection bundle', className: 'catalogue-chip--bpc', description: 'Three BPC-157 5mg vials from one verified batch, plus one BAC Water.' },
   GHKCUX3: { chip: 'Copper peptide bundle', className: 'catalogue-chip--ghk', description: 'Three GHK-Cu 50mg vials from one verified batch, plus one BAC Water.' },
   UKXRB1: { chip: 'Signature research bundle', className: 'catalogue-chip--bundle', description: 'RETA 10mg, BPC-157 5mg and GHK-Cu 50mg, plus one BAC Water.' },
@@ -100,7 +102,9 @@ const CATALOGUE_ORDER = {
   GHKCU: 20,
   BC5: 30,
   NJ500: 40,
+  RT20: 45,
   RT10: 50,
+  RT20X3: 50,
   UKXRB1: 55,
   RT10X3: 60,
   BC5X3: 70,
