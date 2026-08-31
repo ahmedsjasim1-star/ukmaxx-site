@@ -1,4 +1,4 @@
-import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-rt10-full-price';
+import { PRODUCTS, CATEGORIES, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-sold-out-ux';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
@@ -46,13 +46,14 @@ function productCard(p, bundle = false) {
   const catalogueMode = document.body?.dataset.catalogueCards === 'true';
   const catalogueContent = catalogueMode ? CATALOGUE_CARD_CONTENT[p.id] : null;
   const purchasable = isPurchasable(p);
+  const soldOut = !purchasable && getReleaseLabel(p) === 'Sold out';
   const stockLow = p.stockCount && p.stockCount <= 10;
   const stockUnit = p.category === 'bundles' ? 'bundles' : 'left';
   const stockBadge = catalogueMode
-    ? ''
+    ? (soldOut ? '<span class="badge badge-soldout">Sold out</span>' : '')
     : purchasable
     ? (stockLow ? `<span class="badge badge-low">Only ${p.stockCount} ${stockUnit}</span>` : `<span class="badge badge-stock">In stock</span>`)
-    : `<span class="badge badge-coming">${p.coa?.status === 'REJECTED' ? 'Not available' : getReleaseLabel(p)}</span>`;
+    : `<span class="badge ${soldOut ? 'badge-soldout' : 'badge-coming'}">${p.coa?.status === 'REJECTED' ? 'Not available' : getReleaseLabel(p)}</span>`;
   const coaBadge = !p.coaUrl && !purchasable ? `<span class="badge badge-awaiting">${getCoaStatusLabel(p)}</span>` : '';
   const bestBadge = !catalogueMode && p.featured ? `<span class="badge badge-best">★ ${bundle ? 'Best value' : 'Featured'}</span>` : '';
   const comparisonPrice = Number(p.separatePrice || p.originalPrice || 0);
@@ -80,7 +81,7 @@ function productCard(p, bundle = false) {
       <div class="product-sku">${p.id} · ${p.shortName}</div>
       <h3 class="product-name"><a href="./product.html?sku=${p.id}">${p.name}</a></h3>
       <div class="product-rating">
-        ${hasReviews ? `<span class="stars" aria-hidden="true">${starsStr}</span><span><strong>${rating.toFixed(1)}</strong></span><a class="count" href="/#reviews">(${p.reviewCount} reviews)</a>` : '<span class="count">New batch · awaiting reviews</span>'}
+        ${hasReviews ? `<span class="stars" aria-hidden="true">${starsStr}</span><span><strong>${rating.toFixed(1)}</strong></span><a class="count" href="/#reviews">(${p.reviewCount} reviews)</a>` : soldOut ? '<span class="count">Previous batch · no reviews yet</span>' : '<span class="count">New batch · awaiting reviews</span>'}
       </div>
       <p class="product-desc">${catalogueContent?.description || p.description}</p>
       <div class="product-attrs">
@@ -88,9 +89,9 @@ function productCard(p, bundle = false) {
       </div>
       <div class="product-foot">
         ${priceWrap}
-        <button class="add-btn${purchasable ? '' : ' is-disabled'}" ${purchasable ? `data-add="${p.id}" aria-label="Add ${p.name} to basket"` : `disabled aria-disabled="true" aria-label="${p.name} coming soon"`}>
+        <button class="add-btn${soldOut ? ' is-restock' : purchasable ? '' : ' is-disabled'}" ${purchasable ? `data-add="${p.id}" aria-label="Add ${p.name} to basket"` : soldOut ? `data-restock-alert="${p.id}" aria-label="Join restock alerts for ${p.name}"` : `disabled aria-disabled="true" aria-label="${p.name} coming soon"`}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          ${purchasable ? 'Add' : 'Soon'}
+          ${purchasable ? 'Add' : soldOut ? 'Notify me' : 'Soon'}
         </button>
       </div>
     </div>

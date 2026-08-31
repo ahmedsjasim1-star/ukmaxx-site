@@ -1,6 +1,6 @@
 import { toast } from './toast.js';
 import { getCurrentUser } from './auth.js?v=20260819-customer-journeys';
-import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-rt10-full-price';
+import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-sold-out-ux';
 import { money } from '../utils/money.js';
 import { getStorage, setStorage, getRaw, setRaw, removeStorage } from '../utils/storage.js';
 import { $, $$, byId, delegate } from '../utils/dom.js';
@@ -273,41 +273,43 @@ function renderCheckoutSummary() {
 }
 
 export function addSku(s) {
-  const p = PRODUCTS[s];
-  if (!isPurchasable(p)) {
-    toast(getReleaseLabel(p), `${p?.name || 'This product'} is awaiting COA before release.`, 'error');
-    return;
-  }
-  const c = getCart();
-  const f = c.find(x => x.sku === s);
-  const maxQty = Math.max(1, Number(p.stockCount || 1));
-  if (f && f.qty >= maxQty) {
-    toast('Stock limit reached', `Only ${maxQty} ${p.category === 'bundles' ? 'bundles' : 'available'} right now.`, 'error');
-    return;
-  }
-  if (f) f.qty++; else c.push({ sku: s, qty: 1 });
-  setCart(c);
-  renderCart();
-  trackEvent('add_to_cart', { productSku: s, ...cartAnalyticsPayload() });
-  if (p) toast('Added to basket', `${p.name} added — review your basket or continue shopping.`);
+  return addSkuQty(s, 1);
 }
 
 export function addSkuQty(s, qty) {
   const p = PRODUCTS[s];
   if (!isPurchasable(p)) {
-    toast(getReleaseLabel(p), `${p?.name || 'This product'} is awaiting COA before release.`, 'error');
-    return;
+    const soldOut = getReleaseLabel(p) === 'Sold out';
+    toast(getReleaseLabel(p), soldOut
+      ? `${p?.name || 'This product'} is currently sold out. Join the restock alerts for the next release.`
+      : `${p?.name || 'This product'} is awaiting COA before release.`, 'error');
+    return { ok: false, requested: 0, added: 0, maxQty: 0 };
   }
   const num = Math.max(1, Math.min(99, Number(qty) || 1));
   const c = getCart();
   const f = c.find(x => x.sku === s);
   const maxQty = Math.max(1, Number(p.stockCount || 1));
-  const nextQty = Math.min(maxQty, (f?.qty || 0) + num);
+  const currentQty = Number(f?.qty || 0);
+  const nextQty = Math.min(maxQty, currentQty + num);
+  const added = Math.max(0, nextQty - currentQty);
+  if (!added) {
+    const unit = p.category === 'bundles' ? (maxQty === 1 ? 'bundle' : 'bundles') : (maxQty === 1 ? 'vial' : 'vials');
+    toast('Stock limit reached', `Only ${maxQty} ${unit} available and your basket already contains that amount.`, 'error');
+    return { ok: false, requested: num, added: 0, maxQty };
+  }
   if (f) f.qty = nextQty; else c.push({ sku: s, qty: Math.min(maxQty, num) });
   setCart(c);
   renderCart();
-  trackEvent('add_to_cart', { productSku: s, ...cartAnalyticsPayload() });
-  if (p) toast('Added to basket', `${num}× ${p.name} added.`);
+  trackEvent('add_to_cart', { productSku: s, quantity: added, ...cartAnalyticsPayload() });
+  if (p && added < num) {
+    const unit = p.category === 'bundles' ? (maxQty === 1 ? 'bundle' : 'bundles') : (maxQty === 1 ? 'vial' : 'vials');
+    toast('Stock limit applied', `Only ${maxQty} ${unit} available — ${added} added to your basket.`);
+  } else if (p) {
+    toast('Added to basket', num === 1
+      ? `${p.name} added — review your basket or continue shopping.`
+      : `${added}× ${p.name} added.`);
+  }
+  return { ok: true, requested: num, added, maxQty, limited: added < num };
 }
 
 function chg(s, d) {
@@ -459,8 +461,8 @@ export function initCart() {
     const originalHtml = btn.dataset.originalHtml || btn.innerHTML;
     btn.dataset.originalHtml = originalHtml;
     const qtyInput = btn.dataset.qtyInput ? byId(btn.dataset.qtyInput) : null;
-    if (qtyInput) addSkuQty(sku, qtyInput.value);
-    else addSku(sku);
+    const result = qtyInput ? addSkuQty(sku, qtyInput.value) : addSku(sku);
+    if (!result?.ok) return;
     btn.classList.add('is-adding');
     btn.textContent = '✓ Added';
     setTimeout(() => {

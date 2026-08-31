@@ -1,5 +1,6 @@
 import { tpStars } from '../utils/money.js';
 import { $, byId } from '../utils/dom.js';
+import { PRODUCTS, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-sold-out-ux';
 
 const REVIEW_ENDPOINT = '/api/track-order';
 const PRODUCT_LABELS = {
@@ -157,6 +158,8 @@ export async function renderProductReviewsSummary(productId) {
   const rows = await fetchReviews(productId);
   const avg = averageRating(rows);
   const hasRows = rows.length > 0;
+  const product = PRODUCTS[String(productId).toUpperCase()];
+  const soldOut = !isPurchasable(product) && getReleaseLabel(product) === 'Sold out';
 
   const scoreNum = byId('pdpScoreNum');
   if (scoreNum) scoreNum.textContent = hasRows ? avg.toFixed(1) : '—';
@@ -168,7 +171,7 @@ export async function renderProductReviewsSummary(productId) {
   }
 
   const scoreText = byId('pdpScoreText');
-  if (scoreText) scoreText.textContent = hasRows ? `${rows.length} verified review${rows.length === 1 ? '' : 's'}` : 'Verified customer feedback coming soon';
+  if (scoreText) scoreText.textContent = hasRows ? `${rows.length} verified review${rows.length === 1 ? '' : 's'}` : soldOut ? 'No verified reviews for the previous batch' : 'Verified customer feedback coming soon';
 
   renderBars(byId('pdpRbList'), rows, 'product');
 
@@ -183,7 +186,7 @@ export async function renderProductReviewsSummary(productId) {
   const ratingTop = byId('pdpRating');
   const reviewCountTop = byId('pdpReviewCount');
   if (ratingTop) ratingTop.textContent = hasRows ? avg.toFixed(1) : '';
-  if (reviewCountTop) reviewCountTop.textContent = hasRows ? `${rows.length} review${rows.length === 1 ? '' : 's'}` : 'Awaiting verified reviews';
+  if (reviewCountTop) reviewCountTop.textContent = hasRows ? `${rows.length} review${rows.length === 1 ? '' : 's'}` : soldOut ? 'Previous batch · no verified reviews yet' : 'Awaiting verified reviews';
 }
 
 export function setupReviewDrawer() {

@@ -42,8 +42,8 @@
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
-<link rel="stylesheet" href="./assets/css/components.css?v=20260828-real-photos">
-<link rel="stylesheet" href="./assets/css/pages/product.css?v=20260813-positioning">
+<link rel="stylesheet" href="./assets/css/components.css?v=20260831-sold-out-ux">
+<link rel="stylesheet" href="./assets/css/pages/product.css?v=20260831-sold-out-ux">
 <script src="./assets/html/bundle.js?v=20260831-rt20"></script>
 </head>
 <body>
@@ -495,6 +495,7 @@
 <script>document.write(window.__html.lightbox)</script>
 <script>document.write(window.__html.successModal)</script>
 <script>document.write(window.__html.reviewDrawer)</script>
+<script>document.write(window.__html.exitIntent)</script>
 <script>document.write(window.__html.toast)</script>
 <script>document.write(window.__html.cookieBanner)</script>
 <!-- MOBILE STICKY BUY BAR -->
@@ -505,7 +506,7 @@
 <span class="ms-price" id="pdpMobilePrice">Loading</span>
 <span class="stock-dot" aria-hidden="true">
 </span>
-<span>In stock</span>
+<span id="pdpMobileStockText">In stock</span>
 </div>
 </div>
 <div class="pdp-mobile-bar-qty" role="group" aria-label="Quantity">
@@ -522,6 +523,6 @@
 <span id="pdpMobileAddLabel">Add</span>
 </button>
 </div>
-<script type="module" src="./assets/js/app.js?v=20260831-rt10-full-price"></script>
+<script type="module" src="./assets/js/app.js?v=20260831-sold-out-ux"></script>
 </body>
 </html>

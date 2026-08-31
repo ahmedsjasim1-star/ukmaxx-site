@@ -1,7 +1,7 @@
-import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-rt10-full-price';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260831-sold-out-ux';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
-import { renderProductReviewsSummary } from './reviews.js?v=20260827-bundle-chips';
+import { renderProductReviewsSummary } from './reviews.js?v=20260831-sold-out-ux';
 
 const PRODUCT_POSITIONING = {
   GHKCU: { label: 'Copper peptide', className: 'positioning-badge--ghk' },
@@ -44,6 +44,7 @@ export function renderProductDetail() {
   if (!p) { container.innerHTML = '<div class="product-404"><h2>Product not found</h2><p>This product does not exist or has been removed.</p><a class="btn btn-dark" href="/">Back to shop</a></div>'; return; }
   const d = DETAIL_DATA[sku] || {};
   const purchasable = isPurchasable(p);
+  const soldOut = !purchasable && getReleaseLabel(p) === 'Sold out';
   const priceLabel = Number.isFinite(Number(p.price)) ? money(p.price) : 'TBC';
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
@@ -151,6 +152,7 @@ function renderPdpProduct(root) {
 
   const d = DETAIL_DATA[sku] || {};
   const purchasable = isPurchasable(p);
+  const soldOut = !purchasable && getReleaseLabel(p) === 'Sold out';
   const priceLabel = Number.isFinite(Number(p.price)) ? money(p.price) : 'TBC';
   const rating = Number(p.rating || 0);
   const hasReviews = Number(p.reviewCount || 0) > 0 && rating > 0;
@@ -275,10 +277,11 @@ function renderPdpProduct(root) {
     starsWrap.innerHTML = h;
     starsWrap.style.display = hasReviews ? '' : 'none';
   }
-  setText('pdpRating', hasReviews ? rating.toFixed(1) : 'New batch');
-  setText('pdpReviewCount', hasReviews ? p.reviewCount + ' reviews' : 'Awaiting verified reviews');
+  setText('pdpRating', hasReviews ? rating.toFixed(1) : soldOut ? '' : 'New batch');
+  setText('pdpReviewCount', hasReviews ? p.reviewCount + ' reviews' : soldOut ? 'Previous batch · no verified reviews yet' : 'Awaiting verified reviews');
   setText('pdpStockText', purchasable ? 'In stock' : getReleaseLabel(p));
   setText('pdpStockSub', purchasable ? '\u00B7 ' + p.stockCount + ' ' + (p.category === 'bundles' ? 'bundles' : 'vials') + ' ready' : '\u00B7 ' + getCoaStatusLabel(p));
+  setText('pdpMobileStockText', purchasable ? 'In stock' : getReleaseLabel(p));
   const stockDot = $('.pdp-stock-dot', root);
   if (stockDot) stockDot.className = 'pdp-stock-dot stock-' + p.stock;
 
@@ -297,7 +300,7 @@ function renderPdpProduct(root) {
   if (galleryBadges) {
     galleryBadges.innerHTML = purchasable
       ? productPositioningBadge(p)
-      : '<span class="badge badge-coming">' + getReleaseLabel(p) + '</span><span class="badge badge-awaiting">' + getCoaStatusLabel(p) + '</span>';
+      : '<span class="badge ' + (soldOut ? 'badge-soldout' : 'badge-coming') + '">' + getReleaseLabel(p) + '</span><span class="badge ' + (soldOut ? 'badge-coa' : 'badge-awaiting') + '">' + getCoaStatusLabel(p) + '</span>';
   }
   const galleryThumbs = byId('pdpGalleryThumbs');
   if (galleryThumbs) {
@@ -331,58 +334,93 @@ function renderPdpProduct(root) {
     if (purchasable) {
       addBtn.dataset.add = p.id;
       addBtn.dataset.qtyInput = 'pdpQtyInput';
+      delete addBtn.dataset.restockAlert;
       addBtn.disabled = false;
+      addBtn.classList.remove('is-restock');
       if (addBtnLabel) addBtnLabel.textContent = 'Add to basket';
+    } else if (soldOut) {
+      delete addBtn.dataset.add;
+      delete addBtn.dataset.qtyInput;
+      addBtn.dataset.restockAlert = p.id;
+      addBtn.disabled = false;
+      addBtn.classList.add('is-restock');
+      if (addBtnLabel) addBtnLabel.textContent = 'Join restock alerts';
     } else {
       delete addBtn.dataset.add;
       delete addBtn.dataset.qtyInput;
+      delete addBtn.dataset.restockAlert;
       addBtn.disabled = true;
+      addBtn.classList.remove('is-restock');
       if (addBtnLabel) addBtnLabel.textContent = getReleaseLabel(p);
     }
   }
   setText('pdpMobileName', p.name);
   setText('pdpMobilePrice', priceLabel);
+  const mobileStockDot = $('.pdp-mobile-bar .stock-dot');
+  if (mobileStockDot) mobileStockDot.className = 'stock-dot stock-' + p.stock;
   const mobileAdd = byId('pdpMobileAdd');
   if (mobileAdd) {
     if (purchasable) {
       mobileAdd.dataset.add = p.id;
       mobileAdd.dataset.qtyInput = 'pdpMobileQtyInput';
+      delete mobileAdd.dataset.restockAlert;
       mobileAdd.disabled = false;
+      mobileAdd.classList.remove('is-restock');
       setText('pdpMobileAddLabel', 'Add');
+    } else if (soldOut) {
+      delete mobileAdd.dataset.add;
+      delete mobileAdd.dataset.qtyInput;
+      mobileAdd.dataset.restockAlert = p.id;
+      mobileAdd.disabled = false;
+      mobileAdd.classList.add('is-restock');
+      setText('pdpMobileAddLabel', 'Notify me');
     } else {
       delete mobileAdd.dataset.add;
       delete mobileAdd.dataset.qtyInput;
+      delete mobileAdd.dataset.restockAlert;
       mobileAdd.disabled = true;
-      setText('pdpMobileAddLabel', 'Soon');
+      mobileAdd.classList.remove('is-restock');
+      setText('pdpMobileAddLabel', getReleaseLabel(p));
     }
   }
 
   const dec = byId('pdpQtyDec');
   const inc = byId('pdpQtyInc');
   const inp = byId('pdpQtyInput');
-  const clamp = (v) => Math.max(1, Math.min(99, Number(v) || 1));
-  const sync = () => { if (inp) inp.value = clamp(inp.value); };
-  if (dec) dec.onclick = () => { if (inp) inp.value = clamp(Number(inp.value) - 1); sync(); };
-  if (inc) inc.onclick = () => { if (inp) inp.value = clamp(Number(inp.value) + 1); sync(); };
-  if (inp) inp.onchange = sync;
-
   const mDec = byId('pdpMobileQtyDec');
   const mInc = byId('pdpMobileQtyInc');
   const mInp = byId('pdpMobileQtyInput');
-  const mSync = () => { if (mInp) mInp.value = clamp(mInp.value); };
-  if (mDec) mDec.onclick = () => { if (mInp) mInp.value = clamp(Number(mInp.value) - 1); mSync(); };
-  if (mInc) mInc.onclick = () => { if (mInp) mInp.value = clamp(Number(mInp.value) + 1); mSync(); };
-  if (mInp) mInp.onchange = mSync;
+  const stockLimit = Math.max(1, Number(p.stockCount || 1));
+  const bindQuantity = (decrease, increase, input) => {
+    if (!input) return;
+    input.max = String(stockLimit);
+    const clamp = (value) => Math.max(1, Math.min(stockLimit, Number(value) || 1));
+    const sync = () => {
+      input.value = String(clamp(input.value));
+      if (decrease) decrease.disabled = Number(input.value) <= 1;
+      if (increase) increase.disabled = Number(input.value) >= stockLimit;
+    };
+    if (decrease) decrease.onclick = () => { input.value = String(clamp(Number(input.value) - 1)); sync(); };
+    if (increase) increase.onclick = () => { input.value = String(clamp(Number(input.value) + 1)); sync(); };
+    input.oninput = sync;
+    input.onchange = sync;
+    sync();
+  };
+  bindQuantity(dec, inc, inp);
+  bindQuantity(mDec, mInc, mInp);
+  if (inp?.parentElement) inp.parentElement.hidden = !purchasable;
+  if (mInp?.parentElement) mInp.parentElement.hidden = !purchasable;
 
   const buyNowBtn = byId('pdpBuyNow');
   if (buyNowBtn) {
-    buyNowBtn.disabled = !purchasable;
+    buyNowBtn.disabled = !purchasable && !soldOut;
     buyNowBtn.innerHTML = purchasable
       ? '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Buy now — secure checkout'
-      : getReleaseLabel(p) + ' — ' + getCoaStatusLabel(p);
+      : soldOut ? 'View previous batch COA' : getReleaseLabel(p) + ' — ' + getCoaStatusLabel(p);
     buyNowBtn.onclick = purchasable ? function () {
       const qty = Number(byId('pdpQtyInput')?.value || 1);
-      window.addSkuQty(p.id, qty);
+      const result = window.addSkuQty(p.id, qty);
+      if (!result?.ok) return;
       setTimeout(function () {
         if (typeof window.openCheckout === 'function') {
           window.openCheckout();
@@ -390,7 +428,7 @@ function renderPdpProduct(root) {
           byId('cartBtn')?.click();
         }
       }, 300);
-    } : null;
+    } : soldOut && p.coaUrl ? function () { window.open(p.coaUrl, '_blank', 'noopener,noreferrer'); } : null;
   }
 
   const upsellSkus = ['RT10', 'BC5', 'IP5', 'GHKCU', 'NJ500'];
@@ -413,7 +451,9 @@ function renderPdpProduct(root) {
         : '<p>' + p.description + '</p><p>This batch was independently tested by <strong>' + p.coa.lab + '</strong> using <strong>' + p.coa.method + '</strong>. Purity verified at <strong>' + p.purity + '</strong>. Batch: <strong>' + p.batch + '</strong>.</p>')
       : (p.coa?.status === 'REJECTED'
         ? '<p>' + p.description + '</p><p><strong>' + getReleaseLabel(p) + '.</strong> The tested batch was QC rejected and not released for sale. A new batch will be listed after it passes UKMAXX release checks.</p>'
-        : '<p>' + p.description + '</p><p><strong>' + getReleaseLabel(p) + '.</strong> This product is awaiting its COA before release, so ordering is disabled until the batch documentation is ready.</p>');
+        : soldOut
+          ? '<p>' + p.description + '</p><p><strong>Current stock has sold through.</strong> Ordering is paused while the next release is prepared. The previous batch COA remains publicly available for traceability.</p>'
+          : '<p>' + p.description + '</p><p><strong>' + getReleaseLabel(p) + '.</strong> This product is awaiting its COA before release, so ordering is disabled until the batch documentation is ready.</p>');
   }
   const featureList = byId('pdpFeatureList');
   if (featureList) {

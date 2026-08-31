@@ -7,7 +7,7 @@ export function setupExitIntent() {
   const backdrop = byId('exitBackdrop');
   const form = byId('exitForm');
   if (!backdrop || !form) return;
-  if (getRaw(EXIT_KEY)) return;
+  const previouslyDismissed = Boolean(getRaw(EXIT_KEY));
 
   let shown = false;
   const checkoutIsOpen = () => {
@@ -15,8 +15,8 @@ export function setupExitIntent() {
     return Boolean(checkout && (checkout.classList.contains('is-open') || checkout.getAttribute('aria-hidden') === 'false'));
   };
 
-  const show = () => {
-    if (shown) return;
+  const show = (force = false) => {
+    if (shown && !force) return;
     if (checkoutIsOpen()) return;
     shown = true;
     backdrop.classList.add('is-open');
@@ -33,14 +33,23 @@ export function setupExitIntent() {
 
   byId('exitClose')?.addEventListener('click', close);
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest('[data-restock-alert]');
+    if (!trigger) return;
+    e.preventDefault();
+    show(true);
+    byId('exitEmail')?.focus();
+  });
 
-  document.addEventListener('mouseout', (e) => { if (e.clientY <= 0 && !shown) show(); });
+  if (!previouslyDismissed) {
+    document.addEventListener('mouseout', (e) => { if (e.clientY <= 0 && !shown) show(); });
 
-  const dwellTimer = setTimeout(() => { if (!shown) show(); }, 30000);
-  document.addEventListener('scroll', () => {
-    const atBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200;
-    if (atBottom && !shown) { clearTimeout(dwellTimer); show(); }
-  }, { passive: true });
+    const dwellTimer = setTimeout(() => { if (!shown) show(); }, 30000);
+    document.addEventListener('scroll', () => {
+      const atBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200;
+      if (atBottom && !shown) { clearTimeout(dwellTimer); show(); }
+    }, { passive: true });
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

@@ -25,6 +25,7 @@
 .badge-low{background:rgba(180,83,9,.10);color:var(--warning);border:1px solid rgba(180,83,9,.25)}
 .badge-coming{background:#0a7e8c;color:#fff;border:1px solid rgba(255,255,255,.55);box-shadow:0 5px 14px rgba(4,31,35,.18)}
 .badge-awaiting{background:#d97706;color:#fff;border:1px solid rgba(255,255,255,.60);box-shadow:0 5px 14px rgba(76,29,0,.20)}
+.badge-soldout{background:#fff1f2;color:#9f1239;border:1px solid #fecdd3;box-shadow:0 5px 14px rgba(159,18,57,.10)}
 .badge-sale{background:var(--danger);color:#fff}
 .badge-coa{background:var(--accent-light);color:var(--accent);border:1px solid var(--accent)}
 
@@ -164,6 +165,8 @@
 .add-btn:active{transform:scale(.97)}
 .add-btn svg{width:14px;height:14px}
 .add-btn.is-adding{background:var(--success)}
+.add-btn.is-restock{background:#7c3aed;color:#fff}
+.add-btn.is-restock:hover{background:#6d28d9}
 .add-btn:disabled,.add-btn.is-disabled{background:var(--surface-3);color:var(--dim);cursor:not-allowed;pointer-events:none;border:1px solid var(--border)}
 .add-btn:disabled svg,.add-btn.is-disabled svg{display:none}
 @media (max-width:560px){
