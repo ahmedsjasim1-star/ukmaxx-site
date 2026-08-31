@@ -56,14 +56,16 @@
 <a class="skip-link" href="#main">Skip to content</a>
 <script>document.write(window.__html.topbar)</script>
 <script>document.write(window.__html.header)</script>
-<div id="ageGate" class="age-gate" role="dialog" aria-modal="true" aria-labelledby="ageGateTitle">
+<div id="ageGate" class="age-gate" role="dialog" aria-modal="true" aria-labelledby="ageGateTitle" aria-describedby="ageGateDesc">
   <div class="age-gate-card">
+    <div class="age-gate-logo"><span class="logo-mark" aria-hidden="true"></span>UKMAXX</div>
     <h2 id="ageGateTitle" class="age-gate-title">Research Compounds — Age Verification</h2>
-    <p class="age-gate-text">UKMAXX products are supplied strictly for laboratory and in-vitro research use only. They are not medicines, supplements or products for human consumption.</p>
+    <p id="ageGateDesc" class="age-gate-copy">You must be 18 or older to access this site. All products are supplied strictly for laboratory and in-vitro research use only. Not for human consumption.</p>
     <div class="age-gate-actions">
-      <button id="ageGateAccept" class="btn btn-primary btn-lg" type="button">I understand</button>
-      <a href="https://google.com" class="btn btn-ghost btn-lg" style="border-color:rgba(255,255,255,.2);color:#fff">Leave site</a>
+      <button id="ageEnterBtn" class="btn btn-primary btn-lg" type="button" style="flex:1">I am 18 or older — Enter</button>
+      <button id="ageExitBtn" class="btn btn-ghost btn-lg" type="button" style="flex:1">I am under 18</button>
     </div>
+    <p class="age-gate-foot">By entering you confirm you are a qualified researcher aged 18 or older acting in compliance with all applicable laws.</p>
   </div>
 </div>
 <main id="main">
