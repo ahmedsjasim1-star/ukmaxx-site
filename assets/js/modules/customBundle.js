@@ -1,5 +1,5 @@
-import { PRODUCTS, CUSTOM_BUNDLE_ELIGIBLE_SKUS, isPurchasable } from '../data/products.js?v=20260831-permanent-pricing-v2';
-import { addCustomBundle } from './cart.js?v=20260831-permanent-pricing-v2';
+import { PRODUCTS, CUSTOM_BUNDLE_ELIGIBLE_SKUS, isPurchasable } from '../data/products.js?v=20260901-retatrutide-method';
+import { addCustomBundle } from './cart.js?v=20260901-retatrutide-method';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
