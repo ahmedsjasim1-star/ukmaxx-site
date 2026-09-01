@@ -10,7 +10,7 @@ import { initAuthGate, setupAuthForms, setupPasswordStrength, setupGoogleAuth, s
 import { setupTracking } from './modules/tracking.js';
 import { renderProductDetail, refreshProductDetailData, renderRelatedProducts } from './modules/productDetail.js?v=20260901-retatrutide-method';
 import { setupAccountPage } from './modules/account.js?v=20260731-account-reorder';
-import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260813-catalogue';
+import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260901-featured-rt20';
 import { refreshLiveStock } from './data/products.js?v=20260901-retatrutide-method';
 import { setupCoaPage } from './modules/coaPage.js?v=20260901-retatrutide-method';
 import { setupAnalytics } from './modules/analytics.js?v=20260819-restore-traffic';

@@ -1,8 +1,8 @@
-import { PRODUCTS } from '../data/products.js';
+import { PRODUCTS } from '../data/products.js?v=20260901-retatrutide-method';
 import { byId } from '../utils/dom.js';
 
 export function updateHeroBatchChips() {
-  const product = PRODUCTS.GHKCU;
+  const product = PRODUCTS.RT20;
   if (!product) return;
 
   const purityValue = byId('heroPurityValue');
