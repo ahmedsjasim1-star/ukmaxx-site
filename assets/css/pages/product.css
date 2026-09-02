@@ -255,6 +255,13 @@ body{padding-bottom:70px}
 .pdp-add.is-restock{background:#7c3aed}
 .pdp-add.is-restock:hover{background:#6d28d9}
 .pdp-add.is-restock svg{display:none}
+.pdp-current-alternative{display:grid;grid-template-columns:68px minmax(0,1fr);gap:13px;align-items:center;margin:12px 0 14px;padding:11px 13px;border:1px solid #d8c8f1;border-radius:18px;background:linear-gradient(135deg,#f7f1ff,#fff);color:var(--text);text-decoration:none;box-shadow:var(--shadow-sm);transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.pdp-current-alternative:hover{transform:translateY(-1px);border-color:#bba2e4;box-shadow:var(--shadow-md)}
+.pdp-current-alternative img{width:68px;height:68px;object-fit:contain;border-radius:14px;background:#fff}
+.pdp-current-alternative span{display:flex;min-width:0;flex-direction:column;gap:2px}
+.pdp-current-alternative small{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#765ba0}
+.pdp-current-alternative strong{font-family:'Space Grotesk',sans-serif;font-size:15px;line-height:1.2;color:var(--text)}
+.pdp-current-alternative em{font-size:12px;font-style:normal;font-weight:700;color:#765ba0}
 
 @media (max-width:640px){
   .pdp{padding:20px 0 36px}.pdp-grid{gap:24px}

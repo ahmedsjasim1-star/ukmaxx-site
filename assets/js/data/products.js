@@ -282,8 +282,10 @@ export const RESEARCH_FOCUS = {
 
 export const FURTHER_READING = {
   RT10: [
+    { label: 'Current Retatrutide 20mg product', url: '/product.html?sku=RT20' },
+    { label: 'Current RT20 assay and batch guide', url: '/retatrutide-20mg-uk.html' },
+    { label: 'Verify current RT20 batch', url: '/coa.html?batch=RT20-2026-08-A' },
     { label: 'UKMAXX Retatrutide 10mg UK guide', url: '/retatrutide-10mg-uk.html' },
-    { label: 'View the RT10 3-pack research bundle', url: '/product.html?sku=RT10X3' },
     { label: 'Retatrutide research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=retatrutide' },
     { label: 'Retatrutide clinical trial records', url: 'https://clinicaltrials.gov/search?term=retatrutide' },
     { label: 'GLP-1, GIP and glucagon receptor research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=GLP-1+GIP+glucagon+receptor+agonist' },

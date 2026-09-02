@@ -1,4 +1,4 @@
-import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260902-rt20-guide';
+import { PRODUCTS, DETAIL_DATA, RESEARCH_FOCUS, FURTHER_READING, SAMPLE_REVIEWS, getCoaStatusLabel, getQualityLabel, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260902-retatrutide-paths';
 import { money, tpStars } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
 import { renderProductReviewsSummary } from './reviews.js?v=20260831-sold-out-ux';
@@ -282,6 +282,11 @@ function renderPdpProduct(root) {
   setText('pdpStockText', purchasable ? 'In stock' : getReleaseLabel(p));
   setText('pdpStockSub', purchasable ? '\u00B7 ' + p.stockCount + ' ' + (p.category === 'bundles' ? 'bundles' : 'vials') + ' ready' : '\u00B7 ' + getCoaStatusLabel(p));
   setText('pdpMobileStockText', purchasable ? 'In stock' : getReleaseLabel(p));
+  const availabilityAlternative = byId('pdpAvailabilityAlternative');
+  if (availabilityAlternative) {
+    const showCurrentRt20 = sku === 'RT10' && soldOut && isPurchasable(PRODUCTS.RT20);
+    availabilityAlternative.style.display = showCurrentRt20 ? '' : 'none';
+  }
   const stockDot = $('.pdp-stock-dot', root);
   if (stockDot) stockDot.className = 'pdp-stock-dot stock-' + p.stock;
 
