@@ -34,14 +34,17 @@
   "name":"UKMAXX research catalogue",
   "url":"https://www.ukmaxx.co.uk/catalogue.html",
   "itemListElement":[
-    {"@type":"ListItem","position":1,"name":"BAC WATER 10ML","url":"https://www.ukmaxx.co.uk/product.html?sku=WA10"},
+    {"@type":"ListItem","position":1,"name":"RETA 20MG / RT20","url":"https://www.ukmaxx.co.uk/product.html?sku=RT20"},
     {"@type":"ListItem","position":2,"name":"GHK-Cu 50MG","url":"https://www.ukmaxx.co.uk/product.html?sku=GHKCU"},
-    {"@type":"ListItem","position":3,"name":"BPC 157 5MG","url":"https://www.ukmaxx.co.uk/product.html?sku=BC5"},
+    {"@type":"ListItem","position":3,"name":"BPC-157 5MG","url":"https://www.ukmaxx.co.uk/product.html?sku=BC5"},
     {"@type":"ListItem","position":4,"name":"NAD+ 500MG","url":"https://www.ukmaxx.co.uk/product.html?sku=NJ500"},
-    {"@type":"ListItem","position":5,"name":"RETA 20MG / RT20","url":"https://www.ukmaxx.co.uk/product.html?sku=RT20"},
-    {"@type":"ListItem","position":6,"name":"RETA 20MG 3-Pack","url":"https://www.ukmaxx.co.uk/product.html?sku=RT20X3"},
-    {"@type":"ListItem","position":7,"name":"RETA 10MG / RT10","url":"https://www.ukmaxx.co.uk/product.html?sku=RT10"},
-    {"@type":"ListItem","position":8,"name":"RETA 10MG 3-Pack","url":"https://www.ukmaxx.co.uk/product.html?sku=RT10X3"}
+    {"@type":"ListItem","position":5,"name":"BAC Water 10ML","url":"https://www.ukmaxx.co.uk/product.html?sku=WA10"},
+    {"@type":"ListItem","position":6,"name":"RETA 10MG / RT10 — sold out","url":"https://www.ukmaxx.co.uk/product.html?sku=RT10"},
+    {"@type":"ListItem","position":7,"name":"RETA 20MG 3-Pack","url":"https://www.ukmaxx.co.uk/product.html?sku=RT20X3"},
+    {"@type":"ListItem","position":8,"name":"BPC-157 5MG 3-Pack","url":"https://www.ukmaxx.co.uk/product.html?sku=BC5X3"},
+    {"@type":"ListItem","position":9,"name":"GHK-Cu 50MG 3-Pack","url":"https://www.ukmaxx.co.uk/product.html?sku=GHKCUX3"},
+    {"@type":"ListItem","position":10,"name":"UKMAXX Research Bundle — sold out","url":"https://www.ukmaxx.co.uk/product.html?sku=UKXRB1"},
+    {"@type":"ListItem","position":11,"name":"RETA 10MG 3-Pack — sold out","url":"https://www.ukmaxx.co.uk/product.html?sku=RT10X3"}
   ]
 }
 </script>
@@ -62,7 +65,7 @@
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
 <link rel="stylesheet" href="./assets/css/components.css?v=20260831-sold-out-ux">
-<link rel="stylesheet" href="./assets/css/pages/catalogue.css?v=20260831-custom-bundle">
+<link rel="stylesheet" href="./assets/css/pages/catalogue.css?v=20260902-crawlable-catalogue">
 <script src="./assets/html/bundle.js?v=20260831-permanent-pricing-v2"></script>
 </head>
 <body data-excluded-skus="IP5" data-catalogue-cards="true">
@@ -95,7 +98,52 @@
         </div>
         <div class="filter-tabs" id="filterTabs" role="tablist" aria-label="Filter by category"></div>
       </div>
-      <div class="product-grid" id="productsGrid"></div>
+      <div class="product-grid" id="productsGrid">
+        <div class="catalogue-initial-grid" data-catalogue-fallback>
+          <article class="catalogue-initial-card is-featured">
+            <a class="catalogue-initial-image" href="/product.html?sku=RT20"><img src="./images/product-photography/ukmaxx-retatrutide-20mg-product.jpg" alt="UKMAXX Retatrutide 20mg RT20 research vial" width="400" height="400"></a>
+            <span class="badge catalogue-chip catalogue-chip--reta">Triple receptor agonist</span>
+            <h2><a href="/product.html?sku=RT20">RETA 20MG / RT20</a></h2>
+            <p>Current UK-stocked batch RT20-2026-08-A with published Janoshik assay and purity results.</p>
+            <div class="catalogue-initial-links"><a href="/product.html?sku=RT20">View product</a><a href="/retatrutide-20mg-uk.html">Read RT20 guide</a><a href="/coa.html?batch=RT20-2026-08-A">Check batch</a></div>
+          </article>
+          <article class="catalogue-initial-card">
+            <a class="catalogue-initial-image" href="/product.html?sku=GHKCU"><img src="./images/product-photography/ukmaxx-ghk-cu-50mg-product.jpg" alt="UKMAXX GHK-Cu 50mg copper peptide vial" width="400" height="400"></a>
+            <span class="badge catalogue-chip catalogue-chip--ghk">Copper peptide</span>
+            <h2><a href="/product.html?sku=GHKCU">GHK-Cu 50MG</a></h2>
+            <p>UK-stocked copper peptide linked to batch GHK-2026-05-A and its public laboratory record.</p>
+            <div class="catalogue-initial-links"><a href="/product.html?sku=GHKCU">View product</a><a href="/ghk-cu-50mg-uk.html">Read guide</a><a href="/coa.html?batch=GHK-2026-05-A">Check batch</a></div>
+          </article>
+          <article class="catalogue-initial-card">
+            <a class="catalogue-initial-image" href="/product.html?sku=BC5"><img src="./images/product-photography/ukmaxx-bpc-157-5mg-product.jpg" alt="UKMAXX BPC-157 5mg research vial" width="400" height="400"></a>
+            <span class="badge catalogue-chip catalogue-chip--bpc">Body protection compound</span>
+            <h2><a href="/product.html?sku=BC5">BPC-157 5MG</a></h2>
+            <p>UK-stocked research peptide linked to batch BPC-2026-05-A and its public laboratory record.</p>
+            <div class="catalogue-initial-links"><a href="/product.html?sku=BC5">View product</a><a href="/bpc-157-5mg-uk.html">Read guide</a><a href="/coa.html?batch=BPC-2026-05-A">Check batch</a></div>
+          </article>
+          <article class="catalogue-initial-card">
+            <a class="catalogue-initial-image" href="/product.html?sku=NJ500"><img src="./images/product-photography/ukmaxx-nad-plus-500mg-product.jpg" alt="UKMAXX NAD+ 500mg research coenzyme vial" width="400" height="400"></a>
+            <span class="badge catalogue-chip catalogue-chip--nad">Coenzyme</span>
+            <h2><a href="/product.html?sku=NJ500">NAD+ 500MG</a></h2>
+            <p>UK-stocked research coenzyme linked to batch NAD-2026-05-A and its public assay result.</p>
+            <div class="catalogue-initial-links"><a href="/product.html?sku=NJ500">View product</a><a href="/nad-500mg-uk.html">Read guide</a><a href="/coa.html?batch=NAD-2026-05-A">Check batch</a></div>
+          </article>
+          <article class="catalogue-initial-card">
+            <a class="catalogue-initial-image" href="/product.html?sku=WA10"><img src="./images/product-photography/ukmaxx-bacteriostatic-water-10ml-product.jpg" alt="UKMAXX Bacteriostatic Water 10ml support vial" width="400" height="400"></a>
+            <span class="badge badge-stock">In stock</span>
+            <h2><a href="/product.html?sku=WA10">BAC Water 10ML</a></h2>
+            <p>UK-stocked support water for compatible laboratory reconstitution workflows.</p>
+            <div class="catalogue-initial-links"><a href="/product.html?sku=WA10">View product</a><a href="/bacteriostatic-water-10ml-uk.html">Read guide</a><a href="/coa.html">Open batch checker</a></div>
+          </article>
+          <article class="catalogue-initial-card is-sold-out">
+            <a class="catalogue-initial-image" href="/product.html?sku=RT10"><img src="./images/product-photography/ukmaxx-retatrutide-10mg-product.jpg" alt="UKMAXX Retatrutide 10mg RT10 research vial" width="400" height="400"></a>
+            <span class="badge badge-soldout">Sold out</span>
+            <h2><a href="/product.html?sku=RT10">RETA 10MG / RT10</a></h2>
+            <p>The previous batch is sold through; its batch record and Janoshik result remain publicly available.</p>
+            <div class="catalogue-initial-links"><a href="/product.html?sku=RT10">View status</a><a href="/retatrutide-10mg-uk.html">Read RT10 guide</a><a href="/coa.html?batch=RT10-2026-06-A">Check previous batch</a></div>
+          </article>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -126,7 +174,15 @@
           <button class="btn btn-primary" type="button" data-open-custom-bundle>Build your bundle</button>
         </div>
       </article>
-      <div class="product-grid" id="bundlesGrid"></div>
+      <div class="product-grid" id="bundlesGrid">
+        <div class="catalogue-initial-grid" data-catalogue-fallback>
+          <article class="catalogue-initial-card is-featured"><a class="catalogue-initial-image" href="/product.html?sku=RT20X3"><img src="./images/product-photography/ukmaxx-retatrutide-20mg-3-pack-verification-card.jpg" alt="UKMAXX Retatrutide 20mg three-pack bundle" width="400" height="400"></a><span class="badge catalogue-chip catalogue-chip--reta">Triple receptor bundle</span><h2><a href="/product.html?sku=RT20X3">RETA 20MG 3-Pack</a></h2><p>Three RT20 vials from verified batch RT20-2026-08-A plus one BAC Water 10ml.</p><div class="catalogue-initial-links"><a href="/product.html?sku=RT20X3">View bundle</a><a href="/coa.html?batch=RT20-2026-08-A">Check batch</a></div></article>
+          <article class="catalogue-initial-card"><a class="catalogue-initial-image" href="/product.html?sku=BC5X3"><img src="./images/product-photography/ukmaxx-bpc-157-3-pack-bundle.jpg" alt="UKMAXX BPC-157 5mg three-pack bundle" width="400" height="400"></a><span class="badge catalogue-chip catalogue-chip--bpc">Body protection bundle</span><h2><a href="/product.html?sku=BC5X3">BPC-157 5MG 3-Pack</a></h2><p>Three BPC-157 vials from one verified batch plus one BAC Water 10ml.</p><div class="catalogue-initial-links"><a href="/product.html?sku=BC5X3">View bundle</a><a href="/coa.html?batch=BPC-2026-05-A">Check batch</a></div></article>
+          <article class="catalogue-initial-card"><a class="catalogue-initial-image" href="/product.html?sku=GHKCUX3"><img src="./images/product-photography/ukmaxx-ghk-cu-3-pack-bundle.jpg" alt="UKMAXX GHK-Cu 50mg three-pack bundle" width="400" height="400"></a><span class="badge catalogue-chip catalogue-chip--ghk">Copper peptide bundle</span><h2><a href="/product.html?sku=GHKCUX3">GHK-Cu 50MG 3-Pack</a></h2><p>Three GHK-Cu vials from one verified batch plus one BAC Water 10ml.</p><div class="catalogue-initial-links"><a href="/product.html?sku=GHKCUX3">View bundle</a><a href="/coa.html?batch=GHK-2026-05-A">Check batch</a></div></article>
+          <article class="catalogue-initial-card is-sold-out"><a class="catalogue-initial-image" href="/product.html?sku=UKXRB1"><img src="./images/product-photography/ukmaxx-research-bundle.jpg" alt="UKMAXX Research Bundle" width="400" height="400"></a><span class="badge badge-soldout">Sold out</span><h2><a href="/product.html?sku=UKXRB1">UKMAXX Research Bundle</a></h2><p>The mixed RT10, BPC-157 and GHK-Cu bundle is unavailable while RT10 is sold out.</p><div class="catalogue-initial-links"><a href="/product.html?sku=UKXRB1">View status</a><a href="/coa.html">Check component batches</a></div></article>
+          <article class="catalogue-initial-card is-sold-out"><a class="catalogue-initial-image" href="/product.html?sku=RT10X3"><img src="./images/product-photography/ukmaxx-retatrutide-3-pack-bundle.jpg" alt="UKMAXX Retatrutide 10mg three-pack bundle" width="400" height="400"></a><span class="badge badge-soldout">Sold out</span><h2><a href="/product.html?sku=RT10X3">RETA 10MG 3-Pack</a></h2><p>The previous RT10 bundle is sold through; its batch record remains publicly verifiable.</p><div class="catalogue-initial-links"><a href="/product.html?sku=RT10X3">View status</a><a href="/coa.html?batch=RT10-2026-06-A">Check previous batch</a></div></article>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -173,7 +229,7 @@
 <script>document.write(window.__html.cookieBanner)</script>
 <script>document.write(window.__html.toast)</script>
 
-<script type="module" src="./assets/js/app.js?v=20260901-retatrutide-method"></script>
+<script type="module" src="./assets/js/app.js?v=20260902-rt20-guide"></script>
 <script type="module" src="./assets/js/modules/customBundle.js?v=20260831-permanent-pricing-v2"></script>
 </body>
 </html>

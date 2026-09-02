@@ -9,7 +9,8 @@
 .peptides-products{background:#fff}
 .seo-product-grid{display:grid;gap:14px}
 @media (min-width:760px){.seo-product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}}
-.seo-product-card{display:grid;grid-template-columns:112px 1fr;gap:14px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:24px;padding:12px;box-shadow:0 12px 30px rgba(8,31,35,.06);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.seo-product-card{display:grid;grid-template-columns:112px 1fr;gap:14px;align-items:center;min-width:0;background:#fff;border:1px solid var(--border);border-radius:24px;padding:12px;box-shadow:0 12px 30px rgba(8,31,35,.06);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.seo-product-card>div{min-width:0}
 .seo-product-card:hover{transform:translateY(-2px);border-color:rgba(10,126,140,.35);box-shadow:0 16px 36px rgba(8,31,35,.09)}
 .seo-product-card.is-featured{border-color:rgba(10,126,140,.45);background:linear-gradient(180deg,#fff,#f4fbfc)}
 .seo-product-card.is-muted{background:#fffafa;border-color:rgba(185,28,28,.18)}
@@ -20,7 +21,7 @@
 .seo-product-card a:hover{text-decoration:underline;text-underline-offset:3px}
 .seo-card-links{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
 .seo-card-links a:last-child{color:var(--text-2);font-weight:600}
-.seo-chip{display:inline-flex;width:max-content;padding:4px 8px;border-radius:999px;background:rgba(10,126,140,.09);border:1px solid rgba(10,126,140,.18);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.seo-chip{display:inline-flex;width:max-content;max-width:100%;padding:4px 8px;border-radius:999px;background:rgba(10,126,140,.09);border:1px solid rgba(10,126,140,.18);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;line-height:1.25;letter-spacing:.08em;text-transform:uppercase}
 .seo-chip.rejected{background:rgba(185,28,28,.08);border-color:rgba(185,28,28,.18);color:#b91c1c}
 
 .peptides-verify{background:#fff}

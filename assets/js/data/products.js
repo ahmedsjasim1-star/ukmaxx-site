@@ -296,6 +296,7 @@ export const FURTHER_READING = {
     { label: 'Peptide HPLC analysis research', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=peptide+HPLC+analysis' },
   ],
   RT20: [
+    { label: 'UKMAXX Retatrutide 20mg RT20 assay guide', url: '/retatrutide-20mg-uk.html' },
     { label: 'Verify RT20 batch RT20-2026-08-A', url: '/coa.html?batch=RT20-2026-08-A' },
     { label: 'View the RT20 3-pack research bundle', url: '/product.html?sku=RT20X3' },
     { label: 'Retatrutide research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=retatrutide' },
@@ -303,6 +304,7 @@ export const FURTHER_READING = {
     { label: 'How to read a peptide COA', url: '/coa-verified-peptides-uk.html' },
   ],
   RT20X3: [
+    { label: 'Retatrutide 20mg RT20 assay guide', url: '/retatrutide-20mg-uk.html' },
     { label: 'Shop single RETA 20MG vials', url: '/product.html?sku=RT20' },
     { label: 'Verify RT20 batch RT20-2026-08-A', url: '/coa.html?batch=RT20-2026-08-A' },
     { label: 'Retatrutide research on PubMed', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=retatrutide' },
