@@ -3,10 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FAQ — UKMAXX</title>
-  <meta name="description" content="Frequently asked questions about UKMAXX research compounds — orders, shipping, batch verification, COA, payments and research-use compliance.">
+  <title>UKMAXX Help &amp; FAQ | Orders, Shipping, Payments &amp; COAs</title>
+  <meta name="description" content="UKMAXX help and frequently asked questions about UK orders, Pay by Bank, delivery, tracking, batch verification, COAs, stock and research-use policies.">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="canonical" href="https://www.ukmaxx.co.uk/faq.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="UKMAXX">
+  <meta property="og:title" content="UKMAXX Help &amp; Frequently Asked Questions">
+  <meta property="og:description" content="Clear answers about UKMAXX orders, payments, delivery, tracking, batch verification, stock and support.">
+  <meta property="og:url" content="https://www.ukmaxx.co.uk/faq.html">
+  <meta property="og:image" content="https://www.ukmaxx.co.uk/images/product-photography/ukmaxx-research-bundle-verification-card.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="UKMAXX Help &amp; Frequently Asked Questions">
+  <meta name="twitter:description" content="Orders, payments, delivery, tracking, batch verification, stock and support.">
+  <meta name="twitter:image" content="https://www.ukmaxx.co.uk/images/product-photography/ukmaxx-research-bundle-verification-card.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,7 +25,7 @@
   <link rel="stylesheet" href="./assets/css/reset.css">
   <link rel="stylesheet" href="./assets/css/base.css">
   <link rel="stylesheet" href="./assets/css/components.css">
-  <link rel="stylesheet" href="./assets/css/pages/faq.css">
+  <link rel="stylesheet" href="./assets/css/pages/faq.css?v=20260902-faq-upgrade">
   <script src="./assets/html/bundle.js?v=20260831-permanent-pricing-v2"></script>
 </head>
 <body>
@@ -46,13 +56,14 @@
     <div class="page-hero-inner">
       <span class="section-eyebrow">— Help Centre</span>
       <h1>Frequently asked questions</h1>
-      <p>Everything about ordering, shipping, batch verification and handling. All products are supplied strictly for laboratory and in-vitro research use only.</p>
+      <p>Clear answers about ordering, delivery, payments, batch verification, stock and support. All products are supplied strictly for laboratory and in-vitro research use only.</p>
       <div class="faq-tabs" id="faqTabs">
-        <button class="faq-tab is-active" data-target="orders">Orders &amp; Payments</button>
-        <button class="faq-tab" data-target="shipping">Shipping</button>
-        <button class="faq-tab" data-target="coa">Batch &amp; COA</button>
-        <button class="faq-tab" data-target="handling">Handling</button>
-        <button class="faq-tab" data-target="legal">Legal</button>
+        <a class="faq-tab faq-tab--orders is-active" href="#orders">Orders &amp; Payments</a>
+        <a class="faq-tab faq-tab--shipping" href="#shipping">Shipping</a>
+        <a class="faq-tab faq-tab--coa" href="#coa">Batch &amp; COA</a>
+        <a class="faq-tab faq-tab--stock" href="#stock">Stock &amp; Reviews</a>
+        <a class="faq-tab faq-tab--handling" href="#handling">Handling</a>
+        <a class="faq-tab faq-tab--legal" href="#legal">Legal</a>
       </div>
     </div>
   </div>
@@ -62,8 +73,8 @@
   <div class="container">
     <div style="max-width:880px;margin:0 auto">
 
-      <section class="faq-group" id="orders">
-        <h2>Orders &amp; Payments <span class="faq-group-count">3</span></h2>
+      <section class="faq-group faq-group--orders" id="orders">
+        <h2>Orders &amp; Payments <span class="faq-group-count">5</span></h2>
         <details class="faq-item" open>
           <summary>How quickly do you dispatch?</summary>
           <div class="a"><p>Orders placed before 2PM (UK time) are usually dispatched same working day. Orders after 2PM typically dispatch the next working day. You will receive a dispatch confirmation with tracking by email.</p></div>
@@ -73,16 +84,28 @@
           <div class="a"><p>Checkout is processed securely via Pay by Bank. At checkout you choose your bank, approve the bank-to-bank payment in your banking app or online banking, then return to UKMAXX once the payment is confirmed. No card details are needed. Read the <a href="/pay-by-bank-uk.html" style="color:var(--accent);text-decoration:underline">Pay by Bank guide</a> for the full flow.</p></div>
         </details>
         <details class="faq-item">
+          <summary>What should I do if Pay by Bank does not complete?</summary>
+          <div class="a"><p>Your order is confirmed only after the payment succeeds and you receive confirmation from UKMAXX. If your bank declines, rejects or leaves the payment incomplete, you can return to checkout and try again. If the problem continues, contact support with the order reference shown on screen. Never send a separate bank transfer unless UKMAXX support has confirmed the correct order details.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>How does the MAXX10 discount work?</summary>
+          <div class="a"><p>MAXX10 applies to eligible full-price products and bundles. In a mixed basket, the saving is calculated only against eligible items, and checkout shows which products received the discount. Enter the code before starting payment and check the displayed order total.</p></div>
+        </details>
+        <details class="faq-item">
           <summary>Can I change or cancel an order?</summary>
           <div class="a"><p>If your order has not yet been dispatched, contact support as soon as possible with your order reference and requested change. Once an order has been dispatched it cannot usually be amended.</p></div>
         </details>
       </section>
 
-      <section class="faq-group" id="shipping">
-        <h2>Shipping &amp; Delivery <span class="faq-group-count">3</span></h2>
-        <details class="faq-item" open>
+      <section class="faq-group faq-group--shipping" id="shipping">
+        <h2>Shipping &amp; Delivery <span class="faq-group-count">5</span></h2>
+        <details class="faq-item">
           <summary>Do you ship from the UK?</summary>
           <div class="a"><p>Yes. All stock is held in the UK and we currently ship to UK addresses only.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Can customers outside the UK order?</summary>
+          <div class="a"><p>Online checkout is currently UK-only. If you are outside the UK, you can <a href="https://wa.me/447438637604?text=Hi%20UKMAXX%2C%20I%20am%20outside%20the%20UK%20and%20would%20like%20to%20ask%20about%20ordering." style="color:var(--accent);text-decoration:underline">contact UKMAXX on WhatsApp</a> to ask whether your location can be supported. An enquiry does not guarantee availability or delivery.</p></div>
         </details>
         <details class="faq-item">
           <summary>How long does delivery take?</summary>
@@ -92,17 +115,29 @@
           <summary>Is shipping discreet?</summary>
           <div class="a"><p>Yes. All parcels are packed in plain, unbranded outer packaging for standard courier handling. The contents are not described on the outside of the parcel.</p></div>
         </details>
+        <details class="faq-item">
+          <summary>How do I track my order?</summary>
+          <div class="a"><p>Open the <a href="/track.html" style="color:var(--accent);text-decoration:underline">UKMAXX order tracker</a> and enter your order reference and checkout email. Once Royal Mail tracking is available, the tracking page provides a direct link to the carrier record.</p></div>
+        </details>
       </section>
 
-      <section class="faq-group" id="coa">
-        <h2>Batch Verification &amp; COA <span class="faq-group-count">3</span></h2>
-        <details class="faq-item" open>
+      <section class="faq-group faq-group--coa" id="coa">
+        <h2>Batch Verification &amp; COA <span class="faq-group-count">5</span></h2>
+        <details class="faq-item">
           <summary>Are batches independently tested?</summary>
-          <div class="a"><p>Yes. Every production batch is tested by a third-party laboratory (HPLC, UPLC/MS or NMR) and the associated Certificate of Analysis is published for verification.</p></div>
+          <div class="a"><p>Released UKMAXX peptide and coenzyme batches are submitted to a named third-party laboratory and linked to their published analytical records. The exact method and scope vary by product and are shown on the corresponding batch record. Support items such as BAC Water may use a different quality-control framework and are labelled accordingly.</p></div>
         </details>
         <details class="faq-item">
           <summary>How do I verify my batch?</summary>
           <div class="a"><p>Use the batch code on your verification card and compare it against the <a href="/coa.html" style="color:var(--accent);text-decoration:underline">UKMAXX COA checker</a>. The checker shows active, archived and rejected batch records, including sample, method, date, purity, lab and assay details. If anything does not match, contact support immediately.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Can I verify the laboratory report directly?</summary>
+          <div class="a"><p>Where the laboratory provides public verification, UKMAXX links to the original laboratory-hosted record as well as displaying the relevant batch details. Start with the <a href="/coa.html" style="color:var(--accent);text-decoration:underline">COA checker</a> and use the report link shown for that batch.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Does a COA prove the contents of every vial?</summary>
+          <div class="a"><p>No. A laboratory report documents the sample submitted for analysis. Batch codes, batch boundaries, sample photography and consistent records help connect that result to released stock, but a single analytical test is not an individual test of every vial. Read the <a href="/how-to-verify-research-peptides.html" style="color:var(--accent);text-decoration:underline">research peptide verification checklist</a> for the full evidence chain.</p></div>
         </details>
         <details class="faq-item">
           <summary>What if I cannot find my batch code?</summary>
@@ -110,11 +145,27 @@
         </details>
       </section>
 
-      <section class="faq-group" id="handling">
+      <section class="faq-group faq-group--stock" id="stock">
+        <h2>Stock &amp; Reviews <span class="faq-group-count">3</span></h2>
+        <details class="faq-item">
+          <summary>What happens when a product is sold out?</summary>
+          <div class="a"><p>Ordering is disabled when the live inventory reaches zero. The sold-through batch record remains available for traceability, and the product page offers a restock notification where applicable. A new batch is not released until its required checks and documentation are complete.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>How do batch and restock alerts work?</summary>
+          <div class="a"><p>Enter your email through a batch-alert or restock form and select the updates you want. UKMAXX uses that address for the requested product, COA or batch-release updates. Every marketing update includes an unsubscribe option.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Can I review more than one product from an order?</summary>
+          <div class="a"><p>Yes. Eligible delivered orders can submit a separate review for each distinct product purchased. After the first submission, the review page shows any remaining products from the order that are still available to review.</p></div>
+        </details>
+      </section>
+
+      <section class="faq-group faq-group--handling" id="handling">
         <h2>Product Handling <span class="faq-group-count">3</span></h2>
-        <details class="faq-item" open>
+        <details class="faq-item">
           <summary>How should products be stored?</summary>
-          <div class="a"><p>Follow the storage guidance shown in the product specification sheet. As a general rule, keep sealed vials refrigerated at 2–8°C, dry and protected from light. After reconstitution, keep refrigerated and avoid heat, light and repeated temperature cycling. For the support item page, see <a href="/bacteriostatic-water-10ml-uk.html" style="color:var(--accent);text-decoration:underline">BAC Water 10ml UK</a>.</p></div>
+          <div class="a"><p>Follow the storage information supplied for the specific product and the validated protocol used by your laboratory. Storage requirements can vary by compound, formulation and research workflow. UKMAXX does not provide instructions for human preparation or use.</p></div>
         </details>
         <details class="faq-item">
           <summary>Do you provide usage or dosing advice?</summary>
@@ -126,9 +177,9 @@
         </details>
       </section>
 
-      <section class="faq-group" id="legal">
+      <section class="faq-group faq-group--legal" id="legal">
         <h2>Legal &amp; Compliance <span class="faq-group-count">2</span></h2>
-        <details class="faq-item" open>
+        <details class="faq-item">
           <summary>Are products for human consumption?</summary>
           <div class="a"><p>No. All products are sold strictly for laboratory and in-vitro research purposes only. They are not intended for human or animal use, and are not medicines, food supplements, or cosmetics.</p></div>
         </details>
@@ -147,13 +198,47 @@
           <div class="faq-help-sub">Include your order reference and batch code (if applicable) when contacting support for fastest resolution. Mon–Fri, 09:00–17:00 UK time.</div>
         </div>
         <div class="faq-help-cta">
-          <!--email_off--><a href="mailto:support@ukmaxx.co.uk" class="btn btn-lg">Contact support</a><!--/email_off-->
+          <!--email_off--><a href="mailto:support@ukmaxx.co.uk" class="btn btn-lg faq-help-email">Email support</a><!--/email_off-->
+          <a href="https://wa.me/447438637604?text=Hi%20UKMAXX%2C%20I%20need%20help%20with%20an%20order%2C%20tracking%20or%20batch%20verification." class="btn btn-lg faq-help-whatsapp">WhatsApp us</a>
         </div>
       </div>
 
     </div>
   </div>
 </section>
+
+<script>
+  (function () {
+    var tabs = Array.from(document.querySelectorAll('.faq-tab'));
+    var groups = tabs.map(function (tab) {
+      return document.querySelector(tab.getAttribute('href'));
+    }).filter(Boolean);
+
+    function activate(id) {
+      tabs.forEach(function (tab) {
+        var active = tab.getAttribute('href') === '#' + id;
+        tab.classList.toggle('is-active', active);
+        if (active) tab.setAttribute('aria-current', 'location');
+        else tab.removeAttribute('aria-current');
+      });
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        activate(tab.getAttribute('href').slice(1));
+      });
+    });
+
+    if ('IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(function (entries) {
+        var visible = entries.filter(function (entry) { return entry.isIntersecting; })
+          .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
+        if (visible) activate(visible.target.id);
+      }, { rootMargin: '-18% 0px -62% 0px', threshold: [0, .2, .5] });
+      groups.forEach(function (group) { observer.observe(group); });
+    }
+  }());
+</script>
 
 <script>document.write(window.__html.footer)</script>
 
