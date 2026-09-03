@@ -20,6 +20,20 @@ test('third-party testing page publishes current, archived and rejected evidence
   assert.match(page, /QC rejected · not released/);
 });
 
+test('testing overview mirrors the homepage live batch statistics', () => {
+  const homepage = read('index.html');
+  const page = read('uk-peptides-third-party-tested.html');
+  const proof = read('assets/js/modules/homeProof.js');
+  for (const label of ['Active batches', 'Products tested', 'QC rejected', 'Certificates']) {
+    assert.match(homepage, new RegExp(label));
+    assert.match(page, new RegExp(label));
+  }
+  for (const key of ['active', 'tested', 'rejected', 'certificates']) {
+    assert.match(page, new RegExp(`data-batch-stat="${key}"`));
+  }
+  assert.match(proof, /\[data-batch-stats\]/);
+});
+
 test('testing page exposes crawlable product, COA and supporting-article links', () => {
   const page = read('uk-peptides-third-party-tested.html');
   for (const sku of ['RT20', 'BC5', 'GHKCU', 'NJ500']) {

@@ -32,6 +32,11 @@ function localStats() {
 
 function renderStats(stats) {
   if (!stats) return;
+  Object.entries(stats).forEach(([key, value]) => {
+    document.querySelectorAll(`[data-batch-stat="${key}"]`).forEach((element) => {
+      element.textContent = String(value);
+    });
+  });
   if (byId('homeActiveBatches')) byId('homeActiveBatches').textContent = String(stats.active);
   if (byId('homeProductsTested')) byId('homeProductsTested').textContent = String(stats.tested);
   if (byId('homeRejectedBatches')) byId('homeRejectedBatches').textContent = String(stats.rejected);
@@ -101,7 +106,7 @@ function setupInlineBatchAlerts() {
 }
 
 export function setupHomeProof() {
-  if (!byId('homeBatchStats') && !byId('homeAlertForm')) return;
+  if (!document.querySelector('[data-batch-stats]') && !byId('homeBatchStats') && !byId('homeAlertForm')) return;
   renderStats(localStats());
   refreshLiveStats();
   setupInlineBatchAlerts();

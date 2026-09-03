@@ -9,6 +9,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 test('homepage features the current RT20 Janoshik result', () => {
   const homepage = read('index.html');
   const heroBatch = read('assets/js/modules/heroBatch.js');
+  const lightbox = read('assets/js/modules/lightbox.js');
 
   assert.match(homepage, /Janoshik report #225850/);
   assert.match(homepage, /RT20-2026-08-A/);
@@ -18,5 +19,8 @@ test('homepage features the current RT20 Janoshik result', () => {
   assert.match(homepage, /retatrutide-20mg-janoshik-sample\.jpg/);
   assert.match(homepage, /225850-RT20_QX5EZXK4B9YV/);
   assert.doesNotMatch(homepage.match(/<!-- COA \/ VERIFICATION -->([\s\S]*?)<section class="home-international-section"/)?.[1] || '', /GHK-2026-05-A|208700-GHKCu/);
+  assert.match(lightbox, /Janoshik report #225850/);
+  assert.match(lightbox, /Submitted RT20 sample/);
+  assert.doesNotMatch(lightbox, /GHK-Cu|GHK-2026-05-A|208700/);
   assert.match(heroBatch, /PRODUCTS\.RT20/);
 });

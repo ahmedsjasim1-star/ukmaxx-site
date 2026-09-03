@@ -110,7 +110,7 @@
     </div>
   </header>
 
-  <section class="testing-stats" aria-label="Public verification overview"><div class="container testing-stats-grid"><a href="#current-results"><strong>4</strong><span>Current tested listings</span></a><a href="#reports"><strong>5</strong><span>Passing reports shown</span></a><a href="#records"><strong>1</strong><span>Archived batch example</span></a><a href="#rejected"><strong>1</strong><span>QC rejection published</span></a></div></section>
+  <section class="testing-stats" aria-label="Public verification overview"><div class="container testing-stats-grid" data-batch-stats aria-live="polite"><a href="#current-results"><strong data-batch-stat="active">4</strong><span>Active batches</span></a><a href="/coa.html#all-coas"><strong data-batch-stat="tested">6</strong><span>Products tested</span></a><a href="#rejected"><strong data-batch-stat="rejected">1</strong><span>QC rejected</span></a><a href="/coa.html#all-coas"><strong data-batch-stat="certificates">6</strong><span>Certificates</span></a></div></section>
 
   <section class="testing-section" id="current-results"><div class="container">
     <div class="testing-section-head"><span class="section-eyebrow">Current evidence</span><h2>Four released listings. Four source records.</h2><p>These cards summarise the currently released independently tested peptide and coenzyme listings. The laboratory page—not the UKMAXX summary—is the source record.</p></div>
@@ -160,7 +160,7 @@
 <script>document.write(window.__html.checkout)</script>
 <script>document.write(window.__html.toast)</script>
 <script>document.write(window.__html.cookieBanner)</script>
-<script type="module" src="./assets/js/app.js?v=20260903-testing-page"></script>
+<script type="module" src="./assets/js/app.js?v=20260903-shared-batch-stats"></script>
 <script type="module" src="./assets/js/modules/evidenceCarousel.js?v=20260903-testing-page"></script>
 </body>
 </html>

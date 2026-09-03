@@ -64,7 +64,7 @@
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
-<link rel="stylesheet" href="./assets/css/components.css?v=20260903-pastel-topbar">
+<link rel="stylesheet" href="./assets/css/components.css?v=20260903-featured-coa-lightbox">
 <link rel="stylesheet" href="./assets/css/pages/home.css?v=20260903-home-refresh-4">
 <script src="./assets/html/bundle.js?v=20260831-permanent-pricing-v2"></script>
 </head>
@@ -126,22 +126,22 @@
 <!-- LIVE BATCH STATISTICS -->
 <section class="home-proof-section" id="live-verification" aria-label="Live UKMAXX batch statistics">
   <div class="container">
-    <div class="home-proof-grid" id="homeBatchStats" aria-live="polite">
+    <div class="home-proof-grid" id="homeBatchStats" data-batch-stats aria-live="polite">
       <a class="home-proof-stat home-proof-blue" href="/coa.html#all-coas" aria-label="View active verified batches">
         <span class="home-proof-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 19 6v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-5"/></svg></span>
-        <strong id="homeActiveBatches">4</strong><em>Active batches</em>
+        <strong id="homeActiveBatches" data-batch-stat="active">4</strong><em>Active batches</em>
       </a>
       <a class="home-proof-stat home-proof-green" href="/coa.html#all-coas" aria-label="View all tested product records">
         <span class="home-proof-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg></span>
-        <strong id="homeProductsTested">6</strong><em>Products tested</em>
+        <strong id="homeProductsTested" data-batch-stat="tested">6</strong><em>Products tested</em>
       </a>
       <a class="home-proof-stat home-proof-red" href="/coa.html#rejected-batches" aria-label="View all QC rejected batch records">
         <span class="home-proof-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6"/><path d="M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6A2 2 0 0 0 19 18l-5-9V3"/><path d="M8 15h8"/></svg></span>
-        <strong id="homeRejectedBatches">1</strong><em>QC rejected</em>
+        <strong id="homeRejectedBatches" data-batch-stat="rejected">1</strong><em>QC rejected</em>
       </a>
       <a class="home-proof-stat home-proof-purple" href="/coa.html#all-coas" aria-label="View published certificates">
         <span class="home-proof-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg></span>
-        <strong id="homeCertificates">6</strong><em>Certificates</em>
+        <strong id="homeCertificates" data-batch-stat="certificates">6</strong><em>Certificates</em>
       </a>
     </div>
   </div>
@@ -197,7 +197,7 @@
       <div>
         <div class="coa-block-title">Real verification, not claims</div>
         <p class="coa-block-sub">Two safeguards on every UKMAXX product — both verifiable by you, on arrival, before opening.</p>
-        <a class="coa-tile coa-tile--report" data-lb="0" href="#" role="button">
+        <a class="coa-tile coa-tile--report" data-lb="0" data-lb-title="Janoshik report #225850" data-lb-body="Retatrutide 20mg — batch RT20-2026-08-A — 99.607% purity with 23.20mg Retatrutide reported by Janoshik Analytical on 27 Aug 2026." href="#" role="button">
           <div class="coa-tile-img"><img src="./images/retatrutide-20mg-coa-2026-08.png" alt="Janoshik test report #225850 for Retatrutide 20mg batch RT20-2026-08-A" loading="lazy"></div>
           <div class="coa-tile-body">
             <div class="coa-tile-kicker">Laboratory report</div>
@@ -205,7 +205,7 @@
             <div class="coa-tile-desc">RT20-2026-08-A &middot; 99.607% purity &middot; 23.20mg Retatrutide &middot; 27 Aug 2026</div>
           </div>
         </a>
-        <a class="coa-tile coa-tile--sample" data-lb="1" href="#" role="button" style="margin-top:12px">
+        <a class="coa-tile coa-tile--sample" data-lb="1" data-lb-title="Submitted RT20 sample" data-lb-body="The Janoshik report documents the submitted UKMAXX Retatrutide 20mg vial and connects it to batch RT20-2026-08-A, the published analytical result and report #225850." href="#" role="button" style="margin-top:12px">
           <div class="coa-tile-img"><img src="./images/retatrutide-20mg-janoshik-sample.jpg" alt="Retatrutide 20mg vial photographed by Janoshik for batch verification" loading="lazy"></div>
           <div class="coa-tile-body">
             <div class="coa-tile-kicker">Submitted sample</div>
@@ -404,6 +404,6 @@
 <script>document.write(window.__html.cookieBanner)</script>
 <script>document.write(window.__html.toast)</script>
 
-<script type="module" src="./assets/js/app.js?v=20260903-rt20-reprice"></script>
+<script type="module" src="./assets/js/app.js?v=20260903-featured-coa-lightbox"></script>
 </body>
 </html>
