@@ -18,6 +18,10 @@
 .field-input{width:100%;height:48px;padding:0 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-3);font-size:14.5px;color:var(--text);font-family:inherit;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease}
 .field-input:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(10,126,140,.12)}
 .field-input::placeholder{color:var(--dim-2)}
+.password-field{position:relative}
+.password-field .field-input{padding-right:64px}
+.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.04em;padding:9px 7px;cursor:pointer;border-radius:6px}
+.password-toggle:hover,.password-toggle:focus-visible{background:var(--accent-light);outline:none}
 .auth-submit{width:100%;margin-top:4px}
 .auth-divider{display:flex;align-items:center;gap:14px;margin:4px 0}
 .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border-2)}

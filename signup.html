@@ -19,8 +19,8 @@
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
-<link rel="stylesheet" href="./assets/css/components.css">
-<link rel="stylesheet" href="./assets/css/pages/auth.css">
+<link rel="stylesheet" href="./assets/css/components.css?v=20260903-loyalty-rewards">
+<link rel="stylesheet" href="./assets/css/pages/auth.css?v=20260903-account-upgrade">
 </head>
 <body>
 
@@ -50,7 +50,7 @@
   <div class="auth-hero-inner">
     <span class="auth-eyebrow">Get started</span>
     <h1 class="auth-title">Create your account</h1>
-    <p class="auth-sub">Track orders, save addresses, and reorder with one tap. Free to join.</p>
+    <p class="auth-sub">Track orders, revisit supplied batch COAs, earn rewards and reorder in one tap. Free to join.</p>
   </div>
 </section>
 
@@ -73,7 +73,10 @@
     </div>
     <div class="field">
       <label for="su_password" class="field-label">Password</label>
-      <input type="password" id="su_password" class="field-input" placeholder="Min. 8 characters" required autocomplete="new-password" minlength="8">
+      <div class="password-field">
+        <input type="password" id="su_password" class="field-input" placeholder="Min. 8 characters" required autocomplete="new-password" minlength="8">
+        <button class="password-toggle" type="button" data-password-toggle aria-controls="su_password" aria-pressed="false">Show</button>
+      </div>
       <div class="password-strength" id="passwordStrength">
         <div class="password-strength-bar" id="str1"></div>
         <div class="password-strength-bar" id="str2"></div>
@@ -120,7 +123,7 @@
       <div class="auth-feature-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v10l9 4 9-4V7l-9-4z"/><path d="M3 7l9 4 9-4"/></svg>
       </div>
-      <div class="auth-feature-text"><strong>Track orders</strong>Real-time dispatch & delivery</div>
+      <div class="auth-feature-text"><strong>Track orders</strong>Follow processing and delivery</div>
     </div>
     <div class="auth-feature">
       <div class="auth-feature-icon">
@@ -132,7 +135,7 @@
       <div class="auth-feature-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       </div>
-      <div class="auth-feature-text"><strong>Secure storage</strong>Saved addresses & details</div>
+      <div class="auth-feature-text"><strong>UKMAXX Rewards</strong>Unlock benefits as you reorder</div>
     </div>
     <div class="auth-feature">
       <div class="auth-feature-icon">
@@ -163,6 +166,6 @@
   </div>
 </div>
 
-<script type="module" src="./assets/js/app.js?v=20260831-permanent-pricing-v2"></script>
+<script type="module" src="./assets/js/app.js?v=20260903-account-rewards-preview"></script>
 </body>
 </html>

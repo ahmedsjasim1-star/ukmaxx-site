@@ -3,6 +3,7 @@ const { getPaymentById } = require('./_lib/fena');
 const { sendTelegramOrderAlert } = require('./_lib/notify');
 const { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } = require('./_lib/email');
 const { syncRoyalMailOrderToSupabase } = require('./_lib/royalmail');
+const { redeemReward, releaseReward } = require('./_lib/loyalty');
 
 function asMoney(value) {
   return Number(Number(value || 0).toFixed(2));
@@ -58,6 +59,7 @@ module.exports = async (req, res) => {
     if (verifiedStatus === 'paid') {
       await processPaidPayment({ supabase, attempt, verifiedPayment });
     } else if (['rejected', 'cancelled', 'overdue', 'refund rejected'].includes(verifiedStatus)) {
+      await releaseReward(supabase, attempt.payload?.loyalty_reward_id, attempt.payment_reference);
       await notifyNonPaidStatus(attempt, verifiedStatus, verifiedPayment);
     }
 
@@ -113,6 +115,7 @@ async function processPaidPayment({ supabase, attempt, verifiedPayment }) {
     .maybeSingle();
   if (existing.error) throw existing.error;
   if (existing.data) {
+    await redeemReward(supabase, payload.loyalty_reward_id, reference, existing.data.id);
     const items = await getOrderItems(supabase, existing.data.id);
     const fulfilment = await ensureRoyalMailFulfilment(supabase, existing.data, items);
     await sendNotifications(supabase, existing.data, items, verifiedPayment.id || attempt.provider_payment_id, fulfilment);
@@ -146,6 +149,13 @@ async function processPaidPayment({ supabase, attempt, verifiedPayment }) {
     p_items: payload.items || [],
   });
   if (orderError) throw orderError;
+
+  await supabase.from('orders').update({
+    account_user_id: payload.user_id || null,
+    loyalty_qualifying_subtotal: payload.loyalty_qualifying_subtotal || payload.subtotal,
+    loyalty_reward_discount: payload.loyalty_reward_discount || 0,
+  }).eq('id', order.id);
+  await redeemReward(supabase, payload.loyalty_reward_id, reference, order.id);
 
   await supabase
     .from('payment_attempts')

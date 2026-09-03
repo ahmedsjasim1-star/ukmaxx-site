@@ -12,6 +12,12 @@ const SHIP_FLAT = FLAT_SHIPPING || 4.99;
 const PROMOS = PROMO_CODES || { MAXX10: { type: 'percent', value: 0.10, label: '10% off' } };
 const WHATSAPP_NUMBER = '447438637604';
 let visitorCountryPromise;
+let loyaltyRewards = [];
+let selectedLoyaltyReward = null;
+let selectedRewardSku = '';
+
+const LOYALTY_GIFT_CODES = new Set(['FREE_BAC', 'FREE_VIAL_2999', 'FREE_BAC_VIAL_2999', 'FREE_ANY_VIAL']);
+const LOYALTY_VIAL_CODES = new Set(['FREE_VIAL_2999', 'FREE_BAC_VIAL_2999', 'FREE_ANY_VIAL']);
 
 function normalizeSku(raw = '') {
   const t = String(raw).trim();
@@ -100,11 +106,65 @@ function cartTotals(c) {
   const promoEligibleSub = Math.max(0, promoEligibility(c).eligibleSubtotal - bundleDiscount);
   const code = getPromoCode();
   const promo = PROMOS[code];
-  const discount = promo ? (promo.type === 'percent' ? promoEligibleSub * promo.value : Math.min(promo.value, promoEligibleSub)) : 0;
+  const promoDiscount = promo ? (promo.type === 'percent' ? promoEligibleSub * promo.value : Math.min(promo.value, promoEligibleSub)) : 0;
+  let rewardDiscount = 0;
+  if (selectedLoyaltyReward && !promo) {
+    if (selectedLoyaltyReward.code === 'CREDIT_5') rewardDiscount = Math.min(5, promoEligibleSub);
+    if (selectedLoyaltyReward.code === 'CREDIT_10') rewardDiscount = Math.min(10, promoEligibleSub);
+    if (selectedLoyaltyReward.code === 'CREDIT_20') rewardDiscount = Math.min(20, promoEligibleSub);
+    if (selectedLoyaltyReward.code === 'PERCENT_20_CAP_25') rewardDiscount = Math.min(25, promoEligibleSub * .20);
+    if (selectedLoyaltyReward.code === 'PERCENT_30_CAP_50') rewardDiscount = Math.min(50, promoEligibleSub * .30);
+  }
+  const discount = promoDiscount + rewardDiscount;
   const discounted = sub - bundleGiftDiscount - bundleDiscount - discount;
-  const ship = !c.length ? 0 : (discounted >= SHIP_THRESHOLD ? 0 : SHIP_FLAT);
+  const forceShipping = selectedLoyaltyReward?.code === 'FREE_ANY_VIAL';
+  const ship = !c.length ? 0 : (forceShipping ? SHIP_FLAT : (discounted >= SHIP_THRESHOLD ? 0 : SHIP_FLAT));
   const tot = discounted + ship;
-  return { sub, promoEligibleSub, discount, bundleGiftDiscount, bundleDiscount, freeBacQty, discounted, ship, tot, code, promo };
+  return { sub, promoEligibleSub, discount, promoDiscount, rewardDiscount, bundleGiftDiscount, bundleDiscount, freeBacQty, discounted, ship, tot, code, promo };
+}
+
+function eligibleRewardVials(reward) {
+  return Object.values(PRODUCTS).filter((product) => {
+    if (!['RT10', 'RT20', 'BC5', 'GHKCU', 'NJ500', 'IP5'].includes(product.sku) || !isPurchasable(product)) return false;
+    if (reward?.code === 'FREE_ANY_VIAL') return true;
+    return Number(product.price) <= 29.99;
+  });
+}
+
+function renderRewardsPanels() {
+  const checkoutPanel = byId('checkoutRewardsPanel');
+  const cartPanel = byId('cartRewardsPanel');
+  const panels = [checkoutPanel, cartPanel].filter(Boolean);
+  if (!loyaltyRewards.length) {
+    panels.forEach((panel) => { panel.hidden = true; panel.innerHTML = ''; });
+    return;
+  }
+  const options = loyaltyRewards.map((reward) => `<button type="button" class="rewards-option${selectedLoyaltyReward?.id === reward.id ? ' is-selected' : ''}" data-loyalty-reward="${reward.id}"><span>${reward.label}</span><em>${selectedLoyaltyReward?.id === reward.id ? 'Applied' : 'Use'}</em></button>`).join('');
+  const needsVial = LOYALTY_VIAL_CODES.has(selectedLoyaltyReward?.code);
+  const vialOptions = needsVial ? eligibleRewardVials(selectedLoyaltyReward).map((product) => `<option value="${product.sku}"${selectedRewardSku === product.sku ? ' selected' : ''}>${product.name} · ${money(product.price)}</option>`).join('') : '';
+  const html = `<div class="rewards-panel-head"><strong>UKMAXX Rewards</strong><span>${loyaltyRewards.length} available</span></div><div class="rewards-options">${options}${needsVial ? `<select class="rewards-vial-select" aria-label="Choose your free vial"><option value="">Choose your free vial</option>${vialOptions}</select>` : ''}</div><p class="rewards-panel-note">One earned reward per order. Applying a reward removes MAXX10 from this basket.</p>`;
+  panels.forEach((panel) => { panel.hidden = false; panel.innerHTML = html; });
+}
+
+async function syncLoyaltyRewards() {
+  const localPreview = ['127.0.0.1', 'localhost'].includes(location.hostname) && new URLSearchParams(location.search).get('loyalty_checkout_preview') === '1';
+  if (localPreview) {
+    loyaltyRewards = [
+      { id: 'preview-credit-20', code: 'CREDIT_20', label: '£20 credit' },
+      { id: 'preview-bac-vial', code: 'FREE_BAC_VIAL_2999', label: 'Free BAC Water + one vial up to £29.99' },
+    ];
+    renderRewardsPanels();
+    return;
+  }
+  try {
+    const supabase = await getSupabase();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
+    const response = await fetch('/api/account-orders', { headers: { Authorization: `Bearer ${session.access_token}` } });
+    const data = await response.json().catch(() => ({}));
+    loyaltyRewards = data.loyalty?.enabled ? (data.loyalty.rewards || []).filter((reward) => reward.status === 'available') : [];
+    renderRewardsPanels();
+  } catch {}
 }
 
 function cartAnalyticsPayload(c = getCart()) {
@@ -262,6 +322,7 @@ export function renderCart() {
       ${t.bundleGiftDiscount > 0 ? `<div class="cart-totals-row is-gift"><span>Build-your-own bundle gift</span><span>-${money(t.bundleGiftDiscount)}</span></div>` : ''}
       ${t.bundleDiscount > 0 ? `<div class="cart-totals-row is-discount"><span>Build-your-own bundle saving (5%)</span><span>-${money(t.bundleDiscount)}</span></div>` : ''}
       ${t.promo && t.discount > 0 ? `<div class="cart-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
+      ${t.rewardDiscount > 0 ? `<div class="cart-totals-row is-reward"><span>UKMAXX reward</span><span>-${money(t.rewardDiscount)}</span></div>` : ''}
       <div class="cart-totals-row"><span>Shipping</span><span>${t.ship === 0 ? '<strong style="color:var(--success)">FREE</strong>' : money(t.ship)}</span></div>
       <div class="cart-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>`;
   }
@@ -294,6 +355,8 @@ function renderCheckoutSummary() {
       ${t.bundleGiftDiscount > 0 ? `<div class="checkout-totals-row is-gift"><span>Build-your-own bundle gift</span><span>-${money(t.bundleGiftDiscount)}</span></div>` : ''}
       ${t.bundleDiscount > 0 ? `<div class="checkout-totals-row is-discount"><span>Build-your-own bundle saving (5%)</span><span>-${money(t.bundleDiscount)}</span></div>` : ''}
       ${t.promo && t.discount > 0 ? `<div class="checkout-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
+      ${t.rewardDiscount > 0 ? `<div class="checkout-totals-row is-reward"><span>UKMAXX reward</span><span>-${money(t.rewardDiscount)}</span></div>` : ''}
+      ${selectedLoyaltyReward && LOYALTY_GIFT_CODES.has(selectedLoyaltyReward.code) ? `<div class="checkout-totals-row is-reward"><span>${selectedLoyaltyReward.label}${selectedRewardSku ? ` · ${PRODUCTS[selectedRewardSku]?.name || selectedRewardSku}` : ''}</span><span>FREE</span></div>` : ''}
       <div class="checkout-totals-row"><span>Shipping</span><span>${t.ship === 0 ? '<strong style="color:var(--success)">FREE</strong>' : money(t.ship)}</span></div>
       <div class="checkout-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>`;
   }
@@ -416,6 +479,7 @@ export async function openCheckout() {
   m.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   renderCheckoutSummary();
+  void syncLoyaltyRewards();
   void syncInternationalCheckoutNotice(c);
   trackEvent('checkout_opened', cartAnalyticsPayload(c));
 }
@@ -497,6 +561,8 @@ async function startCheckout() {
         cartItems: c,
         promoOptIn: false,
         promoCode,
+        loyaltyRewardId: selectedLoyaltyReward?.id || '',
+        loyaltyRewardSku: selectedRewardSku,
         guestCheckoutId,
         analyticsContext: getAnalyticsContext(),
         ...details,
@@ -564,6 +630,28 @@ export function initCart() {
     byId('cartBackdrop').classList.add('is-open');
     byId('cartDrawer').setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    void syncLoyaltyRewards();
+  });
+
+  delegate(document.body, '[data-loyalty-reward]', 'click', (event, button) => {
+    const reward = loyaltyRewards.find((item) => item.id === button.dataset.loyaltyReward);
+    if (!reward) return;
+    selectedLoyaltyReward = selectedLoyaltyReward?.id === reward.id ? null : reward;
+    selectedRewardSku = '';
+    if (selectedLoyaltyReward) {
+      removeStorage(PROMO_KEY);
+      const promoInput = byId('promoCode');
+      if (promoInput) promoInput.value = '';
+    }
+    renderRewardsPanels();
+    renderCart();
+  });
+
+  document.body.addEventListener('change', (event) => {
+    if (!event.target.matches('.rewards-vial-select')) return;
+    selectedRewardSku = event.target.value;
+    renderRewardsPanels();
+    renderCheckoutSummary();
   });
 
   byId('mobileCartBtn')?.addEventListener('click', () => byId('cartToggle')?.click());

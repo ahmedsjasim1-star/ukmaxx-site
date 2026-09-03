@@ -12,7 +12,24 @@ const ACCOUNT_URL = '/account.html';
 
 function redirectTarget() {
   const params = new URLSearchParams(window.location.search);
-  return params.get('redirect') || ACCOUNT_URL;
+  const requested = params.get('redirect');
+  if (!requested) return ACCOUNT_URL;
+  try {
+    const target = new URL(requested, window.location.origin);
+    if (target.origin !== window.location.origin) return ACCOUNT_URL;
+    return `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return ACCOUNT_URL;
+  }
+}
+
+function friendlyAuthError(error, fallback) {
+  const message = String(error?.message || '').toLowerCase();
+  if (message.includes('invalid login credentials')) return 'The email or password is incorrect.';
+  if (message.includes('email not confirmed')) return 'Please confirm your email before signing in.';
+  if (message.includes('user already registered')) return 'An account with this email already exists.';
+  if (message.includes('rate limit') || message.includes('too many')) return 'Too many attempts. Please wait a moment and try again.';
+  return fallback;
 }
 
 /* ── Age gate (auth pages) ── */
@@ -99,13 +116,10 @@ function updateAuthUI() {
 export function setupProfileDropdown() {
   const toggle = byId('authProfileToggle');
   const dropdown = byId('authDropdown');
-  if (!toggle || !dropdown) { console.warn('[profile] toggle or dropdown missing', {toggle, dropdown}); return; }
-  console.log('[profile] setup ok');
+  if (!toggle || !dropdown) return;
   toggle.addEventListener('click', e => {
     e.stopPropagation();
-    console.log('[profile] toggle clicked, current classes:', dropdown.className);
     dropdown.classList.toggle('is-open');
-    console.log('[profile] after toggle, classes:', dropdown.className);
   });
   document.addEventListener('click', () => dropdown.classList.remove('is-open'), { passive: true });
   byId('authDropdownSignOut')?.addEventListener('click', () => {
@@ -156,7 +170,7 @@ export function setupSignInForm() {
       const supabase = await getSupabase();
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        const m = error.message;
+        const m = friendlyAuthError(error, 'We could not sign you in. Please try again.');
         if (msg) { msg.textContent = m; msg.style.color = 'var(--danger)'; }
         toast('Sign in failed', m, 'error');
         if (btn) btn.disabled = false;
@@ -215,11 +229,11 @@ export function setupSignUpForm() {
         password,
         options: { data: { first_name: firstName, last_name: lastName }, emailRedirectTo: SITE_URL }
       });
-      console.log('[signup] Supabase response:', JSON.stringify(result));
       const { data, error } = result;
       if (error) {
-        if (msg) { msg.textContent = error.message; msg.style.color = 'var(--danger)'; }
-        toast('Sign up failed', error.message, 'error');
+        const m = friendlyAuthError(error, 'We could not create your account. Please try again.');
+        if (msg) { msg.textContent = m; msg.style.color = 'var(--danger)'; }
+        toast('Sign up failed', m, 'error');
         if (btn) btn.disabled = false;
         return;
       }
@@ -293,6 +307,22 @@ export function setupPasswordStrength() {
       else if (score === 3) text.textContent = 'Good';
       else text.textContent = 'Strong';
     }
+  });
+}
+
+export function setupPasswordToggles() {
+  document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+    if (button.dataset.bound === 'true') return;
+    button.dataset.bound = 'true';
+    button.addEventListener('click', () => {
+      const input = byId(button.getAttribute('aria-controls'));
+      if (!input) return;
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      button.textContent = showing ? 'Show' : 'Hide';
+      button.setAttribute('aria-pressed', String(!showing));
+      input.focus();
+    });
   });
 }
 

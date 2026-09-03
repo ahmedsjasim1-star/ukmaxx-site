@@ -17,8 +17,8 @@
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
-<link rel="stylesheet" href="./assets/css/components.css">
-<link rel="stylesheet" href="./assets/css/pages/account.css?v=20260731-account-reorder">
+<link rel="stylesheet" href="./assets/css/components.css?v=20260903-loyalty-rewards">
+<link rel="stylesheet" href="./assets/css/pages/account.css?v=20260903-account-rewards-preview-2">
 <script src="./assets/html/bundle.js?v=20260831-permanent-pricing-v2"></script>
 </head>
 <body>
@@ -31,7 +31,7 @@
     <div class="container">
       <span class="section-eyebrow">Customer account</span>
       <h1>My UKMAXX</h1>
-      <p>Track your orders, revisit batch COAs, and keep your research purchase history in one place.</p>
+      <p>Your orders, supplied batch records and UKMAXX Rewards card in one place.</p>
       <div class="account-email" id="accountEmail">Loading account…</div>
     </div>
   </section>
@@ -40,6 +40,8 @@
     <div class="container">
       <div class="account-loading" id="accountLoading">Loading your account…</div>
       <div class="account-content" id="accountContent" style="display:none">
+        <section class="loyalty-section" id="loyaltySection" aria-labelledby="loyaltyTitle"></section>
+
         <div class="account-summary" id="accountSummary"></div>
 
         <div class="account-actions">
@@ -72,6 +74,6 @@
 <script>document.write(window.__html.cartDrawer)</script>
 <script>document.write(window.__html.checkout)</script>
 <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
-<script type="module" src="./assets/js/app.js?v=20260831-permanent-pricing-v2"></script>
+<script type="module" src="./assets/js/app.js?v=20260903-account-rewards-preview-2"></script>
 </body>
 </html>

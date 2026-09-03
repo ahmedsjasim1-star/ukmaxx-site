@@ -1,5 +1,6 @@
 const { getSupabaseAdmin } = require('./_lib/supabase');
 const { createAndProcessPayment } = require('./_lib/fena');
+const { enabled: loyaltyEnabled, getAvailableReward, rewardQuote, reserveReward, releaseReward } = require('./_lib/loyalty');
 
 const SITE_URL = process.env.SITE_URL || 'https://www.ukmaxx.co.uk';
 const COA_PENDING_SKUS = new Set(['IP5']);
@@ -154,8 +155,10 @@ module.exports = async (req, res) => {
     return res.status(503).json({ error: 'Pay by Bank is not configured' });
   }
 
+  const supabase = getSupabaseAdmin();
+  let reservedRewardId = '';
+  let reservedReference = '';
   try {
-    const supabase = getSupabaseAdmin();
     const token = getBearerToken(req);
     let authData = null;
     if (token) {
@@ -171,9 +174,18 @@ module.exports = async (req, res) => {
     const normalized = normalizeCart(req.body?.cartItems);
     if (!normalized.length) return res.status(400).json({ error: 'Cart is empty or invalid' });
 
+    const requestedRewardId = clean(req.body?.loyaltyRewardId, 80);
+    const requestedRewardSku = String(req.body?.loyaltyRewardSku || '').trim().toUpperCase();
+    if (requestedRewardId && !authData?.user?.id) return res.status(401).json({ error: 'Sign in to use UKMAXX Rewards.' });
+    if (requestedRewardId && !loyaltyEnabled()) return res.status(409).json({ error: 'UKMAXX Rewards are not available yet.' });
+    const loyaltyReward = requestedRewardId && loyaltyEnabled()
+      ? await getAvailableReward(supabase, authData.user.id, requestedRewardId)
+      : null;
+
     const stockRequirements = new Map();
     normalized.forEach((item) => addRequiredStock(stockRequirements, item.sku, item.qty));
-    const skus = [...new Set([...normalized.map((item) => item.sku), ...stockRequirements.keys()])];
+    const rewardSkus = loyaltyReward ? ['WA10', requestedRewardSku].filter(Boolean) : [];
+    const skus = [...new Set([...normalized.map((item) => item.sku), ...stockRequirements.keys(), ...rewardSkus])];
     const { data: products, error: productsError } = await supabase
       .from('products')
       .select('sku,name,price,stock_quantity,is_active')
@@ -213,6 +225,7 @@ module.exports = async (req, res) => {
     const bundleDiscount = customBundleDiscount(normalized, bySku);
     promoEligibleSubtotal = Math.max(0, promoEligibleSubtotal - bundleDiscount);
     const requestedPromo = String(req.body?.promoCode || '').trim().toUpperCase();
+    if (loyaltyReward && requestedPromo) return res.status(409).json({ error: 'Use either a UKMAXX reward or a promo code, not both.' });
     const validPromo = requestedPromo === 'MAXX10';
     const promoApplies = validPromo && promoEligibleSubtotal > 0;
     if (promoApplies) {
@@ -226,15 +239,34 @@ module.exports = async (req, res) => {
       if (prior?.length) return res.status(409).json({ error: 'MAXX10 has already been used for this email.' });
     }
 
+    const loyaltyQuote = loyaltyReward
+      ? rewardQuote(loyaltyReward, promoEligibleSubtotal, bySku.get(requestedRewardSku))
+      : { discount: 0, gifts: [], forceShipping: false, label: '' };
+    for (const gift of loyaltyQuote.gifts) {
+      const product = bySku.get(gift.sku);
+      if (!product || !product.is_active || Number(product.stock_quantity) < gift.qty) return res.status(409).json({ error: `${gift.sku} is unavailable for this reward.` });
+      stockRequirements.set(gift.sku, (stockRequirements.get(gift.sku) || 0) + gift.qty);
+      orderItems.push({ sku: gift.sku, product_name: `${product.name} (${gift.label})`, qty: gift.qty, price: Number(product.price), line_total: 0 });
+    }
+    for (const [sku, qty] of stockRequirements.entries()) {
+      const product = bySku.get(sku);
+      if (!product || Number(product.stock_quantity) < qty) return res.status(409).json({ error: `Insufficient stock for ${sku}` });
+    }
+
     const promoDiscount = promoApplies ? Number((promoEligibleSubtotal * 0.10).toFixed(2)) : 0;
-    const discount = Number((bundleDiscount + promoDiscount).toFixed(2));
+    const discount = Number((bundleDiscount + promoDiscount + loyaltyQuote.discount).toFixed(2));
     const discounted = subtotal - discount;
-    const shipping = discounted >= 100 ? 0 : 4.99;
+    const shipping = loyaltyQuote.forceShipping ? 4.99 : (discounted >= 100 ? 0 : 4.99);
     const total = Number((discounted + shipping).toFixed(2));
     if (total <= 0) return res.status(400).json({ error: 'Invalid order total' });
 
     const orderNumber = makeOrderNumber();
     const reference = orderNumber;
+    if (loyaltyReward) {
+      await reserveReward(supabase, loyaltyReward.id, reference);
+      reservedRewardId = loyaltyReward.id;
+      reservedReference = reference;
+    }
     const attemptPayload = {
       orderNumber,
       user_id: authData?.user?.id || null,
@@ -253,6 +285,12 @@ module.exports = async (req, res) => {
       custom_bundle_free_bac_qty: freeBacQty,
       custom_bundle_discount: bundleDiscount,
       promo_discount: promoDiscount,
+      loyalty_reward_id: loyaltyReward?.id || null,
+      loyalty_reward_code: loyaltyReward?.reward_code || '',
+      loyalty_reward_label: loyaltyQuote.label || '',
+      loyalty_reward_sku: requestedRewardSku || '',
+      loyalty_reward_discount: loyaltyQuote.discount,
+      loyalty_qualifying_subtotal: promoEligibleSubtotal,
       items: orderItems,
       analytics,
     };
@@ -322,6 +360,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({ url: payment.link, orderReference: orderNumber });
   } catch (error) {
+    if (reservedRewardId) await releaseReward(supabase, reservedRewardId, reservedReference).catch(() => {});
     const message = error?.message || 'Unable to start Pay by Bank';
     const safeClientErrors = [
       'Please enter a valid email address.',
@@ -330,8 +369,16 @@ module.exports = async (req, res) => {
       'Please enter your town or city.',
       'Please enter a valid postcode.',
       'UK delivery only is currently available.',
+      'Rewards account not found. Open My Account and try again.',
+      'This reward is no longer available.',
+      'This reward was already used or reserved.',
+      'A £50 qualifying product subtotal is required to use this reward.',
+      'Choose an available single vial for this reward.',
+      'UKMAXX Rewards are not available yet.',
     ];
-    if (safeClientErrors.includes(message)) return res.status(400).json({ error: message });
+    if (safeClientErrors.includes(message) || /^Choose a vial priced at £\d+\.\d{2} or less\.$/.test(message)) {
+      return res.status(/no longer|already used|not available yet/i.test(message) ? 409 : 400).json({ error: message });
+    }
     console.error('create-fena-payment-error', { message: error?.message, stack: error?.stack, data: error?.data });
     return res.status(500).json({ error: 'Unable to start Pay by Bank' });
   }
