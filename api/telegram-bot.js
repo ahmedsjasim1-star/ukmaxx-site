@@ -354,7 +354,9 @@ async function handleDispatch(token, chatId, args) {
 
   await sendOrderDispatchedEmail({
     to: order.email, orderNumber: order.order_number, items, total: order.total,
-    trackingNumber, expectedDate: '—', packedDate: '—',
+    trackingNumber, trackingUrl,
+    expectedDate: 'Usually the next working day',
+    packedDate: new Date().toLocaleDateString('en-GB'),
     dispatchedDate: new Date().toLocaleDateString('en-GB'),
   });
 
@@ -448,13 +450,19 @@ async function handleReview(token, chatId, args) {
   const items = await getItems(supabase, order.id);
   const now = new Date().toISOString();
 
-  await sendReviewRequestEmail({
+  const emailResult = await sendReviewRequestEmail({
     to: order.email,
     orderNumber: order.order_number,
     items,
+    idempotencyKey: `review-order-${order.id}`,
   });
 
-  await supabase.from('orders').update({ review_request_sent_at: now }).eq('id', order.id);
+  await supabase.from('orders').update({
+    review_request_sent_at: now,
+    review_request_status: 'sent',
+    review_request_email_id: emailResult.id,
+    review_request_last_error: null,
+  }).eq('id', order.id);
 
   await supabase.from('admin_audit_log').insert({
     action: 'review_request_sent', order_id: order.id,

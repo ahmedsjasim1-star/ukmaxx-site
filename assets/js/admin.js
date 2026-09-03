@@ -355,6 +355,8 @@ function openOrderDrawer(orderNumber) {
     detail('Dispatched', date(order.dispatchedAt)),
     detail('Delivered', date(order.deliveredAt)),
     detail('Review requested', date(order.reviewRequestSentAt)),
+    detail('Review automation', `${order.reviewRequestStatus || 'not due'} · ${number(order.reviewRequestAttempts || 0)} attempt(s)`),
+    ...(order.reviewRequestLastError ? [detailWide('Review email error', escapeHtml(order.reviewRequestLastError))] : []),
     detailWide('Complete journey', renderTimeline(order.timeline || [])),
   ].join('');
   drawer.classList.add('is-open');

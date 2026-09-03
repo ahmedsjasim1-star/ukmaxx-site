@@ -29,6 +29,8 @@ const RANGE_DEFINITIONS = [
   { key: '1y', label: 'Last year', ms: 365 * 24 * 60 * 60 * 1000 },
   { key: 'all', label: 'All time', ms: null },
 ];
+const AUTOMATED_REVIEW_ORDER_CUTOFF = '2026-08-31T23:00:00.000Z';
+const REVIEW_DELAY_MS = 7 * 24 * 60 * 60 * 1000;
 
 function isAuthorized(req) {
   const expected = process.env.ADMIN_API_KEY || '';
@@ -39,7 +41,17 @@ function isAuthorized(req) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
+function isCronAuthorized(req) {
+  const secret = process.env.CRON_SECRET || '';
+  const supplied = String(req.headers.authorization || '');
+  if (!secret || !supplied) return false;
+  const expected = Buffer.from(`Bearer ${secret}`);
+  const actual = Buffer.from(supplied);
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
 module.exports = async (req, res) => {
+  if (req.method === 'GET' && req.query?.type === 'automated-reviews') return handleAutomatedReviews(req, res);
   if (req.method === 'GET' && req.query?.type === 'dashboard') return handleDashboard(req, res);
   if (req.method === 'POST' && req.query?.type === 'link-account') return handleAccountAnalyticsLink(req, res);
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -585,6 +597,9 @@ function recentOrders(orders, items, attempts, events, profiles, audits, product
       dispatchedAt: order.dispatched_at,
       deliveredAt: order.delivered_at,
       reviewRequestSentAt: order.review_request_sent_at,
+      reviewRequestStatus: order.review_request_status || (order.review_request_sent_at ? 'sent' : 'not due'),
+      reviewRequestAttempts: Number(order.review_request_attempts || 0),
+      reviewRequestLastError: order.review_request_last_error || '',
       createdAt: order.created_at,
       trackingNumber: order.tracking_number || order.royalmail_tracking_number || '',
       trackingUrl: order.tracking_url || '',
@@ -927,7 +942,7 @@ async function buildDashboard(supabase) {
     profiles,
     audits,
   ] = await Promise.all([
-    safeSelect(supabase, 'orders', 'id,order_number,email,full_name,phone,total,subtotal,discount,shipping,status,created_at,delivered_at,dispatched_at,review_request_sent_at,payment_provider,promo_opt_in,shipping_address_line1,shipping_address_line2,shipping_city,shipping_postcode,shipping_country,tracking_number,tracking_url,royalmail_order_identifier,royalmail_tracking_number', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
+    safeSelect(supabase, 'orders', 'id,order_number,email,full_name,phone,total,subtotal,discount,shipping,status,created_at,delivered_at,dispatched_at,review_request_sent_at,review_request_status,review_request_attempts,review_request_last_error,payment_provider,promo_opt_in,shipping_address_line1,shipping_address_line2,shipping_city,shipping_postcode,shipping_country,tracking_number,tracking_url,royalmail_order_identifier,royalmail_tracking_number', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
     safeSelect(supabase, 'order_items', 'order_id,sku,product_name,qty,line_total', { limit: 5000 }),
     safeSelect(supabase, 'products', 'sku,name,price,stock_quantity,is_active', { limit: 200 }),
     safeSelect(supabase, 'payment_attempts', '*', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
@@ -1039,9 +1054,13 @@ async function handleDispatch({ res, supabase }, details) {
 
   const items = await getItems(supabase, order.id);
   const now = new Date().toISOString();
+  const trackingNumber = details.trackingNumber || null;
+  const trackingUrl = trackingNumber
+    ? `https://www.royalmail.com/track-your-item#/tracking-results/${encodeURIComponent(trackingNumber)}`
+    : null;
   const { error } = await supabase
     .from('orders')
-    .update({ status: 'dispatched', tracking_number: details.trackingNumber || null, dispatched_at: now })
+    .update({ status: 'dispatched', tracking_number: trackingNumber, tracking_url: trackingUrl, dispatched_at: now })
     .eq('id', order.id);
   if (error) throw error;
 
@@ -1050,14 +1069,16 @@ async function handleDispatch({ res, supabase }, details) {
     orderNumber: order.order_number,
     items,
     total: order.total,
-    trackingNumber: details.trackingNumber || '—',
-    expectedDate: details.expectedDate || '—',
-    packedDate: details.packedDate || '—',
+    trackingNumber: trackingNumber || 'Not supplied',
+    trackingUrl,
+    expectedDate: details.expectedDate || 'Usually the next working day',
+    packedDate: details.packedDate || new Date().toLocaleDateString('en-GB'),
     dispatchedDate: details.dispatchedDate || new Date().toLocaleDateString('en-GB'),
   });
   await audit(supabase, 'order_dispatched', order.id, {
     order_number: order.order_number,
-    tracking_number: details.trackingNumber || null,
+    tracking_number: trackingNumber,
+    tracking_url: trackingUrl,
   });
   return res.status(200).json({ success: true, orderNumber: order.order_number });
 }
@@ -1227,12 +1248,83 @@ async function handleReviewRequest({ res, supabase }, { orderNumber }) {
   }
 
   const items = await getItems(supabase, order.id);
-  await sendReviewRequestEmail({ to: order.email, orderNumber: order.order_number, items });
+  const emailResult = await sendReviewRequestEmail({
+    to: order.email,
+    orderNumber: order.order_number,
+    items,
+    idempotencyKey: `review-order-${order.id}`,
+  });
   const now = new Date().toISOString();
-  const { error } = await supabase.from('orders').update({ review_request_sent_at: now }).eq('id', order.id);
+  const { error } = await supabase.from('orders').update({
+    review_request_sent_at: now,
+    review_request_status: 'sent',
+    review_request_email_id: emailResult.id,
+    review_request_last_error: null,
+  }).eq('id', order.id);
   if (error) throw error;
   await audit(supabase, 'review_request_sent', order.id, { order_number: order.order_number });
   return res.status(200).json({ success: true, orderNumber: order.order_number });
+}
+
+async function handleAutomatedReviews(req, res) {
+  if (!isCronAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+  const supabase = getSupabaseAdmin();
+  const dueBefore = new Date(Date.now() - REVIEW_DELAY_MS).toISOString();
+  const { data: claimed, error: claimError } = await supabase.rpc('claim_automated_review_requests', {
+    p_order_cutoff: AUTOMATED_REVIEW_ORDER_CUTOFF,
+    p_due_before: dueBefore,
+    p_limit: 20,
+  });
+  if (claimError) {
+    console.error('automated-review-claim-error', claimError);
+    return res.status(500).json({ error: 'Unable to claim review requests' });
+  }
+
+  const results = [];
+  for (const order of claimed || []) {
+    try {
+      const items = await getItems(supabase, order.id);
+      const emailResult = await sendReviewRequestEmail({
+        to: order.email,
+        orderNumber: order.order_number,
+        items,
+        idempotencyKey: `review-order-${order.id}`,
+      });
+      const sentAt = new Date().toISOString();
+      const { error: updateError } = await supabase.from('orders').update({
+        review_request_sent_at: sentAt,
+        review_request_status: 'sent',
+        review_request_email_id: emailResult.id,
+        review_request_last_error: null,
+      }).eq('id', order.id).eq('review_request_status', 'sending');
+      if (updateError) throw updateError;
+      await audit(supabase, 'review_request_sent', order.id, {
+        order_number: order.order_number,
+        source: 'automated_review_cron',
+        resend_email_id: emailResult.id,
+      });
+      results.push({ orderNumber: order.order_number, status: 'sent' });
+    } catch (error) {
+      const message = String(error?.message || error).slice(0, 500);
+      await supabase.from('orders').update({
+        review_request_status: 'failed',
+        review_request_last_error: message,
+      }).eq('id', order.id).eq('review_request_status', 'sending');
+      console.error('automated-review-send-error', { orderNumber: order.order_number, message });
+      results.push({ orderNumber: order.order_number, status: 'failed' });
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    cutoff: AUTOMATED_REVIEW_ORDER_CUTOFF,
+    dueBefore,
+    claimed: results.length,
+    sent: results.filter((result) => result.status === 'sent').length,
+    failed: results.filter((result) => result.status === 'failed').length,
+    results,
+  });
 }
 
 module.exports.__test = {

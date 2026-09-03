@@ -5,6 +5,21 @@ const { Resend } = require('resend');
 const BASE_URL = process.env.PUBLIC_BASE_URL || process.env.SITE_URL || 'https://www.ukmaxx.co.uk';
 const FROM = process.env.RESEND_FROM || 'UKMAXX Orders <orders@ukmaxx.co.uk>';
 
+async function sendEmail({ to, subject, html, idempotencyKey }) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || !to) throw new Error('Missing Resend configuration or recipient');
+  const resend = new Resend(key);
+  const { data, error } = await resend.emails.send({
+    from: FROM,
+    to,
+    subject,
+    html: useProductionBase(html),
+  }, idempotencyKey ? { idempotencyKey } : undefined);
+  if (error) throw new Error(`Resend rejected email: ${error.message || 'unknown error'}`);
+  if (!data?.id) throw new Error('Resend did not return an email id');
+  return { id: data.id };
+}
+
 function useProductionBase(html) {
   return String(html || '');
 }
@@ -243,32 +258,27 @@ function renderTemplate(tpl, ctx) {
     .replace(/\{\{(\w+)\}\}/g, (_, key) => ctx[key] ?? '');
 }
 
-async function sendOrderDispatchedEmail({ to, orderNumber, items, total, trackingNumber, expectedDate, packedDate, dispatchedDate }) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key || !to) return;
-  const resend = new Resend(key);
+async function sendOrderDispatchedEmail({ to, orderNumber, items, total, trackingNumber, trackingUrl, expectedDate, packedDate, dispatchedDate }) {
   const rendered = renderTemplate(tpls.dispatched, {
     orderNumber,
     total: formatMoney(total),
     trackingNumber: trackingNumber || '-',
+    trackingUrl: trackingUrl || `${BASE_URL}/track.html?order=${encodeURIComponent(orderNumber)}`,
     expectedDate: expectedDate || '-',
     packedDate: packedDate || '-',
     dispatchedDate: dispatchedDate || '-',
     items: items || [],
     email: to,
   });
-  await resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to,
     subject: `Your UKMAXX order ${orderNumber} has been dispatched`,
-    html: useProductionBase(rendered),
+    html: rendered,
+    idempotencyKey: `dispatch-${orderNumber}`,
   });
 }
 
 async function sendOrderDeliveredEmail({ to, orderNumber, items, total, deliveredTime }) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key || !to) return;
-  const resend = new Resend(key);
   const rendered = renderTemplate(tpls.delivered, {
     orderNumber,
     total: formatMoney(total),
@@ -277,29 +287,26 @@ async function sendOrderDeliveredEmail({ to, orderNumber, items, total, delivere
     email: to,
     reviewUrl: `${BASE_URL}/review.html?order=${encodeURIComponent(orderNumber)}`,
   });
-  await resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to,
     subject: `Your UKMAXX order ${orderNumber} has been delivered`,
-    html: useProductionBase(rendered),
+    html: rendered,
+    idempotencyKey: `delivered-${orderNumber}`,
   });
 }
 
-async function sendReviewRequestEmail({ to, orderNumber, items }) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key || !to) return;
-  const resend = new Resend(key);
+async function sendReviewRequestEmail({ to, orderNumber, items, idempotencyKey }) {
   const rendered = renderTemplate(tpls.reviewRequest, {
     orderNumber,
     items: items || [],
     email: to,
     reviewUrl: `${BASE_URL}/review.html?order=${encodeURIComponent(orderNumber)}`,
   });
-  await resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to,
-    subject: `How was your UKMAXX order ${orderNumber}? - Quick review`,
-    html: useProductionBase(rendered),
+    subject: `How was your UKMAXX order ${orderNumber}? Share your verified feedback`,
+    html: rendered,
+    idempotencyKey: idempotencyKey || `review-${orderNumber}`,
   });
 }
 

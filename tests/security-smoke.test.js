@@ -40,6 +40,14 @@ test('direct order administration validates actions before touching the database
   assert.equal(res.statusCode, 400);
 });
 
+test('automated review cron rejects requests without its bearer secret', async () => {
+  process.env.CRON_SECRET = 'test-cron-secret';
+  const handler = require('../api/order-admin');
+  const res = response();
+  await handler({ method: 'GET', query: { type: 'automated-reviews' }, headers: {} }, res);
+  assert.equal(res.statusCode, 401);
+});
+
 test('checkout refuses to operate without Stripe configuration', async () => {
   delete process.env.STRIPE_SECRET_KEY;
   const handler = require('../api/create-checkout-session');

@@ -15,7 +15,7 @@ a{color:#0A7E8C;text-decoration:underline}
 <body style="margin:0;padding:0;background-color:#F4F8F9;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;color:#081F23">
 
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px">
-  Quick check-in on your UKMAXX order {{orderNumber}} — reply with feedback whenever you have a minute.
+  Seven days after delivery: share verified feedback on UKMAXX order {{orderNumber}}.
 </div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F4F8F9;padding:32px 16px">
@@ -45,12 +45,12 @@ a{color:#0A7E8C;text-decoration:underline}
               How did we do?
             </h1>
             <p style="font-size:15.5px;line-height:1.6;margin:0 auto 24px;max-width:480px;color:#5B7B82;font-family:'Inter',Arial,sans-serif">
-              If you have a minute, we would really value your feedback on order {{orderNumber}} — packaging, dispatch, batch details, communication, or anything we could improve.
+              It has been seven days since order {{orderNumber}} was marked as delivered. We would value your honest feedback on the order, packaging, dispatch, batch details and communication.
             </p>
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
               <tr>
                 <td align="center" style="background-color:#081F23;border-radius:8px">
-                  <a href="{{reviewUrl}}" style="display:inline-block;padding:14px 24px;font-family:'Space Grotesk','Helvetica Neue',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none;letter-spacing:0.02em">Leave feedback</a>
+                  <a href="{{reviewUrl}}" style="display:inline-block;padding:14px 24px;font-family:'Space Grotesk','Helvetica Neue',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none;letter-spacing:0.02em">Leave a verified review</a>
                 </td>
               </tr>
             </table>
@@ -64,7 +64,7 @@ a{color:#0A7E8C;text-decoration:underline}
                   <p style="font-family:'IBM Plex Mono',Menlo,Consolas,monospace;font-size:10.5px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#5B7B82;margin:0 0 8px;line-height:1">Order recap</p>
                   <p style="font-size:13.5px;color:#081F23;margin:0;line-height:1.5;font-family:'Inter',Arial,sans-serif">
                     {{#items}}
-                    <strong>{{product_name}}</strong> &middot; {{sku}}<br>
+                    <strong>{{product_name}}</strong> &middot; {{sku}} &middot; Qty {{qty}}<br>
                     {{/items}}
                   </p>
                 </td>
@@ -81,6 +81,8 @@ a{color:#0A7E8C;text-decoration:underline}
                   <p style="font-size:13.5px;color:#081F23;margin:0 0 8px;line-height:1.55;font-family:'Inter',Arial,sans-serif"><span style="color:#0A7E8C;font-weight:700;margin-right:6px">&rarr;</span> Your notes help us improve dispatch, packaging and batch information.</p>
                   <p style="font-size:13.5px;color:#081F23;margin:0 0 8px;line-height:1.55;font-family:'Inter',Arial,sans-serif"><span style="color:#0A7E8C;font-weight:700;margin-right:6px">&rarr;</span> If anything felt unclear, tell us and we will tighten it up.</p>
                   <p style="font-size:13.5px;color:#081F23;margin:0;line-height:1.55;font-family:'Inter',Arial,sans-serif"><span style="color:#0A7E8C;font-weight:700;margin-right:6px">&rarr;</span> Every useful detail helps us build UKMAXX properly.</p>
+                  <p style="font-size:13.5px;color:#081F23;margin:8px 0 0;line-height:1.55;font-family:'Inter',Arial,sans-serif"><span style="color:#0A7E8C;font-weight:700;margin-right:6px">&rarr;</span> Photos are optional, and you can choose to show your first name or initials.</p>
+                  <p style="font-size:13.5px;color:#081F23;margin:8px 0 0;line-height:1.55;font-family:'Inter',Arial,sans-serif"><span style="color:#0A7E8C;font-weight:700;margin-right:6px">&rarr;</span> If your order contained several products, you can review each one separately.</p>
                 </td>
               </tr>
             </table>
@@ -113,8 +115,6 @@ a{color:#0A7E8C;text-decoration:underline}
                     <a href="https://www.ukmaxx.co.uk/returns.html" style="color:#5B7B82;text-decoration:underline">Returns</a>
                     <span style="color:#D5E5E8;margin:0 6px">&middot;</span>
                     <a href="https://www.ukmaxx.co.uk/privacy-policy.html" style="color:#5B7B82;text-decoration:underline">Privacy</a>
-                    <span style="color:#D5E5E8;margin:0 6px">&middot;</span>
-                    <a href="https://www.ukmaxx.co.uk/unsubscribe?email={{email}}" style="color:#5B7B82;text-decoration:underline">Unsubscribe</a>
                   </p>
                 </td>
               </tr>

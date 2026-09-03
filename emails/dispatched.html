@@ -192,12 +192,13 @@ a{color:#0A7E8C;text-decoration:underline}
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
               <tr>
                 <td align="center" style="background-color:#0A7E8C;border-radius:8px;mso-padding-alt:14px 28px">
-                  <a href="https://www.ukmaxx.co.uk/track.html?order={{orderNumber}}" target="_blank" style="display:inline-block;padding:14px 28px;font-family:'Space Grotesk','Helvetica Neue',Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;letter-spacing:0.02em;line-height:1;mso-line-height-rule:exactly">Track my order &rarr;</a>
+                  <a href="{{trackingUrl}}" target="_blank" style="display:inline-block;padding:14px 28px;font-family:'Space Grotesk','Helvetica Neue',Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;letter-spacing:0.02em;line-height:1;mso-line-height-rule:exactly">Track with Royal Mail &rarr;</a>
                 </td>
               </tr>
             </table>
             <p style="font-family:'IBM Plex Mono',Menlo,Consolas,monospace;font-size:11px;color:#5B7B82;margin:14px 0 0;letter-spacing:0.04em;line-height:1.4">
-              Order {{orderNumber}} &middot; Total {{total}}
+              Order {{orderNumber}} &middot; Total {{total}}<br>
+              <a href="https://www.ukmaxx.co.uk/track.html?order={{orderNumber}}" style="color:#0A7E8C;text-decoration:underline">View on UKMAXX</a>
             </p>
           </td>
         </tr>
@@ -246,8 +247,6 @@ a{color:#0A7E8C;text-decoration:underline}
                     <a href="https://www.ukmaxx.co.uk/returns.html" style="color:#5B7B82;text-decoration:underline">Returns</a>
                     <span style="color:#D5E5E8;margin:0 6px">&middot;</span>
                     <a href="https://www.ukmaxx.co.uk/privacy-policy.html" style="color:#5B7B82;text-decoration:underline">Privacy</a>
-                    <span style="color:#D5E5E8;margin:0 6px">&middot;</span>
-                    <a href="https://www.ukmaxx.co.uk/unsubscribe?email={{email}}" style="color:#5B7B82;text-decoration:underline">Unsubscribe</a>
                   </p>
                 </td>
               </tr>
