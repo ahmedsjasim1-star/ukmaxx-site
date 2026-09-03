@@ -501,6 +501,14 @@
 .review-grid::-webkit-scrollbar-track{background:var(--surface-3);border-radius:999px}
 .review-grid::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:999px}
 .review-grid .review-card{flex:0 0 min(340px,88vw);scroll-snap-align:start}
+.review-grid .review-card{border-radius:20px;padding:17px;background:linear-gradient(145deg,#effaf6 0%,#fff 42%);border-color:#d8ebe4;box-shadow:0 10px 24px rgba(8,31,35,.055)}
+.review-grid .review-card:nth-child(3n+2){background:linear-gradient(145deg,#eef6ff 0%,#fff 42%);border-color:#d9e6f2}
+.review-grid .review-card:nth-child(3n+3){background:linear-gradient(145deg,#f5f0ff 0%,#fff 42%);border-color:#e5daf3}
+.review-grid .review-card-head span:first-child{display:inline-flex;padding:5px 8px;border:1px solid #c9e6db;border-radius:999px;background:rgba(255,255,255,.78);color:#28715a;font-weight:650}
+.review-grid .review-card:nth-child(3n+2) .review-card-head span:first-child{border-color:#ccdeef;color:#3d6f99}
+.review-grid .review-card:nth-child(3n+3) .review-card-head span:first-child{border-color:#ddd0ef;color:#70539a}
+.review-grid .review-card-text{margin-top:1px;padding:13px 14px;border:1px solid rgba(95,133,139,.11);border-radius:13px;background:rgba(255,255,255,.72)}
+.review-grid .review-card-author{padding-top:2px;color:#49666b;font-weight:650}
 @media (min-width:1024px){.review-grid .review-card{flex-basis:360px}}
 .review-bars{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
 .review-bar-row{display:flex;align-items:center;gap:10px;font-size:12px}
