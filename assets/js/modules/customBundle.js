@@ -131,6 +131,10 @@ export function setupCustomBundleBuilder() {
     closeBuilder();
     byId('cartToggle')?.click();
   });
+
+  if (new URLSearchParams(window.location.search).get('build_bundle') === '1') {
+    window.requestAnimationFrame(openBuilder);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', setupCustomBundleBuilder);

@@ -67,6 +67,7 @@ function renderLoyalty(data) {
   const deliveredOrders = (data.orders || []).filter((order) => order.status === 'delivered').length;
   const completedOrders = Number(data.loyalty?.completed_orders ?? deliveredOrders);
   const state = loyaltyState(completedOrders);
+  const locked = completedOrders === 0;
   const firstName = escapeHtml(data.first_name || 'Member');
   const nextReward = REWARD_STEPS[Math.min(state.progress, 9)];
   const currentReward = state.progress ? REWARD_STEPS[state.progress - 1] : null;
@@ -85,25 +86,25 @@ function renderLoyalty(data) {
       <li class="loyalty-stamp${complete ? ' is-complete' : ''}${next ? ' is-next' : ''}${latest ? ' is-latest' : ''}" title="${escapeHtml(reward.title)}">
         <span class="loyalty-stamp-number">${reward.step}</span>
         ${complete ? '<span class="loyalty-stamp-check" aria-hidden="true">✓</span>' : ''}
-        <strong>${escapeHtml(reward.short)}</strong>
+        <strong>${escapeHtml(locked && reward.step === 1 ? 'Unlock card' : reward.short)}</strong>
       </li>`;
   }).join('');
 
   root.innerHTML = `
-    <div class="loyalty-card loyalty-card--${state.level.toLowerCase()}">
+    <div class="loyalty-card loyalty-card--${state.level.toLowerCase()}${locked ? ' is-locked' : ''}">
       <div class="loyalty-card-watermark" aria-hidden="true"></div>
       <div class="loyalty-card-head">
         <div>
           <span class="loyalty-eyebrow">UKMAXX Rewards</span>
-          <h2 id="loyaltyTitle">${firstName}'s ${state.level} Card</h2>
+          <h2 id="loyaltyTitle">${locked ? `${firstName}'s UKMAXX Rewards` : `${firstName}'s ${state.level} Card`}</h2>
         </div>
-        <span class="loyalty-cycle">Cycle ${state.cycle}</span>
+        <span class="loyalty-cycle">${locked ? '🔒 Locked' : `Cycle ${state.cycle}`}</span>
       </div>
       <ol class="loyalty-stamps" aria-label="${state.progress} of 10 orders completed">${stamps}</ol>
       <div class="loyalty-card-foot">
         <div>
-          <span>${state.progress} of 10 qualifying orders</span>
-          <strong>${state.progress === 10 ? 'Card complete' : `Next: ${escapeHtml(nextReward.title)}`}</strong>
+          <span>${locked ? 'Ready for your first stamp' : `${state.progress} of 10 qualifying orders`}</span>
+          <strong>${locked ? 'Make your first £50 order to unlock UKMAXX Rewards' : (state.progress === 10 ? 'Card complete' : `Next: ${escapeHtml(nextReward.title)}`)}</strong>
         </div>
         ${currentReward ? `<div class="loyalty-latest"><span>Latest milestone</span><strong>${escapeHtml(currentReward.title)}</strong></div>` : ''}
       </div>
@@ -111,7 +112,7 @@ function renderLoyalty(data) {
     <div class="loyalty-explainer">
       <div>
         <span class="section-eyebrow">How it works</span>
-        <p>Spend at least <strong>£50 on products</strong> in one order. Once delivered, it adds one stamp and unlocks that step's reward for a future qualifying order.</p>
+        <p>${locked ? 'Spend at least <strong>£50 on products</strong>. Once that order is delivered, your card unlocks and receives its first stamp.' : 'Spend at least <strong>£50 on products</strong> in one order. Once delivered, it adds one stamp and unlocks that step\'s reward for a future qualifying order.'}</p>
       </div>
       <details>
         <summary>Reward rules</summary>
@@ -208,6 +209,7 @@ export async function setupAccountPage() {
   const summaryEl = byId('accountSummary');
   const localPreview = ['127.0.0.1', 'localhost'].includes(window.location.hostname)
     && new URLSearchParams(window.location.search).get('loyalty_preview') === '1';
+  const lockedPreview = localPreview && new URLSearchParams(window.location.search).get('locked') === '1';
 
   try {
     if (localPreview) {
@@ -216,13 +218,17 @@ export async function setupAccountPage() {
         first_name: 'Bashir',
         loyalty: {
           enabled: true,
-          completed_orders: 8,
-          rewards: [
+          completed_orders: lockedPreview ? 0 : 8,
+          rewards: lockedPreview ? [] : [
             { id: 'preview-reward-7', code: 'CREDIT_20', label: '£20 credit', status: 'available' },
             { id: 'preview-reward-8', code: 'FREE_BAC_VIAL_2999', label: 'Free BAC Water + one vial up to £29.99', status: 'available' },
           ],
         },
-        orders: [
+        orders: lockedPreview ? [
+          { order_number: 'UKX26LOCKED1', status: 'processing', created_at: new Date().toISOString(), total: 13.98, items: [{ sku: 'WA10', product_name: 'BAC WATER', qty: 1, line_total: 8.99 }], batches: [] },
+          { order_number: 'UKX26LOCKED2', status: 'delivered', created_at: new Date(Date.now() - 86400000 * 20).toISOString(), total: 12.63, items: [{ sku: 'WA10', product_name: 'BAC WATER', qty: 1, line_total: 8.99 }], batches: [] },
+          { order_number: 'UKX26LOCKED3', status: 'dispatched', created_at: new Date(Date.now() - 86400000 * 35).toISOString(), total: 13.98, items: [{ sku: 'WA10', product_name: 'BAC WATER', qty: 1, line_total: 8.99 }], batches: [] },
+        ] : [
           {
             order_number: 'UKX26PREVIEW', status: 'delivered', created_at: new Date().toISOString(), total: 85.06,
             tracking_number: 'AA123456789GB', tracking_url: 'https://www.royalmail.com/track-your-item',
@@ -237,9 +243,10 @@ export async function setupAccountPage() {
       if (emailEl) emailEl.textContent = previewData.email;
       accountOrders = previewData.orders;
       renderLoyalty(previewData);
+      const previewProgress = Number(previewData.loyalty.completed_orders || 0);
       if (summaryEl) summaryEl.innerHTML = `
-        <div><strong>8</strong><span>Completed orders</span></div>
-        <div><strong>8 / 10</strong><span>Rewards progress</span></div>
+        <div><strong>${previewData.orders.length}</strong><span>Total orders</span></div>
+        <div><strong>${previewProgress} / 10</strong><span>Rewards progress</span></div>
         <div><strong>${formatDate(previewData.orders[0].created_at)}</strong><span>Latest order</span></div>`;
       if (ordersEl) ordersEl.innerHTML = previewData.orders.slice(0, 1).map(orderCard).join('');
       if (content) content.style.display = '';

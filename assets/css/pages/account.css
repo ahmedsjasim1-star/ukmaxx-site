@@ -11,6 +11,11 @@
 .loyalty-card--violet{background:linear-gradient(135deg,#e9e0ff,#dcecff 55%,#d7f1ed)}
 .loyalty-card--onyx{background:linear-gradient(135deg,#152f37,#244953 55%,#3f5260);color:#fff}
 .loyalty-card--gold{background:linear-gradient(135deg,#fff0bd,#f7db91 50%,#d9f0e9)}
+.loyalty-card.is-locked{background:linear-gradient(135deg,#dff8f3 0%,#e4f1ff 52%,#eee4ff 100%);border-color:rgba(39,137,147,.24);box-shadow:0 16px 38px rgba(24,105,114,.12)}
+.loyalty-card.is-locked .loyalty-card-watermark{opacity:.42}
+.loyalty-card.is-locked .loyalty-stamp{background:rgba(255,255,255,.38);border-color:rgba(86,116,122,.13);color:#809197}
+.loyalty-card.is-locked .loyalty-stamp.is-next{background:rgba(255,255,255,.75);border-color:#7caab0;color:#446d73;box-shadow:inset 0 0 0 1px rgba(75,127,135,.1)}
+.loyalty-card.is-locked .loyalty-cycle{background:rgba(255,255,255,.7);border-color:rgba(67,103,110,.18);color:#546f74}
 .loyalty-card-watermark{position:absolute;width:250px;height:250px;right:-70px;top:-95px;border:34px solid rgba(0,111,124,.07);clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);z-index:-1}
 .loyalty-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}
 .loyalty-eyebrow{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#087a87;margin-bottom:6px}

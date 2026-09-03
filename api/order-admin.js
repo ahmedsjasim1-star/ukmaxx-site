@@ -54,6 +54,7 @@ module.exports = async (req, res) => {
   if (req.method === 'GET' && req.query?.type === 'automated-reviews') return handleAutomatedReviews(req, res);
   if (req.method === 'GET' && req.query?.type === 'dashboard') return handleDashboard(req, res);
   if (req.method === 'POST' && req.query?.type === 'link-account') return handleAccountAnalyticsLink(req, res);
+  if (req.method === 'POST' && req.query?.type === 'release-loyalty-reward') return handleReleaseLoyaltyReward(req, res);
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!isAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -181,6 +182,65 @@ async function handleDashboard(req, res) {
   } catch (err) {
     console.error('admin-dashboard-error', { message: err?.message, stack: err?.stack });
     return res.status(500).json({ error: 'Failed to load dashboard' });
+  }
+}
+
+async function handleReleaseLoyaltyReward(req, res) {
+  try {
+    const auth = await requireAdminUser(req);
+    if (auth.error === 'missing_token' || auth.error === 'invalid_token') return res.status(401).json({ error: 'Unauthorized' });
+    if (auth.error === 'forbidden') return res.status(403).json({ error: 'Forbidden' });
+
+    const rewardId = String(req.body?.rewardId || '').trim();
+    if (!rewardId || req.body?.confirmAbandoned !== true) return res.status(400).json({ error: 'Confirmed reward reservation is required.' });
+
+    const { data: reward, error: rewardError } = await auth.supabase
+      .from('loyalty_rewards')
+      .select('id,member_id,reward_code,status,reserved_reference,reserved_at')
+      .eq('id', rewardId)
+      .maybeSingle();
+    if (rewardError) throw rewardError;
+    if (!reward) return res.status(404).json({ error: 'Reward reservation not found.' });
+    if (reward.status !== 'reserved') return res.status(409).json({ error: 'This reward is no longer reserved.' });
+
+    const reservedAt = new Date(reward.reserved_at || 0).getTime();
+    if (!reservedAt || Date.now() - reservedAt < 2 * 60 * 60 * 1000) {
+      return res.status(409).json({ error: 'Wait at least two hours before releasing a payment reservation.' });
+    }
+
+    const { data: attempt, error: attemptError } = await auth.supabase
+      .from('payment_attempts')
+      .select('id,status,order_id,provider_payment_id,payment_reference')
+      .eq('payment_provider', 'fena')
+      .eq('payment_reference', reward.reserved_reference)
+      .maybeSingle();
+    if (attemptError) throw attemptError;
+    const paymentStatus = String(attempt?.status || '').toLowerCase();
+    if (attempt?.order_id || ['paid', 'completed', 'success', 'succeeded'].includes(paymentStatus)) {
+      return res.status(409).json({ error: 'This payment completed; the reward cannot be released.' });
+    }
+
+    const { data: released, error: releaseError } = await auth.supabase
+      .from('loyalty_rewards')
+      .update({ status: 'available', reserved_reference: null, reserved_at: null })
+      .eq('id', reward.id)
+      .eq('status', 'reserved')
+      .select('id')
+      .maybeSingle();
+    if (releaseError) throw releaseError;
+    if (!released) return res.status(409).json({ error: 'The reward changed before it could be released.' });
+
+    await audit(auth.supabase, 'loyalty_reward_released', null, {
+      reward_id: reward.id,
+      reward_code: reward.reward_code,
+      payment_reference: reward.reserved_reference,
+      payment_status: paymentStatus || 'unknown',
+      released_by: auth.email,
+    });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('release-loyalty-reward-error', { message: err?.message, stack: err?.stack });
+    return res.status(500).json({ error: 'Unable to release this reward reservation.' });
   }
 }
 
@@ -941,6 +1001,8 @@ async function buildDashboard(supabase) {
     events,
     profiles,
     audits,
+    loyaltyRewards,
+    loyaltyMembers,
   ] = await Promise.all([
     safeSelect(supabase, 'orders', 'id,order_number,email,full_name,phone,total,subtotal,discount,shipping,status,created_at,delivered_at,dispatched_at,review_request_sent_at,review_request_status,review_request_attempts,review_request_last_error,payment_provider,promo_opt_in,shipping_address_line1,shipping_address_line2,shipping_city,shipping_postcode,shipping_country,tracking_number,tracking_url,royalmail_order_identifier,royalmail_tracking_number', { order: { column: 'created_at', ascending: false }, limit: 1000 }),
     safeSelect(supabase, 'order_items', 'order_id,sku,product_name,qty,line_total', { limit: 5000 }),
@@ -954,6 +1016,8 @@ async function buildDashboard(supabase) {
     safeSelect(supabase, 'site_events', '*', { order: { column: 'created_at', ascending: false }, limit: 20000 }),
     safeSelect(supabase, 'profiles', '*', { order: { column: 'created_at', ascending: false }, limit: 5000 }),
     safeSelect(supabase, 'admin_audit_log', 'order_id,action,payload,created_at', { order: { column: 'created_at', ascending: true }, limit: 10000 }),
+    safeSelect(supabase, 'loyalty_rewards', 'id,member_id,reward_code,status,reserved_reference,reserved_at,created_at', { order: { column: 'reserved_at', ascending: false }, limit: 1000 }),
+    safeSelect(supabase, 'loyalty_members', 'id,email', { limit: 5000 }),
   ]);
 
   const now = new Date();
@@ -969,6 +1033,23 @@ async function buildDashboard(supabase) {
     definition.key,
     rangeDashboard(definition, rangeStart(now, definition), rangeContext),
   ]));
+  const loyaltyEmailByMember = new Map(loyaltyMembers.map((member) => [member.id, member.email]));
+  const attemptByReference = new Map(attempts.map((attempt) => [String(attempt.payment_reference || '').toUpperCase(), attempt]));
+  const reservedRewards = loyaltyRewards.filter((reward) => reward.status === 'reserved').map((reward) => {
+    const attempt = attemptByReference.get(String(reward.reserved_reference || '').toUpperCase());
+    return {
+      id: reward.id,
+      email: loyaltyEmailByMember.get(reward.member_id) || 'Unknown member',
+      code: reward.reward_code,
+      reference: reward.reserved_reference || '',
+      reservedAt: reward.reserved_at,
+      paymentStatus: String(attempt?.status || 'unknown').toLowerCase(),
+      releasable: Boolean(reward.reserved_at)
+        && Date.now() - new Date(reward.reserved_at).getTime() >= 2 * 60 * 60 * 1000
+        && !attempt?.order_id
+        && !['paid', 'completed', 'success', 'succeeded'].includes(String(attempt?.status || '').toLowerCase()),
+    };
+  });
 
   return {
     ranges,
@@ -1014,6 +1095,7 @@ async function buildDashboard(supabase) {
       averageRating: approvedRatings.length ? Number((approvedRatings.reduce((sum, rating) => sum + rating, 0) / approvedRatings.length).toFixed(1)) : 0,
     },
     emailSubscribers: subscriberStats(notifySubscribers, null),
+    loyalty: { reservedRewards },
   };
 }
 

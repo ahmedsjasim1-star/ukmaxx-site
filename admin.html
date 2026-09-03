@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="./assets/css/variables.css">
 <link rel="stylesheet" href="./assets/css/reset.css">
 <link rel="stylesheet" href="./assets/css/base.css">
-<link rel="stylesheet" href="./assets/css/admin.css?v=20260819-customer-journeys">
+<link rel="stylesheet" href="./assets/css/admin.css?v=20260903-loyalty-recovery">
 </head>
 <body class="admin-page">
   <main class="admin-shell">
@@ -348,6 +348,18 @@
       <section class="admin-panel">
         <div class="panel-head">
           <div>
+            <p class="eyebrow">Rewards recovery</p>
+            <h2>Reserved loyalty rewards</h2>
+          </div>
+          <span class="panel-chip" id="reservedRewardsChip">—</span>
+        </div>
+        <p class="panel-note">Rewards are held while a Fena payment is open. Only release a reservation after checking that the payment was abandoned and did not complete.</p>
+        <div class="loyalty-admin-list" id="reservedRewardsList"></div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-head">
+          <div>
             <p class="eyebrow">Live feed</p>
             <h2>Recent orders</h2>
           </div>
@@ -383,6 +395,6 @@
     </div>
   </aside>
 
-  <script type="module" src="./assets/js/admin.js?v=20260819-customer-journeys"></script>
+  <script type="module" src="./assets/js/admin.js?v=20260903-loyalty-recovery"></script>
 </body>
 </html>

@@ -45,6 +45,25 @@ test('live rewards stay hidden until the feature flag is enabled', () => {
   assert.match(loyalty, /LOYALTY_REWARDS_ENABLED/);
 });
 
+test('new members see an honest locked rewards card', () => {
+  const account = read('assets/js/modules/account.js');
+  const css = read('assets/css/pages/account.css');
+  assert.match(account, /Make your first £50 order to unlock UKMAXX Rewards/);
+  assert.match(account, /'🔒 Locked'/);
+  assert.match(account, /'Unlock card'/);
+  assert.match(css, /\.loyalty-card\.is-locked/);
+});
+
+test('admin can recover old abandoned reward reservations without touching payments', () => {
+  const api = read('api/order-admin.js');
+  const admin = read('assets/js/admin.js');
+  assert.match(api, /release-loyalty-reward/);
+  assert.match(api, /Wait at least two hours before releasing a payment reservation/);
+  assert.match(api, /This payment completed; the reward cannot be released/);
+  assert.match(api, /status: 'available', reserved_reference: null, reserved_at: null/);
+  assert.match(admin, /Only continue after checking Fena and confirming the payment did not complete/);
+});
+
 test('checkout supports one non-stacking reward with server-side enforcement', () => {
   const cart = read('assets/js/modules/cart.js');
   const checkout = read('api/create-fena-payment.js');

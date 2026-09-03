@@ -111,3 +111,15 @@ test('account analytics linkage requires an authenticated account', async () => 
   }, res);
   assert.equal(res.statusCode, 401);
 });
+
+test('loyalty reservation release requires an authenticated admin account', async () => {
+  const handler = require('../api/order-admin');
+  const res = response();
+  await handler({
+    method: 'POST',
+    query: { type: 'release-loyalty-reward' },
+    headers: {},
+    body: { rewardId: 'not-authorised', confirmAbandoned: true },
+  }, res);
+  assert.equal(res.statusCode, 401);
+});

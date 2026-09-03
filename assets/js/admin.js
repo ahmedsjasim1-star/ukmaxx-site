@@ -18,6 +18,13 @@ const money = (value) => new Intl.NumberFormat('en-GB', { style: 'currency', cur
 const number = (value) => new Intl.NumberFormat('en-GB').format(Number(value || 0));
 const date = (value) => value ? new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) : '—';
 
+const LOYALTY_LABELS = {
+  CREDIT_5: '£5 credit', FREE_BAC: 'Free BAC Water', CREDIT_10: '£10 credit',
+  PERCENT_20_CAP_25: '20% off · £25 cap', FREE_VIAL_2999: 'Free vial up to £29.99',
+  CREDIT_20: '£20 credit', FREE_BAC_VIAL_2999: 'Free BAC + vial',
+  PERCENT_30_CAP_50: '30% off · £50 cap', FREE_ANY_VIAL: 'Any single vial free',
+};
+
 let currentDashboard = null;
 let dashboardLoading = false;
 let selectedRange = getStoredRange();
@@ -308,6 +315,32 @@ function renderTimeline(rows) {
   </li>`).join('')}</ol>`;
 }
 
+function renderReservedRewards(rows) {
+  if (!rows?.length) return '<p class="empty-state">No loyalty rewards are currently reserved.</p>';
+  return rows.map((row) => `<div class="loyalty-admin-row">
+    <div><strong>${escapeHtml(LOYALTY_LABELS[row.code] || row.code)}</strong><span>${escapeHtml(row.email)}</span></div>
+    <div><strong>${escapeHtml(row.reference || 'No reference')}</strong><span>${escapeHtml(row.paymentStatus || 'unknown')} · ${date(row.reservedAt)}</span></div>
+    ${row.releasable ? `<button class="admin-btn admin-btn-warning" type="button" data-release-reward="${escapeHtml(row.id)}" data-payment-reference="${escapeHtml(row.reference)}">Release</button>` : '<span class="status-pill muted">Protected</span>'}
+  </div>`).join('');
+}
+
+async function releaseReservedReward(rewardId, reference) {
+  const confirmed = window.confirm(`Release the reward held against ${reference || 'this payment'}?\n\nOnly continue after checking Fena and confirming the payment did not complete.`);
+  if (!confirmed) return;
+  const supabase = await getSupabase();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error('Please sign in again.');
+  const response = await fetch('/api/order-admin?type=release-loyalty-reward', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+    body: JSON.stringify({ rewardId, confirmAbandoned: true }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Unable to release reward.');
+  await loadDashboard();
+  showAlert('The abandoned payment reservation was released. The customer can use the reward again.');
+}
+
 function detailWide(label, content) {
   return `<div class="order-detail-wide"><span>${escapeHtml(label)}</span>${content}</div>`;
 }
@@ -506,6 +539,9 @@ function renderDashboardRange(data) {
   $('emailSubscribersList').innerHTML = renderEmailSubscribers(emailSubscribers.recent || []);
   setText('accountCreationChip', `${number(accounts.newInRange || 0)} new · ${number(accounts.total || 0)} total`);
   $('recentAccounts').innerHTML = renderAccounts(accounts.recent || []);
+  const reservedRewards = data.loyalty?.reservedRewards || [];
+  setText('reservedRewardsChip', `${number(reservedRewards.length)} reserved`);
+  $('reservedRewardsList').innerHTML = renderReservedRewards(reservedRewards);
 
   setText('openFulfilment', `${number(data.orders?.openFulfilment)} open fulfilment`);
   $('recentOrders').innerHTML = renderRecentOrders(data.orders?.recent || []);
@@ -643,6 +679,17 @@ $('checkoutDropoffs')?.addEventListener('click', (event) => {
 $('visitorJourneys')?.addEventListener('click', (event) => {
   const row = event.target.closest('[data-visitor-index]');
   if (row) openVisitorDrawer(row.getAttribute('data-visitor-index'));
+});
+$('reservedRewardsList')?.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-release-reward]');
+  if (!button) return;
+  button.disabled = true;
+  try {
+    await releaseReservedReward(button.dataset.releaseReward, button.dataset.paymentReference);
+  } catch (err) {
+    showAlert(err.message);
+    button.disabled = false;
+  }
 });
 $('orderDrawerClose')?.addEventListener('click', closeOrderDrawer);
 $('orderDrawerBackdrop')?.addEventListener('click', closeOrderDrawer);

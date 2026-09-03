@@ -13,6 +13,7 @@ test('catalogue offers a three-vial custom bundle with a free BAC Water', () => 
   assert.match(catalogue, /Choose any three single vials/);
   assert.match(catalogue, /Free BAC Water/);
   assert.match(catalogue, /id="customBundleBackdrop"/);
+  assert.match(builder, /get\('build_bundle'\) === '1'/);
   assert.match(builder, /selection\.length !== 3/);
   assert.match(builder, /addCustomBundle\(selection\)/);
 });

@@ -9,7 +9,7 @@ import { setupNewsletter } from './modules/newsletter.js';
 import { initAuthGate, setupAuthForms, setupPasswordStrength, setupPasswordToggles, setupGoogleAuth, setupForgotPassword, setupProfileDropdown, initAuth } from './modules/auth.js?v=20260903-account-rewards-preview';
 import { setupTracking } from './modules/tracking.js';
 import { renderProductDetail, refreshProductDetailData, renderRelatedProducts } from './modules/productDetail.js?v=20260903-rt20-reprice';
-import { setupAccountPage } from './modules/account.js?v=20260903-account-rewards-preview-2';
+import { setupAccountPage } from './modules/account.js?v=20260903-locked-rewards';
 import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260901-featured-rt20';
 import { refreshLiveStock } from './data/products.js?v=20260903-rt20-reprice';
 import { setupCoaPage } from './modules/coaPage.js?v=20260901-retatrutide-method';

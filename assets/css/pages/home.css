@@ -42,7 +42,7 @@
 .trust-strip{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:18px 0}
 .trust-strip-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 @media (min-width:640px){.trust-strip-grid{grid-template-columns:repeat(3,1fr)}}
-@media (min-width:1024px){.trust-strip-grid{grid-template-columns:repeat(6,1fr);gap:8px}}
+@media (min-width:1024px){.trust-strip-grid{grid-template-columns:repeat(3,1fr);gap:24px}}
 .trust-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-2)}
 .trust-item-icon{width:32px;height:32px;border-radius:var(--radius-sm);background:#fff;border:1px solid var(--border);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .trust-item-icon svg{width:16px;height:16px}
@@ -78,11 +78,16 @@
 .coa-summary-cell{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.15);padding:12px 14px;border-radius:var(--radius-sm);backdrop-filter:blur(4px)}
 .coa-summary-cell .label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:3px}
 .coa-summary-cell .val{font-size:14px;font-weight:600}
+.coa-summary-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:16px}
+.coa-summary-link{display:flex;align-items:center;color:#fff;font-size:12.5px;font-weight:650;line-height:1.35;text-decoration:none;transition:background .15s ease,opacity .15s ease}
+.coa-summary-link.is-primary{padding:10px 11px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.1)}
+.coa-summary-link.is-secondary{padding:4px 2px;opacity:.78}
+.coa-summary-link:hover{color:#fff;opacity:1}.coa-summary-link.is-primary:hover{background:rgba(255,255,255,.18)}
 .reviews-summary{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;display:flex;flex-direction:column;gap:18px;margin-bottom:24px}
 @media (min-width:768px){.reviews-summary{flex-direction:row;align-items:center;gap:32px;padding:28px}}
 .reviews-score{text-align:center;flex-shrink:0}
 .reviews-score-num{font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:700;line-height:1;color:var(--text);letter-spacing:-.02em}
-.reviews-score-stars{color:#F59E0B;font-size:18px;letter-spacing:2px;margin:6px 0}
+.reviews-score-stars{color:var(--tp);font-size:18px;letter-spacing:2px;margin:6px 0}
 .reviews-score-count{font-size:12px;color:var(--dim);font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;text-transform:uppercase}
 .tp-summary{display:flex;flex-direction:column;align-items:flex-start;gap:6px;flex-shrink:0;min-width:200px}
 .tp-summary-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
@@ -138,6 +143,23 @@
 .home-library-card h3{font-family:'Space Grotesk',sans-serif;font-size:22px;line-height:1.15;letter-spacing:-.02em;margin-bottom:10px;max-width:270px}
 .home-library-card p{font-size:13.5px;line-height:1.6;color:var(--dim);margin-bottom:24px}
 .home-library-read{margin-top:auto;color:var(--accent);font-size:13px;font-weight:700}
+.home-library-all{display:flex;justify-content:flex-end;margin-top:14px;color:var(--accent);font-size:13px;font-weight:700;text-decoration:none}
+.home-library-all:hover{text-decoration:underline}
+.home-benefits-section{padding:24px 0 0;background:#fff}
+.home-benefits-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.home-benefit-card{display:grid;grid-template-columns:54px minmax(0,1fr);gap:17px;align-items:start;padding:24px;border:1px solid var(--border);border-radius:24px;overflow:hidden;position:relative}
+.home-benefit-card--bundle{background:linear-gradient(135deg,#f3efff 0%,#fbf9ff 58%,#fff 100%);border-color:#ddd3f3}
+.home-benefit-card--rewards{background:linear-gradient(135deg,#eaf8f6 0%,#f5fbfa 58%,#fff 100%);border-color:#cce8e2}
+.home-benefit-icon{display:grid;place-items:center;width:54px;height:54px;border-radius:18px;background:rgba(255,255,255,.78);box-shadow:0 8px 20px rgba(8,31,35,.06)}
+.home-benefit-card--bundle .home-benefit-icon{color:#7255aa}.home-benefit-card--rewards .home-benefit-icon{color:#13876f}
+.home-benefit-icon svg{width:27px;height:27px}
+.home-benefit-copy>span{display:block;margin:1px 0 7px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:650;letter-spacing:.11em;text-transform:uppercase;color:var(--accent)}
+.home-benefit-card--bundle .home-benefit-copy>span{color:#7255aa}.home-benefit-card--rewards .home-benefit-copy>span{color:#13876f}
+.home-benefit-copy h2{margin:0 0 7px;font-family:'Space Grotesk',sans-serif;font-size:21px;line-height:1.18;letter-spacing:-.02em;color:var(--text)}
+.home-benefit-copy p{margin:0 0 12px;color:var(--dim);font-size:13px;line-height:1.55}
+.home-benefit-copy a{font-size:13px;font-weight:700;color:var(--accent);text-decoration:none}
+.home-benefit-card--bundle .home-benefit-copy a{color:#6844a6}.home-benefit-card--rewards .home-benefit-copy a{color:#087c70}
+.home-benefit-copy a:hover{text-decoration:underline}
 .home-international-section{padding:24px 0 0;background:#fff}
 .home-international-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center;padding:22px 24px;border:1px solid #d9e2f8;border-radius:24px;background:linear-gradient(135deg,#f1f5ff 0%,#fbf9ff 52%,#fff 100%)}
 .home-international-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:17px;background:#e4ebfb;color:#5872ad}
@@ -168,9 +190,10 @@
   .home-proof-section{order:2}
   #why{order:3}
   #coa{order:4}
-  .home-international-section{order:5}
-  #reviews{order:6}
-  .home-library{order:7}
+  .home-benefits-section{order:5}
+  .home-international-section{order:6}
+  #reviews{order:7}
+  .home-library{order:8}
   .site-footer{order:99}
   .hero-grid{gap:12px}
   .hero-content{order:2}
@@ -222,11 +245,19 @@
   .coa-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
   .coa-summary-cell{padding:10px;border-radius:14px}
   .coa-summary-cell .val{font-size:12.5px}
+  .coa-summary-links{gap:7px;margin-top:13px}
+  .coa-summary-link{font-size:11.5px}.coa-summary-link.is-primary{padding:9px;border-radius:11px}.coa-summary-link.is-secondary{padding:4px 1px}
+  .home-benefits-section{padding-top:18px}
+  .home-benefits-grid{grid-template-columns:1fr;gap:12px}
+  .home-benefit-card{grid-template-columns:44px minmax(0,1fr);gap:13px;padding:18px;border-radius:22px}
+  .home-benefit-icon{width:44px;height:44px;border-radius:15px}.home-benefit-icon svg{width:22px;height:22px}
+  .home-benefit-copy h2{font-size:18px}.home-benefit-copy p{font-size:12.5px;line-height:1.5;margin-bottom:10px}
   .home-library-grid{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;margin:0 -20px;padding:0 20px 8px;scrollbar-width:none}
   .home-library-grid::-webkit-scrollbar{display:none}
   .home-library-card{flex:0 0 min(292px,82vw);min-height:245px;padding:21px 18px;border-radius:22px;scroll-snap-align:start}
   .home-library-tag{margin-bottom:24px}
   .home-library-card h3{font-size:20px}
+  .home-library-all{justify-content:flex-start;margin-top:10px}
   .home-international-section{padding-top:18px}
   .home-international-card{grid-template-columns:42px minmax(0,1fr);gap:12px;padding:18px;border-radius:22px}
   .home-international-icon{width:42px;height:42px;border-radius:15px}
