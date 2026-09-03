@@ -1,5 +1,5 @@
-import { PRODUCTS, CUSTOM_BUNDLE_ELIGIBLE_SKUS, isPurchasable } from '../data/products.js?v=20260901-retatrutide-method';
-import { addCustomBundle } from './cart.js?v=20260901-retatrutide-method';
+import { PRODUCTS, CUSTOM_BUNDLE_ELIGIBLE_SKUS, isPurchasable } from '../data/products.js?v=20260903-rt20-reprice';
+import { addCustomBundle } from './cart.js?v=20260903-rt20-reprice';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 

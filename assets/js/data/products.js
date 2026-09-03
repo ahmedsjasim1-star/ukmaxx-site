@@ -15,7 +15,9 @@ export const PRODUCTS = {
 
 // Current permanent pricing. RT10X3 retains its existing bundle price.
 Object.assign(PRODUCTS.NJ500, { price: 39.99 });
-Object.assign(PRODUCTS.RT20X3, { price: 269.99 });
+Object.assign(PRODUCTS.RT20, { price: 79.99 });
+Object.assign(PRODUCTS.RT20X3, { price: 227.97 });
+delete PRODUCTS.RT20X3.separatePrice;
 Object.assign(PRODUCTS.BC5X3, { price: 84.99 });
 Object.assign(PRODUCTS.GHKCUX3, { price: 84.99 });
 Object.assign(PRODUCTS.UKXRB1, { price: 109.99 });

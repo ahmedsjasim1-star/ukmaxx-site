@@ -9,12 +9,27 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 test('RT20 single and bundle use the agreed full prices and remain MAXX10 eligible', () => {
   const products = read('assets/js/data/products.js');
   const fena = read('api/create-fena-payment.js');
+  const migration = read('supabase/migrations/20260903_reprice_rt20.sql');
+  const bundleHub = read('research-peptide-bundles-uk.html');
 
-  assert.match(products, /RT20:\{[^\n]+price:94\.99/);
+  assert.match(products, /Object\.assign\(PRODUCTS\.RT20, \{ price: 79\.99 \}\)/);
   assert.doesNotMatch(products.match(/RT20:\{[^\n]+/)?.[0] || '', /originalPrice|launchPrice|promoExcluded/);
-  assert.match(products, /Object\.assign\(PRODUCTS\.RT20X3, \{ price: 269\.99 \}\)/);
+  assert.match(products, /Object\.assign\(PRODUCTS\.RT20X3, \{ price: 227\.97 \}\)/);
+  assert.match(products, /delete PRODUCTS\.RT20X3\.separatePrice/);
   assert.match(products, /RT20X3: \{ RT20: 3, WA10: 1 \}/);
   assert.doesNotMatch(fena, /PROMO_EXCLUDED_SKUS/);
+  assert.match(migration, /when 'RT20' then 79\.99/);
+  assert.match(migration, /when 'RT20X3' then 227\.97/);
+  assert.doesNotMatch(migration, /stock_quantity|bundle_components|allocate_order_stock/);
+  assert.match(bundleHub, /<dt>Bundle price<\/dt><dd>£227\.97<\/dd>/);
+});
+
+test('RT20 fixed bundle exactly matches the three-vial builder price', () => {
+  const threeSingles = 79.99 * 3;
+  const builderSaving = Math.round(79.99 * 100 * 0.05) / 100 * 3;
+  const builderPrice = Number((threeSingles - builderSaving).toFixed(2));
+  assert.equal(builderPrice, 227.97);
+  assert.equal(Number((builderPrice * 0.90).toFixed(2)), 205.17);
 });
 
 test('RT20 COA data matches Janoshik report 225850', () => {
