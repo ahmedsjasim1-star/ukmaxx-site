@@ -283,6 +283,7 @@
 }
 
 .testing-process { background: #092b38; color: #f5fbfc; }
+.testing-process h2 { color: #f5fbfc; }
 .testing-process .section-eyebrow { color: #6fdce6; }
 .testing-process .testing-section-head { margin-bottom: 34px; }
 .process-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -359,6 +360,7 @@
 .testing-faq details p { margin-bottom: 22px; }
 
 .testing-related { padding: clamp(74px, 8vw, 112px) 0 44px; background: #082b38; color: #f7fbfc; }
+.testing-related h2 { color: #f7fbfc; }
 .testing-related .section-eyebrow { color: #72dde6; }
 .related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .related-grid a { min-width: 0; padding: 24px; border: 1px solid rgba(255,255,255,.12); border-radius: 20px; color: #fff; text-decoration: none; }
