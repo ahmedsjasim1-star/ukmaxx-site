@@ -17,10 +17,10 @@ test('NAD is permanently £39.99 and no longer carries launch-price behavior', (
   assert.doesNotMatch(fena, /PROMO_EXCLUDED_SKUS/);
 });
 
-test('all fixed bundles except RT10 receive the agreed 5% reduction', () => {
+test('fixed bundles retain their current agreed prices', () => {
   const products = read('assets/js/data/products.js');
   assert.match(products, /RT10X3:\{[^\n]+price:149\.99/);
-  assert.match(products, /Object\.assign\(PRODUCTS\.RT20X3, \{ price: 227\.97 \}\)/);
+  assert.match(products, /Object\.assign\(PRODUCTS\.RT20X3, \{ price: 184\.99 \}\)/);
   assert.match(products, /Object\.assign\(PRODUCTS\.BC5X3, \{ price: 84\.99 \}\)/);
   assert.match(products, /Object\.assign\(PRODUCTS\.GHKCUX3, \{ price: 84\.99 \}\)/);
   assert.match(products, /Object\.assign\(PRODUCTS\.UKXRB1, \{ price: 109\.99 \}\)/);

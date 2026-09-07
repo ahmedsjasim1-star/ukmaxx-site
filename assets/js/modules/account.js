@@ -232,7 +232,7 @@ export async function setupAccountPage() {
           {
             order_number: 'UKX26PREVIEW', status: 'delivered', created_at: new Date().toISOString(), total: 85.06,
             tracking_number: 'AA123456789GB', tracking_url: 'https://www.royalmail.com/track-your-item',
-            items: [{ sku: 'RT20', product_name: 'RETA 20MG', qty: 1, line_total: 79.99 }],
+            items: [{ sku: 'RT20', product_name: 'RETA 20MG', qty: 1, line_total: 64.99 }],
             batches: [{ sku: 'RT20', product_name: 'RETA 20MG', qty: 1, batch_code: 'RT20-2026-08-A', coa_url: '/coa.html?batch=RT20-2026-08-A' }],
           },
           ...Array.from({ length: 7 }, (_, index) => ({
