@@ -1,0 +1,19 @@
+.sourcing-hero-cards,.sourcing-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:28px}
+.supplier-comparison-page .guide-back{display:block;margin-bottom:16px}
+.sourcing-hero-cards>div,.sourcing-compare>div,.sourcing-cost,.sourcing-rejection,.sourcing-value-grid>div{padding:24px;border:1px solid #d4e3e7;border-radius:22px;background:#edf5fc;color:#153c43}
+.sourcing-hero-cards>div:nth-child(2),.sourcing-compare>div:nth-child(2){background:#e8f6ee;border-color:#cde5d8}
+.sourcing-hero-cards span{display:block;font:11px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.sourcing-hero-cards strong{font:600 24px 'Space Grotesk',sans-serif;display:block}
+.sourcing-hero-cards p{margin:10px 0 0;font-size:15px;line-height:1.6}
+.sourcing-compare h3,.sourcing-cost h3,.sourcing-rejection h3,.sourcing-value-grid h3{margin-top:8px;color:#163d43}
+.sourcing-compare ul{padding-left:19px;margin-bottom:0}.sourcing-compare li{font-size:15px}
+.sourcing-cost{background:#f2edfc;border-color:#ded4f0;margin:26px 0}
+.sourcing-cost dl{margin:20px 0}.sourcing-cost dl>div{display:flex;justify-content:space-between;gap:20px;border-bottom:1px solid #dbd4e8;padding:12px 0}
+.sourcing-cost dd{font-weight:700;white-space:nowrap}.sourcing-cost .cost-total{font-weight:700;border-bottom:0}
+.sourcing-rejection{background:#fff1e7;border-color:#efddca;margin:24px 0}
+.sourcing-value-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:22px 0}
+.sourcing-value-grid>div{padding:19px}.sourcing-value-grid>div:nth-child(3n+2){background:#e8f6ee}.sourcing-value-grid>div:nth-child(3n){background:#f2edfc}
+.sourcing-value-grid p{margin-bottom:0;font-size:14px}
+.supplier-comparison-page .article-hero h1{font-size:clamp(34px,4.3vw,62px);max-width:1000px}
+.supplier-comparison-page .article-toc a{line-height:1.45}
+@media(max-width:700px){.sourcing-hero-cards,.sourcing-compare,.sourcing-value-grid{grid-template-columns:1fr}.sourcing-hero-cards>div,.sourcing-compare>div,.sourcing-cost,.sourcing-rejection{padding:19px}.sourcing-cost dl{font-size:14px}.sourcing-cost dl>div{gap:12px}.supplier-comparison-page .article-hero h1{font-size:34px}}
