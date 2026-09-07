@@ -1,0 +1,26 @@
+/* Grouped custom bundles and a single scrolling basket body. */
+html:has(.cart-drawer.is-open){overflow-x:clip}
+body:has(.cart-drawer.is-open) .toast-container{bottom:120px}
+.cart-drawer{width:min(500px,100%)}
+.cart-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.cart-scroll .cart-items{overflow:visible;flex:none}
+.cart-scroll .cart-foot{box-shadow:none}
+.cart-scroll .cart-totals-row.is-total{display:none}
+.cart-pinned-actions{flex-shrink:0;padding:14px 20px max(14px,env(safe-area-inset-bottom));border-top:1px solid var(--border);background:#fff}
+.cart-pinned-actions[hidden],.cart-promo[hidden],#cartAppliedPromo[hidden]{display:none}
+#cartPinnedTotal{display:flex;justify-content:space-between;font-size:18px;margin-bottom:10px}
+.cart-bundle{margin:14px 0;padding:16px;border:1px solid #c4e6dd;border-radius:16px;background:linear-gradient(120deg,#e8f6ef,#edf5fc)}
+.cart-bundle-heading{display:flex;justify-content:space-between;gap:12px;color:#123d38;font-size:15px}
+.cart-bundle-heading strong:last-child{white-space:nowrap}
+.cart-bundle-images{display:flex;gap:8px;margin:12px 0}
+.cart-bundle-images img{width:52px;height:52px;object-fit:cover;border-radius:9px;background:#fff}
+.cart-bundle-contents{list-style:none;font-size:13px;line-height:1.8;color:#244943}
+.cart-bundle-included{font-size:12px;color:#216953;margin-top:8px;line-height:1.6}
+.cart-bundle-actions{display:flex;gap:24px;margin-top:8px}
+.cart-bundle-actions a,.cart-bundle-actions button{font:inherit;font-size:13px;min-height:36px;display:inline-flex;align-items:center;text-decoration:underline;color:#24554c}
+#cartAppliedPromo{display:flex;align-items:center;justify-content:space-between;background:#e8f6ef;padding:8px 12px;border-radius:8px;font-size:13px;color:#216953;margin:8px 0}
+#cartAppliedPromo button{min-height:32px;text-decoration:underline}
+.cart-scroll:has(#cartAppliedPromo:not([hidden])) .cart-launch-code,.cart-scroll:has(#cartAppliedPromo:not([hidden])) #promoMsg{display:none}
+.cart-scroll .cart-launch-code{font-family:inherit;font-size:12px;letter-spacing:0}
+.checkout-summary-items .cart-bundle{padding:12px}
+@media(max-width:480px){.cart-bundle{padding:13px}.cart-scroll .cart-items{padding:0 14px}.cart-scroll .cart-foot{padding:14px}.cart-pinned-actions{padding-left:14px;padding-right:14px}.cart-bundle-heading{font-size:14px}.cart-bundle-images img{width:46px;height:46px}}

@@ -15,7 +15,7 @@ test('catalogue offers a three-vial custom bundle with a free BAC Water', () => 
   assert.match(catalogue, /id="customBundleBackdrop"/);
   assert.match(builder, /get\('build_bundle'\) === '1'/);
   assert.match(builder, /selection\.length !== 3/);
-  assert.match(builder, /addCustomBundle\(selection\)/);
+  assert.match(builder, /addCustomBundle\(selection, editingId\)/);
 });
 
 test('custom bundle eligibility excludes BAC Water and pre-built bundles', () => {
@@ -31,7 +31,7 @@ test('free BAC and automatic 5% saving are priced consistently in basket and Pay
   assert.match(cart, /Math\.min\(Math\.floor\(qualifyingVials \/ 3\), bacQuantity\)/);
   assert.match(cart, /Number\(item\.bundleQty \|\| 0\)/);
   assert.match(cart, /sub - bundleGiftDiscount - bundleDiscount - discount/);
-  assert.match(cart, /Build-your-own bundle saving \(5%\)/);
+  assert.match(cart, /5% saving included/);
   assert.match(cart, /Math\.round\(price \* 100 \* 0\.05\)/);
   assert.match(cart, /productSku: 'CUSTOM3'/);
   assert.match(fena, /const freeBacQty = customBundleGiftQuantity\(normalized\)/);

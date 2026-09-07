@@ -1,3 +1,4 @@
+import { projectBundles, subtractBundle, bundlePrice } from './bundleGroups.js?v=20260907-grouped-cart';
 import { toast } from './toast.js';
 import { getCurrentUser } from './auth.js?v=20260819-customer-journeys';
 import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, CUSTOM_BUNDLE_ELIGIBLE_SKUS, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260907-rt20-reprice';
@@ -55,9 +56,47 @@ function sanitizeCart(arr = []) {
     .map(([sku, item]) => ({ sku, qty: item.qty, ...(item.bundleQty ? { bundleQty: item.bundleQty } : {}) }));
 }
 
-function getCart() { return sanitizeCart(getStorage(CART_KEY) || []); }
+function getCart() {
+  const cart = sanitizeCart(getStorage(CART_KEY) || []);
+  const { groups } = projectBundles(cart, getStorage(CART_KEY + '_groups') || []);
+  const allocated = new Map();
+  groups.forEach(g => g.selection.forEach(s => allocated.set(s, (allocated.get(s) || 0) + 1)));
+  return cart.map(i => ({ ...i, bundleQty: allocated.get(i.sku) || 0 }));
+}
 function setCart(c) { setStorage(CART_KEY, sanitizeCart(c)); }
 
+const BUNDLE_GROUPS_KEY = CART_KEY + '_groups';
+function groupedCart(c = getCart()) {
+  const result = projectBundles(c, getStorage(BUNDLE_GROUPS_KEY) || []);
+  setStorage(BUNDLE_GROUPS_KEY, result.groups);
+  return result;
+}
+export function getCustomBundle(id) { return groupedCart().groups.find(g => g.id === id); }
+export function builderAvailableStock(sku, editingId = '') {
+  const c = getCart();
+  const group = groupedCart(c).groups.find(g => g.id === editingId);
+  const baseline = group ? subtractBundle(c, group) : c;
+  return Math.max(0, Number(PRODUCTS[sku]?.stockCount || 0) - (baseline.find(i => i.sku === sku)?.qty || 0));
+}
+function removeCustomBundle(id) {
+  const c = getCart();
+  const group = groupedCart(c).groups.find(g => g.id === id);
+  if (!group) return;
+  setCart(subtractBundle(c, group));
+  setStorage(BUNDLE_GROUPS_KEY, groupedCart(c).groups.filter(g => g.id !== id));
+  renderCart();
+}
+function bundleCard(group, compact = false) {
+  const counts = new Map();
+  group.selection.forEach(s => counts.set(s, (counts.get(s) || 0) + 1));
+  return `<article class="cart-bundle">
+    <div class="cart-bundle-heading"><strong>Your custom bundle</strong><strong>${money(bundlePrice(group.selection, PRODUCTS))}</strong></div>
+    <div class="cart-bundle-images">${group.selection.map(s => `<img src="${PRODUCTS[s].image}" alt="${PRODUCTS[s].name}">`).join('')}</div>
+    <ul class="cart-bundle-contents">${[...counts].map(([s,q]) => `<li>${q} × ${PRODUCTS[s].name}</li>`).join('')}</ul>
+    <p class="cart-bundle-included">Includes free BAC Water 10ml · 5% saving included</p>
+    ${compact ? '' : `<div class="cart-bundle-actions"><a href="./catalogue.html?edit_bundle=${encodeURIComponent(group.id)}#bundles">Edit bundle</a><button type="button" data-remove-bundle="${group.id}">Remove</button></div>`}
+  </article>`;
+}
 function getPromoCode() {
   const raw = getRaw(PROMO_KEY) || '';
   try {
@@ -237,7 +276,8 @@ async function syncInternationalCheckoutNotice(c = getCart()) {
 
 export function renderCart() {
   const c = getCart();
-  const count = c.reduce((a, b) => a + b.qty, 0);
+  const basketGroups = groupedCart(c);
+  const count = basketGroups.groups.length + basketGroups.singles.reduce((a, b) => a + b.qty, 0);
   ['cartCount', 'cartCountHeader', 'cartCountMobile'].forEach(id => {
     const el = byId(id);
     if (!el) return;
@@ -270,6 +310,8 @@ export function renderCart() {
   const footEl = byId('cartFoot');
   if (!itemsEl) return;
   if (!c.length) {
+    const pinned = document.querySelector('.cart-pinned-actions');
+    if (pinned) pinned.hidden = true;
     itemsEl.innerHTML = `<div class="cart-empty">
       <div class="cart-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h3l2.4 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L21 7H6"/></svg></div>
       <div class="cart-empty-title">Your basket is empty</div>
@@ -280,9 +322,10 @@ export function renderCart() {
     return;
   }
   if (footEl) footEl.style.display = '';
-  itemsEl.innerHTML = c.map(i => {
+  const grouped = groupedCart(c);
+  itemsEl.innerHTML = grouped.groups.map(g => bundleCard(g)).join('') + grouped.singles.map(i => {
     const p = PRODUCTS[i.sku];
-    const freeQty = i.sku === 'WA10' ? t.freeBacQty : 0;
+    const freeQty = 0;
     const chargeableQty = Math.max(0, i.qty - freeQty);
     const itemPrice = chargeableQty === 0
       ? `<span class="cart-item-free">FREE</span><s>${money(p.price * i.qty)}</s>`
@@ -318,13 +361,24 @@ export function renderCart() {
   const totalsEl = byId('cartTotals');
   if (totalsEl) {
     totalsEl.innerHTML = `
-      <div class="cart-totals-row"><span>Subtotal</span><span>${money(t.sub)}</span></div>
-      ${t.bundleGiftDiscount > 0 ? `<div class="cart-totals-row is-gift"><span>Build-your-own bundle gift</span><span>-${money(t.bundleGiftDiscount)}</span></div>` : ''}
-      ${t.bundleDiscount > 0 ? `<div class="cart-totals-row is-discount"><span>Build-your-own bundle saving (5%)</span><span>-${money(t.bundleDiscount)}</span></div>` : ''}
+      <div class="cart-totals-row"><span>Subtotal</span><span>${money(t.sub - t.bundleGiftDiscount - t.bundleDiscount)}</span></div>
       ${t.promo && t.discount > 0 ? `<div class="cart-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
       ${t.rewardDiscount > 0 ? `<div class="cart-totals-row is-reward"><span>UKMAXX reward</span><span>-${money(t.rewardDiscount)}</span></div>` : ''}
       <div class="cart-totals-row"><span>Shipping</span><span>${t.ship === 0 ? '<strong style="color:var(--success)">FREE</strong>' : money(t.ship)}</span></div>
       <div class="cart-totals-row is-total"><span>Total</span><span>${money(t.tot)}</span></div>`;
+  }
+  const pinned = byId('cartPinnedTotal');
+  if (pinned) pinned.innerHTML = `<span>Total</span><strong>${money(t.tot)}</strong>`;
+  const pinnedActions = document.querySelector('.cart-pinned-actions');
+  if (pinnedActions) pinnedActions.hidden = !c.length;
+  const promoInput = byId('promoCode');
+  const promoRow = promoInput?.closest('.cart-promo');
+  if (promoRow) {
+    promoRow.hidden = !!t.promo;
+    let applied = byId('cartAppliedPromo');
+    if (!applied) { applied = document.createElement('div'); applied.id = 'cartAppliedPromo'; promoRow.after(applied); }
+    applied.innerHTML = t.promo ? `<span>${t.code} applied</span><button type="button" data-remove-promo>Remove</button>` : '';
+    applied.hidden = !t.promo;
   }
   renderCheckoutSummary();
 }
@@ -335,9 +389,10 @@ function renderCheckoutSummary() {
   const itemsEl = byId('checkoutSummaryItems');
   const sumsEl = byId('checkoutSummary');
   if (itemsEl) {
-    itemsEl.innerHTML = c.map(i => {
+    const grouped = groupedCart(c);
+    itemsEl.innerHTML = grouped.groups.map(g => bundleCard(g, true)).join('') + grouped.singles.map(i => {
       const p = PRODUCTS[i.sku];
-      const freeQty = i.sku === 'WA10' ? t.freeBacQty : 0;
+      const freeQty = 0;
       const chargeableQty = Math.max(0, i.qty - freeQty);
       return `<div class="checkout-summary-item">
         <img src="${p.image}" alt="${p.name}">
@@ -351,9 +406,7 @@ function renderCheckoutSummary() {
   }
   if (sumsEl) {
     sumsEl.innerHTML = `
-      <div class="checkout-totals-row"><span>Subtotal</span><span>${money(t.sub)}</span></div>
-      ${t.bundleGiftDiscount > 0 ? `<div class="checkout-totals-row is-gift"><span>Build-your-own bundle gift</span><span>-${money(t.bundleGiftDiscount)}</span></div>` : ''}
-      ${t.bundleDiscount > 0 ? `<div class="checkout-totals-row is-discount"><span>Build-your-own bundle saving (5%)</span><span>-${money(t.bundleDiscount)}</span></div>` : ''}
+      <div class="checkout-totals-row"><span>Subtotal</span><span>${money(t.sub - t.bundleGiftDiscount - t.bundleDiscount)}</span></div>
       ${t.promo && t.discount > 0 ? `<div class="checkout-totals-row is-discount"><span>Discount (${t.code})</span><span>-${money(t.discount)}</span></div>` : ''}
       ${t.rewardDiscount > 0 ? `<div class="checkout-totals-row is-reward"><span>UKMAXX reward</span><span>-${money(t.rewardDiscount)}</span></div>` : ''}
       ${selectedLoyaltyReward && LOYALTY_GIFT_CODES.has(selectedLoyaltyReward.code) ? `<div class="checkout-totals-row is-reward"><span>${selectedLoyaltyReward.label}${selectedRewardSku ? ` · ${PRODUCTS[selectedRewardSku]?.name || selectedRewardSku}` : ''}</span><span>FREE</span></div>` : ''}
@@ -402,7 +455,7 @@ export function addSkuQty(s, qty) {
   return { ok: true, requested: num, added, maxQty, limited: added < num };
 }
 
-export function addCustomBundle(selection = []) {
+export function addCustomBundle(selection = [], editingId = '') {
   const chosen = Array.isArray(selection) ? selection.map(normalizeSku) : [];
   if (chosen.length !== 3 || chosen.some((sku) => !CUSTOM_BUNDLE_ELIGIBLE_SKUS.includes(sku))) {
     toast('Choose three vials', 'Select exactly three eligible single vials to build this bundle.', 'error');
@@ -413,9 +466,16 @@ export function addCustomBundle(selection = []) {
     return { ok: false };
   }
 
+  const original = getCart();
+  const groups = groupedCart(original).groups;
+  const editingGroup = groups.find(g => g.id === editingId);
+  if (editingId && !editingGroup) {
+    toast('Bundle changed', 'Reopen your basket and select the bundle again.', 'error');
+    return { ok: false };
+  }
   const requested = new Map();
   [...chosen, 'WA10'].forEach((sku) => requested.set(sku, (requested.get(sku) || 0) + 1));
-  const c = getCart();
+  const c = editingGroup ? subtractBundle(original, editingGroup) : original;
   for (const [sku, qty] of requested.entries()) {
     const product = PRODUCTS[sku];
     const currentQty = Number(c.find((item) => item.sku === sku)?.qty || 0);
@@ -436,6 +496,7 @@ export function addCustomBundle(selection = []) {
     }
   });
   setCart(c);
+  setStorage(BUNDLE_GROUPS_KEY, [...groups.filter(g => g.id !== editingId), { id: editingId || crypto.randomUUID(), selection: chosen }]);
   renderCart();
   trackEvent('add_to_cart', {
     productSku: 'CUSTOM3',
@@ -443,7 +504,7 @@ export function addCustomBundle(selection = []) {
     customBundleSelection: chosen,
     ...cartAnalyticsPayload(),
   });
-  toast('Bundle added', 'Your three selected vials and free BAC Water are in the basket.');
+  toast(editingId ? 'Bundle updated' : 'Bundle added', 'Your three selected vials and free BAC Water are in the basket.');
   return { ok: true, selection: chosen };
 }
 
@@ -451,6 +512,8 @@ function chg(s, d) {
   const c = getCart();
   const f = c.find(x => x.sku === s);
   if (!f) return;
+  const loose = groupedCart(c).singles.find(i => i.sku === s)?.qty || 0;
+  if (d < 0 && !loose) return;
   f.qty += d;
   f.qty = Math.min(f.qty, Math.max(1, Number(PRODUCTS[s]?.stockCount || 1)));
   if (Number(f.bundleQty || 0) > f.qty) f.bundleQty = f.qty;
@@ -461,7 +524,9 @@ function chg(s, d) {
 
 function rmv(s) {
   const p = PRODUCTS[s];
-  setCart(getCart().filter(x => x.sku !== s));
+  const c = getCart();
+  const loose = groupedCart(c).singles.find(i => i.sku === s)?.qty || 0;
+  setCart(c.map(i => i.sku === s ? { ...i, qty: i.qty - loose } : i).filter(i => i.qty > 0));
   renderCart();
   if (p) toast('Removed from basket', p.name);
 }
@@ -593,6 +658,29 @@ function orderRef() {
 }
 
 export function initCart() {
+  delegate(document.body, '[data-remove-bundle]', 'click', (e, btn) => removeCustomBundle(btn.dataset.removeBundle));
+  const drawer = byId('cartDrawer');
+  const items = byId('cartItems');
+  const foot = byId('cartFoot');
+  if (drawer && items && foot && !drawer.querySelector('.cart-scroll')) {
+    const scroll = document.createElement('div');
+    scroll.className = 'cart-scroll';
+    drawer.insertBefore(scroll, items);
+    scroll.append(items, foot);
+    const actions = document.createElement('div');
+    actions.className = 'cart-pinned-actions';
+    actions.innerHTML = '<div id="cartPinnedTotal"></div>';
+    const checkout = byId('checkoutBtn');
+    if (checkout) actions.append(checkout);
+    drawer.append(actions);
+    renderCart();
+  }
+  delegate(document.body, '[data-remove-promo]', 'click', () => {
+    removeStorage(PROMO_KEY);
+    if (byId('promoCode')) byId('promoCode').value = '';
+    if (byId('promoMsg')) byId('promoMsg').textContent = '';
+    renderCart();
+  });
   void visitorCountry();
   delegate(document.body, '[data-add]', 'click', (e, btn) => {
     e.stopPropagation();

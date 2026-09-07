@@ -1,7 +1,7 @@
 import { PRODUCTS, getReleaseLabel, isPurchasable } from '../data/products.js';
 import { money } from '../utils/money.js';
 import { $, $$, byId } from '../utils/dom.js';
-import { addSku } from './cart.js';
+import { addSku } from './cart.js?v=20260907-grouped-cart';
 
 export function setupHeaderScroll() {
   const h = byId('siteHeader');

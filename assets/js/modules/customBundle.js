@@ -1,9 +1,10 @@
 import { PRODUCTS, CUSTOM_BUNDLE_ELIGIBLE_SKUS, isPurchasable } from '../data/products.js?v=20260907-rt20-reprice';
-import { addCustomBundle } from './cart.js?v=20260907-rt20-reprice';
+import { addCustomBundle, getCustomBundle, builderAvailableStock } from './cart.js?v=20260907-grouped-cart';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 
 const selection = [];
+let editingId = '';
 
 function selectedCount(sku) {
   return selection.filter((item) => item === sku).length;
@@ -33,7 +34,7 @@ function renderBuilder() {
   const products = availableProducts();
   options.innerHTML = products.map((product) => {
     const qty = selectedCount(product.id);
-    const remaining = Math.max(0, Number(product.stockCount || 0) - qty);
+    const remaining = Math.max(0, builderAvailableStock(product.id, editingId) - qty);
     return `<article class="custom-bundle-option${qty ? ' is-selected' : ''}">
       <div class="custom-bundle-option-media custom-bundle-option-media--${product.id}"><img src="${product.image}" alt="${product.name}"></div>
       <div class="custom-bundle-option-copy">
@@ -81,13 +82,17 @@ function renderBuilder() {
     <p class="custom-bundle-discount-note">MAXX10 is also eligible: ${money(maxxPrice)} after the additional 10% saving.</p>`;
 
   count.textContent = `${selection.length} of 3 selected`;
+  addButton.textContent = editingId ? 'Save bundle changes' : 'Add bundle to basket';
   addButton.disabled = selection.length !== 3 || !isPurchasable(PRODUCTS.WA10);
 }
 
 function openBuilder() {
   const backdrop = byId('customBundleBackdrop');
   if (!backdrop) return;
-  selection.splice(0, selection.length);
+  editingId = new URLSearchParams(location.search).get('edit_bundle') || '';
+  const existing = editingId ? getCustomBundle(editingId) : null;
+  if (editingId && !existing) editingId = '';
+  selection.splice(0, selection.length, ...(existing?.selection || []));
   renderBuilder();
   backdrop.classList.add('is-open');
   backdrop.setAttribute('aria-hidden', 'false');
@@ -126,13 +131,15 @@ export function setupCustomBundleBuilder() {
     if (event.key === 'Escape' && backdrop.classList.contains('is-open')) closeBuilder();
   });
   byId('customBundleAdd')?.addEventListener('click', () => {
-    const result = addCustomBundle(selection);
+    const result = addCustomBundle(selection, editingId);
     if (!result.ok) return;
+    history.replaceState(null, '', location.pathname + '#bundles');
+    editingId = '';
     closeBuilder();
     byId('cartToggle')?.click();
   });
 
-  if (new URLSearchParams(window.location.search).get('build_bundle') === '1') {
+  if (new URLSearchParams(window.location.search).get('build_bundle') === '1' || new URLSearchParams(location.search).has('edit_bundle')) {
     window.requestAnimationFrame(openBuilder);
   }
 }
