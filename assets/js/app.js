@@ -1,8 +1,8 @@
 import { renderProducts, refreshProductReviewStats } from './modules/products.js?v=20260907-rt20-reprice';
 import { renderReviews, setupReviewDrawer } from './modules/reviews.js?v=20260831-sold-out-ux';
-import { renderCart, initCart } from './modules/cart.js?v=20260907-grouped-cart';
+import { renderCart, initCart } from './modules/cart.js?v=20260909-rewards-bundles';
 import { initAgeGate } from './modules/ageGate.js';
-import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js?v=20260907-grouped-cart';
+import { setupHeaderScroll, setupActiveNav, setupMobileStickyCta } from './modules/ui.js?v=20260909-rewards-bundles';
 import { setupLightbox } from './modules/lightbox.js?v=20260903-featured-rt20';
 import { setupExitIntent } from './modules/exitIntent.js?v=20260831-sold-out-ux';
 import { setupNewsletter } from './modules/newsletter.js';

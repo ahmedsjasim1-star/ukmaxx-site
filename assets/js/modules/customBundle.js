@@ -1,5 +1,5 @@
 import { PRODUCTS, CUSTOM_BUNDLE_ELIGIBLE_SKUS, isPurchasable } from '../data/products.js?v=20260907-rt20-reprice';
-import { addCustomBundle, getCustomBundle, builderAvailableStock } from './cart.js?v=20260907-grouped-cart';
+import { addCustomBundle, getCustomBundle, builderAvailableStock } from './cart.js?v=20260909-rewards-bundles';
 import { money } from '../utils/money.js';
 import { byId } from '../utils/dom.js';
 

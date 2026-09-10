@@ -206,7 +206,7 @@ window.__html.cartDrawer = '<div class="cart-backdrop" id="cartBackdrop" aria-hi
   + 'Secure checkout'
   + '</button>'
   + '<div class="cart-trust-row">'
-  + '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> 256-bit SSL</span>'
+  + '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> UK support</span>'
   + '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Pay by Bank</span>'
   + '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> UK Tracked 24</span>'
   + '</div>'

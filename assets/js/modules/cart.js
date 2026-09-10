@@ -1,4 +1,6 @@
-import { projectBundles, subtractBundle, bundlePrice } from './bundleGroups.js?v=20260907-grouped-cart';
+import { projectBundles, subtractBundle, bundlePrice } from './bundleGroups.js?v=20260909-rewards-bundles';
+import { quoteBundle } from './bundleOffer.js?v=20260909';
+import { BUNDLE_COMPONENTS } from '../data/products.js?v=20260907-rt20-reprice';
 import { toast } from './toast.js';
 import { getCurrentUser } from './auth.js?v=20260819-customer-journeys';
 import { PRODUCTS, FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING, PROMO_CODES, CART_KEY, PROMO_KEY, CUSTOM_BUNDLE_ELIGIBLE_SKUS, getReleaseLabel, isPurchasable } from '../data/products.js?v=20260907-rt20-reprice';
@@ -16,6 +18,8 @@ let visitorCountryPromise;
 let loyaltyRewards = [];
 let selectedLoyaltyReward = null;
 let selectedRewardSku = '';
+let bundleOfferOpen = false;
+let bundleOfferSelection = [];
 
 const LOYALTY_GIFT_CODES = new Set(['FREE_BAC', 'FREE_VIAL_2999', 'FREE_BAC_VIAL_2999', 'FREE_ANY_VIAL']);
 const LOYALTY_VIAL_CODES = new Set(['FREE_VIAL_2999', 'FREE_BAC_VIAL_2999', 'FREE_ANY_VIAL']);
@@ -97,6 +101,40 @@ function bundleCard(group, compact = false) {
     ${compact ? '' : `<div class="cart-bundle-actions"><a href="./catalogue.html?edit_bundle=${encodeURIComponent(group.id)}#bundles">Edit bundle</a><button type="button" data-remove-bundle="${group.id}">Remove</button></div>`}
   </article>`;
 }
+function renderBundleOffer(host, cart, singles) {
+  const available = singles.filter(i => CUSTOM_BUNDLE_ELIGIBLE_SKUS.includes(i.sku));
+  const count = available.reduce((n,i) => n + i.qty, 0);
+  if (count < 3 || !isPurchasable(PRODUCTS.WA10)) return;
+  if (!bundleOfferSelection.length) bundleOfferSelection = available.flatMap(i => Array(i.qty).fill(i.sku)).slice(0,3);
+  const box = document.createElement('section');
+  box.className = 'cart-bundle-offer';
+  box.innerHTML = `<div class="bundle-offer-heading"><strong data-offer-heading>Bundle 3 singles + free BAC Water</strong><button type="button" class="btn btn-ghost" data-review-offer aria-expanded="${bundleOfferOpen}">${bundleOfferOpen ? 'Close' : 'Review'}</button></div><div data-offer-options ${bundleOfferOpen ? '' : 'hidden'}><div ${available.length === 1 ? 'hidden' : ''}>${[0,1,2].map(n => `<label>Vial ${n+1}<select data-offer-slot="${n}">${available.map(i => `<option value="${i.sku}" ${bundleOfferSelection[n] === i.sku ? 'selected' : ''}>${PRODUCTS[i.sku].name} (${i.qty} in basket)</option>`).join('')}</select></label>`).join('')}</div><p data-offer-quote role="status"></p><p>Other items and any paid BAC Water stay separate.</p><button type="button" class="btn btn-primary" data-confirm-offer>Confirm bundle</button></div>`;
+  host.append(box);
+  const update = () => {
+    bundleOfferSelection = [...box.querySelectorAll('select')].map(el => el.value);
+    const offer = quoteBundle(getCart(), bundleOfferSelection, PRODUCTS, CUSTOM_BUNDLE_ELIGIBLE_SKUS, BUNDLE_COMPONENTS);
+    const button = box.querySelector('[data-confirm-offer]');
+    button.disabled = !offer;
+    box.querySelector('[data-offer-heading]').textContent = offer ? `Bundle 3 · save ${money(offer.saving)} + free BAC Water` : 'Bundle 3 singles + free BAC Water';
+    box.querySelector('[data-offer-quote]').textContent = offer
+      ? `${offer.fixedSku ? PRODUCTS[offer.fixedSku].name : 'Custom bundle'}: ${money(offer.price)}. Basket after conversion: ${money(cartTotals(offer.cart).tot)} including UK shipping and current discounts.`
+      : 'Choose quantities already in your basket. Enough stock, including an extra BAC Water, must be available.';
+  };
+  box.querySelector('[data-review-offer]').onclick = () => { bundleOfferOpen = !bundleOfferOpen; renderCart(); };
+  box.querySelectorAll('select').forEach(el => el.onchange = update);
+  box.querySelector('[data-confirm-offer]').onclick = () => {
+    const current = getCart();
+    const offer = quoteBundle(current, bundleOfferSelection, PRODUCTS, CUSTOM_BUNDLE_ELIGIBLE_SKUS, BUNDLE_COMPONENTS);
+    if (!offer) { update(); return; }
+    const groups = groupedCart(current).groups;
+    setCart(offer.cart);
+    setStorage(BUNDLE_GROUPS_KEY, offer.fixedSku ? groups : [...groups, { id: crypto.randomUUID(), selection: offer.selection }]);
+    bundleOfferOpen = false; bundleOfferSelection = [];
+    renderCart();
+    toast('Bundle confirmed', 'Three singles grouped; your other items are unchanged.');
+  };
+  update();
+}
 function getPromoCode() {
   const raw = getRaw(PROMO_KEY) || '';
   try {
@@ -143,6 +181,10 @@ function cartTotals(c) {
   const bundleGiftDiscount = freeBacQty * Number(PRODUCTS.WA10?.price || 0);
   const bundleDiscount = customBundleDiscount(c);
   const promoEligibleSub = Math.max(0, promoEligibility(c).eligibleSubtotal - bundleDiscount);
+  if (selectedLoyaltyReward && promoEligibleSub < 50) {
+    selectedLoyaltyReward = null;
+    selectedRewardSku = '';
+  }
   const code = getPromoCode();
   const promo = PROMOS[code];
   const promoDiscount = promo ? (promo.type === 'percent' ? promoEligibleSub * promo.value : Math.min(promo.value, promoEligibleSub)) : 0;
@@ -171,6 +213,7 @@ function eligibleRewardVials(reward) {
 }
 
 function renderRewardsPanels() {
+  const eligibleSpend = cartTotals(getCart()).promoEligibleSub;
   const checkoutPanel = byId('checkoutRewardsPanel');
   const cartPanel = byId('cartRewardsPanel');
   const panels = [checkoutPanel, cartPanel].filter(Boolean);
@@ -178,11 +221,15 @@ function renderRewardsPanels() {
     panels.forEach((panel) => { panel.hidden = true; panel.innerHTML = ''; });
     return;
   }
-  const options = loyaltyRewards.map((reward) => `<button type="button" class="rewards-option${selectedLoyaltyReward?.id === reward.id ? ' is-selected' : ''}" data-loyalty-reward="${reward.id}"><span>${reward.label}</span><em>${selectedLoyaltyReward?.id === reward.id ? 'Applied' : 'Use'}</em></button>`).join('');
+  const options = loyaltyRewards.map((reward) => `<button type="button" ${eligibleSpend < 50 ? 'disabled' : ''} class="rewards-option${selectedLoyaltyReward?.id === reward.id ? ' is-selected' : ''}" data-loyalty-reward="${reward.id}"><span>${reward.label}</span><em>${selectedLoyaltyReward?.id === reward.id ? 'Applied' : 'Use'}</em></button>`).join('');
   const needsVial = LOYALTY_VIAL_CODES.has(selectedLoyaltyReward?.code);
   const vialOptions = needsVial ? eligibleRewardVials(selectedLoyaltyReward).map((product) => `<option value="${product.sku}"${selectedRewardSku === product.sku ? ' selected' : ''}>${product.name} · ${money(product.price)}</option>`).join('') : '';
-  const html = `<div class="rewards-panel-head"><strong>UKMAXX Rewards</strong><span>${loyaltyRewards.length} available</span></div><div class="rewards-options">${options}${needsVial ? `<select class="rewards-vial-select" aria-label="Choose your free vial"><option value="">Choose your free vial</option>${vialOptions}</select>` : ''}</div><p class="rewards-panel-note">One earned reward per order. Applying a reward removes MAXX10 from this basket.</p>`;
-  panels.forEach((panel) => { panel.hidden = false; panel.innerHTML = html; });
+  const html = `<details class="rewards-disclosure"><summary>${selectedLoyaltyReward ? `Reward applied: ${selectedLoyaltyReward.label}` : 'Use an earned reward'} <span>(${loyaltyRewards.length} available)</span></summary><div class="rewards-options">${options}${needsVial ? `<select class="rewards-vial-select" aria-label="Choose your free vial"><option value="">Choose your free vial</option>${vialOptions}</select>` : ''}</div><p class="rewards-panel-note">Rewards can't be combined with promo codes.</p></details>${eligibleSpend < 50 ? `<p class="rewards-panel-note" role="status">Add ${money(50 - eligibleSpend)} more to reach the £50 reward minimum.</p>` : ''}`;
+  panels.forEach((panel) => {
+    const wasOpen = panel.querySelector('details')?.open;
+    panel.hidden = false; panel.innerHTML = html;
+    panel.querySelector('details').open = Boolean(wasOpen || selectedLoyaltyReward);
+  });
 }
 
 async function syncLoyaltyRewards() {
@@ -198,7 +245,7 @@ async function syncLoyaltyRewards() {
   try {
     const supabase = await getSupabase();
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) return;
+    if (!session?.access_token) { loyaltyRewards = []; selectedLoyaltyReward = null; selectedRewardSku = ''; renderRewardsPanels(); renderCart(); return; }
     const response = await fetch('/api/account-orders', { headers: { Authorization: `Bearer ${session.access_token}` } });
     const data = await response.json().catch(() => ({}));
     loyaltyRewards = data.loyalty?.enabled ? (data.loyalty.rewards || []).filter((reward) => reward.status === 'available') : [];
@@ -285,6 +332,7 @@ export function renderCart() {
     el.classList.toggle('is-empty', count === 0);
   });
   const t = cartTotals(c);
+  renderRewardsPanels();
   const progressEl = byId('shippingProgress');
   const fillEl = byId('shippingFill');
   const labelEl = byId('shippingLabel');
@@ -347,6 +395,7 @@ export function renderCart() {
       </div>
     </div>`;
   }).join('');
+  renderBundleOffer(itemsEl, c, grouped.singles);
   const peptideSkus = ['RT10', 'RT20', 'BC5', 'IP5', 'GHKCU', 'NJ500'];
   const hasPeptide = c.some(i => peptideSkus.includes(i.sku));
   const hasBac = c.some(i => i.sku === 'WA10');
@@ -722,6 +771,7 @@ export function initCart() {
   });
 
   delegate(document.body, '[data-loyalty-reward]', 'click', (event, button) => {
+    if (cartTotals(getCart()).promoEligibleSub < 50) return;
     const reward = loyaltyRewards.find((item) => item.id === button.dataset.loyaltyReward);
     if (!reward) return;
     selectedLoyaltyReward = selectedLoyaltyReward?.id === reward.id ? null : reward;
@@ -783,6 +833,8 @@ export function initCart() {
         return;
       }
 
+      selectedLoyaltyReward = null;
+      selectedRewardSku = '';
       setRaw(PROMO_KEY, code);
       renderCart();
       const totals = cartTotals(c);
