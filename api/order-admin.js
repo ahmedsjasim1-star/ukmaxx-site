@@ -764,7 +764,8 @@ function visitorJourneys(events, profiles, attempts, orders, products, from) {
       .filter((event) => event.event_type === 'product_view' && event.product_sku)
       .map((event) => productNames.get(String(event.product_sku).toUpperCase()) || event.product_sku))];
     const visitorAttempts = attemptsByVisitor.get(row.visitorId) || [];
-    const visitorOrders = visitorAttempts.map((attempt) => orderById.get(attempt.order_id)).filter(Boolean);
+    const visitorOrders = [...new Set(visitorAttempts.map((attempt) => attempt.order_id))]
+      .map((id) => orderById.get(id)).filter((order) => order && PAID_STATUSES.has(order.status));
     const profile = profileByVisitor.get(row.visitorId);
     const latestCheckout = [...row.events].reverse().find((event) => ['payment_success', 'payment_failed', 'payment_started', 'checkout_opened', 'add_to_cart'].includes(event.event_type));
     return {
@@ -942,7 +943,7 @@ function rangeStart(now, definition) {
   return new Date(now.getTime() - definition.ms);
 }
 
-function rangeDashboard(definition, from, { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, notifySubscribers, promoRedemptions, events, profiles, now }) {
+function rangeDashboard(definition, from, { orders, items, products, attempts, operationalAttempts = attempts, pendingReviews, publicReviews, subscribers, notifySubscribers, promoRedemptions, events, profiles, now }) {
   const scopedOrders = orders.filter((order) => isSince(order, from));
   const scopedPaidOrders = scopedOrders.filter((order) => PAID_STATUSES.has(order.status));
   const scopedAttempts = attempts.filter((attempt) => isSince(attempt, from));
@@ -972,7 +973,7 @@ function rangeDashboard(definition, from, { orders, items, products, attempts, p
     },
     payments: paymentSummary(scopedAttempts),
     analytics: analyticsForRange(events, scopedPaidOrders, attempts, products, from),
-    checkoutDropoffs: checkoutDropoffs(events, products, attempts, from, now),
+    checkoutDropoffs: checkoutDropoffs(events, products, operationalAttempts, from, now),
     visitorJourneys: visitorJourneys(events, profiles, attempts, orders, products, from),
     products: {
       top: topProducts(scopedOrders, items),
@@ -989,7 +990,7 @@ function rangeDashboard(definition, from, { orders, items, products, attempts, p
 
 async function buildDashboard(supabase) {
   const [
-    orders,
+    rawOrders,
     items,
     products,
     attempts,
@@ -1020,6 +1021,13 @@ async function buildDashboard(supabase) {
     safeSelect(supabase, 'loyalty_members', 'id,email', { limit: 5000 }),
   ]);
 
+  // Separate reporting metadata: never change fulfilment, payments, stock or loyalty.
+  const { data: exclusions, error: exclusionError } = await supabase
+    .from('admin_order_stat_exclusions').select('order_id,reason').eq('enabled', true);
+  if (exclusionError) throw new Error('Test-order reporting setup unavailable. Run the admin statistics migration first.');
+  const excludedIds = new Set((exclusions || []).map((row) => row.order_id));
+  const orders = rawOrders.filter((order) => !excludedIds.has(order.id));
+  const statsAttempts = attempts.filter((attempt) => !excludedIds.has(attempt.order_id));
   const now = new Date();
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
@@ -1028,12 +1036,16 @@ async function buildDashboard(supabase) {
   const paidOrders = orders.filter((order) => PAID_STATUSES.has(order.status));
   const activeSubscribers = subscribers.filter((sub) => !sub.unsubscribed_at);
   const approvedRatings = publicReviews.map((review) => asNumber(review.rating)).filter(Boolean);
-  const rangeContext = { orders, items, products, attempts, pendingReviews, publicReviews, subscribers, notifySubscribers, promoRedemptions, events, profiles, now };
+  const rangeContext = { orders, items, products, attempts: statsAttempts, operationalAttempts: attempts, pendingReviews, publicReviews, subscribers, notifySubscribers, promoRedemptions, events, profiles, now };
   const ranges = Object.fromEntries(RANGE_DEFINITIONS.map((definition) => [
     definition.key,
     rangeDashboard(definition, rangeStart(now, definition), rangeContext),
   ]));
   const loyaltyEmailByMember = new Map(loyaltyMembers.map((member) => [member.id, member.email]));
+  const rangesIncludingTests = Object.fromEntries(RANGE_DEFINITIONS.map((definition) => [
+    definition.key,
+    rangeDashboard(definition, rangeStart(now, definition), { ...rangeContext, orders: rawOrders, attempts }),
+  ]));
   const attemptByReference = new Map(attempts.map((attempt) => [String(attempt.payment_reference || '').toUpperCase(), attempt]));
   const reservedRewards = loyaltyRewards.filter((reward) => reward.status === 'reserved').map((reward) => {
     const attempt = attemptByReference.get(String(reward.reserved_reference || '').toUpperCase());
@@ -1053,6 +1065,8 @@ async function buildDashboard(supabase) {
 
   return {
     ranges,
+    rangesIncludingTests,
+    testOrders: { excludedCount: excludedIds.size, excludedRevenue: sumRevenue(rawOrders.filter((order) => excludedIds.has(order.id) && PAID_STATUSES.has(order.status))) },
     summary: {
       today: periodSummary(orders, today),
       sevenDays: periodSummary(orders, sevenDaysAgo),
@@ -1067,8 +1081,8 @@ async function buildDashboard(supabase) {
     accounts: accountStats(profiles, null),
     orders: {
       byStatus: countBy(orders, 'status'),
-      recent: recentOrders(orders, items, attempts, events, profiles, audits, products),
-      openFulfilment: orders.filter((order) => ['paid', 'processing', 'dispatched'].includes(order.status)).length,
+      recent: recentOrders(rawOrders, items, attempts, events, profiles, audits, products).map((order) => ({ ...order, isTest: rawOrders.some((raw) => raw.order_number === order.orderNumber && excludedIds.has(raw.id)) })),
+      openFulfilment: rawOrders.filter((order) => ['paid', 'processing', 'dispatched'].includes(order.status)).length,
       problemOrders: orders.filter((order) => FINAL_BAD_STATUSES.has(order.status)).length,
     },
     payments: paymentSummary(attempts),

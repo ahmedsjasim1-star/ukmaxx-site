@@ -13,7 +13,7 @@ import { setupAccountPage } from './modules/account.js?v=20260907-rt20-reprice';
 import { updateHeroBatchChips } from './modules/heroBatch.js?v=20260901-featured-rt20';
 import { refreshLiveStock } from './data/products.js?v=20260907-rt20-reprice';
 import { setupCoaPage } from './modules/coaPage.js?v=20260901-retatrutide-method';
-import { setupAnalytics } from './modules/analytics.js?v=20260819-restore-traffic';
+import { setupAnalytics } from './modules/analytics.js?v=20260913-stable-identity';
 import { setupWhatsAppSupport } from './modules/whatsappSupport.js?v=20260822-international-enquiries';
 import { setupHomeProof } from './modules/homeProof.js?v=20260903-shared-batch-stats';
 

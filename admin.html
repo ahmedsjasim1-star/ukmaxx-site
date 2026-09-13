@@ -59,6 +59,8 @@
           <p class="eyebrow">Time range</p>
           <h2 id="adminRangeTitle">Last 24 hours</h2>
           <p id="adminRangeSub">Switch the window to inspect launch traffic, orders and checkout behaviour.</p>
+          <label><input type="checkbox" id="includeTestOrders"> Include test orders in statistics</label>
+          <p id="testOrdersNote">Test orders remain in the operational order list. Visitor traffic is not removed.</p>
         </div>
         <div class="admin-range-tabs" id="adminRangeTabs" role="tablist" aria-label="Dashboard time range">
           <button class="admin-range-tab" type="button" data-range="1h">1H</button>
@@ -395,6 +397,6 @@
     </div>
   </aside>
 
-  <script type="module" src="./assets/js/admin.js?v=20260903-loyalty-recovery"></script>
+  <script type="module" src="./assets/js/admin.js?v=20260913-test-order-stats"></script>
 </body>
 </html>

@@ -5,6 +5,7 @@ const ACCOUNT_LINK_KEY = 'ukmaxx_analytics_account_link';
 const IGNORE_KEY = 'ukmaxx_analytics_ignore';
 const ENDPOINT = '/api/track-order';
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+const memoryStorage = new Map();
 
 function uuid() {
   try {
@@ -15,13 +16,14 @@ function uuid() {
 
 function storageGet(key) {
   try {
-    return localStorage.getItem(key);
+    return localStorage.getItem(key) || memoryStorage.get(key) || '';
   } catch {
-    return '';
+    return memoryStorage.get(key) || '';
   }
 }
 
 function storageSet(key, value) {
+  memoryStorage.set(key, value);
   try {
     localStorage.setItem(key, value);
   } catch {}
@@ -86,16 +88,16 @@ function firstTouch() {
 function sessionState() {
   const now = Date.now();
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
+    const raw = storageGet(SESSION_KEY);
     const parsed = raw ? JSON.parse(raw) : null;
     if (parsed?.id && Number(parsed.lastSeen || 0) > now - SESSION_TIMEOUT_MS) {
       parsed.lastSeen = now;
       if (!parsed.touch?.landingPage) parsed.touch = touchNow();
-      localStorage.setItem(SESSION_KEY, JSON.stringify(parsed));
+      storageSet(SESSION_KEY, JSON.stringify(parsed));
       return parsed;
     }
     const next = { id: uuid(), startedAt: now, lastSeen: now, touch: touchNow() };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(next));
+    storageSet(SESSION_KEY, JSON.stringify(next));
     return next;
   } catch {
     return { id: uuid(), startedAt: now, lastSeen: now, touch: touchNow() };

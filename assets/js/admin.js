@@ -228,7 +228,7 @@ function renderStock(stock) {
 function renderRecentOrders(rows) {
   if (!rows?.length) return '<tr><td colspan="6" class="empty-state">No orders yet.</td></tr>';
   return rows.map((order) => `<tr data-order-number="${escapeHtml(order.orderNumber)}">
-    <td><strong>${escapeHtml(order.orderNumber)}</strong></td>
+    <td><strong>${escapeHtml(order.orderNumber)}</strong>${order.isTest ? ' <span class="status-pill">Test order</span>' : ''}</td>
     <td>${escapeHtml(order.email)}</td>
     <td><span class="status-pill">${escapeHtml(order.status)}</span></td>
     <td>${escapeHtml(order.paymentProvider)}</td>
@@ -278,9 +278,10 @@ function renderDropoffs(rows) {
 
 function renderVisitorJourneys(rows) {
   if (!rows?.length) return '<p class="empty-state">No visitor journeys in this range.</p>';
-  return rows.slice(0, 25).map((row, index) => `<button class="dropoff-row visitor-row" type="button" data-visitor-index="${index}">
+  return rows.map((row, index) => `<button class="dropoff-row visitor-row" type="button" data-visitor-index="${index}">
     <span class="dropoff-main">
       <strong>${escapeHtml(row.firstSource || 'Direct')} ${row.returning ? '· Returning' : '· New visitor'}</strong>
+      <span>Visitor ${escapeHtml(String(row.visitorId || '').slice(0, 8))}</span>
       <span>${escapeHtml(row.location || 'Unknown')} · ${escapeHtml(row.device || 'unknown')} · ${number(row.sessions)} session${Number(row.sessions) === 1 ? '' : 's'}</span>
     </span>
     <span class="dropoff-meta">
@@ -457,7 +458,10 @@ function closeOrderDrawer() {
 }
 
 function renderDashboardRange(data) {
+  const defaultRanges = data.defaultRanges || data.ranges;
+  data = { ...data, defaultRanges, ranges: $('includeTestOrders')?.checked ? data.rangesIncludingTests : defaultRanges };
   currentDashboard = data;
+  setText('testOrdersNote', `${number(data.testOrders?.excludedCount || 0)} test orders · ${money(data.testOrders?.excludedRevenue || 0)}. ${$('includeTestOrders')?.checked ? 'Included in statistics.' : 'Excluded from sales statistics.'} Operational orders and visitor traffic are retained.`);
   const range = data.ranges?.[selectedRange] || data.ranges?.['24h'] || {};
   const rangeLabel = range.label || RANGE_LABELS[selectedRange] || 'Last 24 hours';
   const summary = range.summary || data.summary || {};
@@ -671,6 +675,9 @@ $('adminRangeTabs')?.addEventListener('click', (event) => {
 $('recentOrders')?.addEventListener('click', (event) => {
   const row = event.target.closest('tr[data-order-number]');
   if (row) openOrderDrawer(row.getAttribute('data-order-number'));
+});
+$('includeTestOrders')?.addEventListener('change', () => {
+  if (currentDashboard) renderDashboardRange(currentDashboard);
 });
 $('checkoutDropoffs')?.addEventListener('click', (event) => {
   const row = event.target.closest('[data-dropoff-index]');
