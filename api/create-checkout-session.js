@@ -158,19 +158,7 @@ module.exports = async (req, res) => {
     const email = String(authData?.user?.email || '').trim().toLowerCase();
     const requestedPromo = String(req.body?.promoCode || '').trim().toUpperCase();
     const validPromo = requestedPromo === 'MAXX10';
-    if (validPromo && email) {
-      const { data: prior, error: priorError } = await supabase
-        .from('promo_redemptions')
-        .select('id')
-        .eq('email', email)
-        .eq('promo_code', 'MAXX10')
-        .limit(1);
-      if (priorError) throw priorError;
-      if (prior?.length) return res.status(409).json({ error: 'MAXX10 has already been used for this account.' });
-      if (!process.env.STRIPE_MAXX10_COUPON_ID) {
-        return res.status(503).json({ error: 'Promo code is temporarily unavailable' });
-      }
-    } else if (validPromo && !process.env.STRIPE_MAXX10_COUPON_ID) {
+    if (validPromo && !process.env.STRIPE_MAXX10_COUPON_ID) {
       return res.status(503).json({ error: 'Promo code is temporarily unavailable' });
     }
 

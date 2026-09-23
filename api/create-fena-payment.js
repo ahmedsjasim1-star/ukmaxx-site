@@ -228,16 +228,6 @@ module.exports = async (req, res) => {
     if (loyaltyReward && requestedPromo) return res.status(409).json({ error: 'Use either a UKMAXX reward or a promo code, not both.' });
     const validPromo = requestedPromo === 'MAXX10';
     const promoApplies = validPromo && promoEligibleSubtotal > 0;
-    if (promoApplies) {
-      const { data: prior, error: priorError } = await supabase
-        .from('promo_redemptions')
-        .select('id')
-        .eq('email', checkout.email)
-        .eq('promo_code', 'MAXX10')
-        .limit(1);
-      if (priorError) throw priorError;
-      if (prior?.length) return res.status(409).json({ error: 'MAXX10 has already been used for this email.' });
-    }
 
     const loyaltyQuote = loyaltyReward
       ? rewardQuote(loyaltyReward, promoEligibleSubtotal, bySku.get(requestedRewardSku))
